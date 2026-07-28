@@ -3854,6 +3854,10 @@ export default function App() {
     return workerSubmissions.filter(s => s.urgency === 'High');
   }, [workerSubmissions]);
 
+  const totalBorn = useMemo(() => species.reduce((s, sp) => s + sp.born, 0), [species]);
+  const totalExported = useMemo(() => species.reduce((s, sp) => s + sp.exported, 0), [species]);
+  const totalDied = useMemo(() => species.reduce((s, sp) => s + sp.died, 0), [species]);
+
   // Date formatted: "27 Jul 2026"
   const formattedDate = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
