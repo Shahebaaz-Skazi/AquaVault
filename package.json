@@ -4,7 +4,7 @@
   "main": "server.js",
   "scripts": {
     "preinstall": "cd backend && npm install",
-    "build": "echo 'Build complete'",
+    "build": "cd frontend && npm install && npm run build && cd .. && cp -R frontend/dist .",
     "start": "node server.js"
   },
   "dependencies": {}
