@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -6408,29 +6408,59 @@ export default function App() {
       api.getActivity()
     ])
       .then(([spData, tsData, tData, sData, eData, cData, wData, eqData, wlData, actData]) => {
-        setSpeciesStateAll(spData);
+        setSpeciesStateAll(spData.map(s => ({
+          id: s.id, name: s.name, price: s.price, min: s.min_threshold,
+          stock: 0, born: 0, exported: 0, died: 0
+        })));
         setTankStock(transformTankStock(tsData));
-        setTanks(tData);
-        setSales(sData);
-        setExpenses(eData);
-        setCustomers(cData);
-        setWorkers(wData);
+        setTanks(tData.map(t => ({
+          id: t.id, displayName: t.display_name, capacity: t.capacity,
+          temp: t.temp, ph: t.ph, type: t.type, addedDate: t.added_date,
+          isQuarantined: t.is_quarantined, quarantineReason: t.quarantine_reason
+        })));
+        setSales(sData.map(s => ({
+          id: s.id, speciesId: s.species_id, speciesName: s.species_name,
+          ageGroup: s.age_group, tankId: s.tank_id, qty: s.qty,
+          unitPrice: s.unit_price, total: s.total, buyer: s.buyer,
+          payMode: s.pay_mode, payStatus: s.pay_status, worker: s.worker_name,
+          approved: s.approved, date: s.date, note: s.note
+        })));
+        setExpenses(eData.map(e => ({
+          id: e.id, category: e.category, amount: e.amount,
+          description: e.description, date: e.date,
+          tankId: e.tank_id, worker: e.worker_name
+        })));
+        setCustomers(cData.map(c => ({
+          id: c.id, name: c.name, contact: c.contact,
+          totalOrders: c.total_orders ?? 0,
+          totalValue: c.total_value ?? 0,
+          lastOrder: c.last_order ?? '—',
+          topSpecies: c.top_species ?? '—'
+        })));
+        const normWorkers = wData.map(w => ({
+          id: w.id, name: w.name, role: w.role, pin: w.pin,
+          avatar: (w.name || '').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'W'
+        }));
+        setWorkers(normWorkers);
         if (session.role === 'worker') {
-          const w = wData.find(x => x.id === session.workerId);
+          const w = normWorkers.find(x => x.id === session.workerId);
           if (w) setActiveWorker(w);
         }
-        setEquipment(eqData);
-        setWaterLog(wlData);
-        
-        // Setup quarantinedTanks lookup from tanks data
+        setEquipment(eqData.map(e => ({
+          id: e.id, name: e.name, type: e.type, tank: e.tank_id,
+          purchaseDate: e.purchase_date, lastService: e.last_service,
+          nextService: e.next_service, cost: e.cost, status: e.status
+        })));
+        setWaterLog(wlData.map(w => ({
+          id: w.id, tank: w.tank_id, date: w.date,
+          ph: w.ph, temp: w.temp, ammonia: w.ammonia,
+          loggedBy: w.logged_by, status: w.status
+        })));
         const qMap = {};
         tData.forEach(t => {
-          if (t.is_quarantined) {
-            qMap[t.id] = { reason: t.quarantine_reason || 'Quarantined' };
-          }
+          if (t.is_quarantined) qMap[t.id] = { reason: t.quarantine_reason || 'Quarantined' };
         });
         setQuarantinedTanks(qMap);
-
         setActivity(actData.map(a => {
           try {
             return { id: a.id, type: a.type, time: formatActivityTime(a.created_at), ...JSON.parse(a.description) };
