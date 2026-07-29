@@ -236,3 +236,16 @@ INSERT INTO activity (id, type, description, worker_name) VALUES
 (5, 'birth', '{"species":"Koi (Kohaku)","ageGroup":"newborn","count":4,"tank":"E","note":"Spring spawn"}', 'Suresh Kamble'),
 (6, 'export', '{"species":"Betta (Red)","ageGroup":"adult","count":5,"tank":"D","note":"PetZone Pune"}', 'Amol Shinde');
 SELECT setval('activity_id_seq', (SELECT MAX(id) FROM activity));
+
+-- Disable Row Level Security (RLS) on all tables for the Node backend
+ALTER TABLE species DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tanks DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tank_stock DISABLE ROW LEVEL SECURITY;
+ALTER TABLE sales DISABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE customers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE workers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment DISABLE ROW LEVEL SECURITY;
+ALTER TABLE water_log DISABLE ROW LEVEL SECURITY;
+ALTER TABLE activity DISABLE ROW LEVEL SECURITY;
+
