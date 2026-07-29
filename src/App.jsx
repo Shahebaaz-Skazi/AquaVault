@@ -11,6 +11,7 @@ import {
   ChevronRight, ChevronDown, User, ShieldAlert
 } from 'lucide-react';
 import './index.css';
+import ErrorBoundary from './ErrorBoundary';
 
 // ─── DATA CONSTANTS (Do not change structures) ──────────────────────────────
 
@@ -5994,7 +5995,7 @@ export default function App() {
   const [customers, setCustomers] = useState(CUSTOMERS_INIT);
   const [equipment, setEquipment] = useState(EQUIPMENT_INIT);
   const [waterLog, setWaterLog] = useState(WATER_LOG_INIT);
-  const [workers] = useState(WORKERS_INIT);
+  const [workers, setWorkers] = useState(WORKERS_INIT);
   
   const [activeWorker, setActiveWorker] = useState(null);
   const [workerSubmissions, setWorkerSubmissions] = useState([]);
@@ -6658,111 +6659,122 @@ export default function App() {
 
           {/* Scrollable Content Body */}
           <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-            {activeTab === 'dashboard' && (
-              <DashboardTab
-                key="dashboard"
-                species={species}
-                activity={activity}
-                alertRef={alertRef}
-                tanks={tanks}
-                getTankTotal={getTankTotal}
-                getContentsOfTank={getContentsOfTank}
-                onViewAllLowStock={handleViewAllLowStock}
-                onConfirmLog={handleConfirmLog}
-                kpiFlash={kpiFlash}
-                tankStock={tankStock}
-                totalRevenue={totalRevenue}
-                pendingRevenue={pendingRevenue}
-                totalExpenses={totalExpenses}
-                netProfit={netProfit}
-                pendingSales={pendingSales}
-                overdueCount={overdueCount}
-                waterWarnings={waterWarnings}
-                onNavigateTab={setActiveTab}
-                highUrgentIssues={highUrgentIssues}
-              />
-            )}
-            {activeTab === 'inventory' && (
-              <InventoryTab
-                key="inventory"
-                species={species}
-                search={search}
-                onConfirmLog={handleConfirmLog}
-                filterLowStock={filterLowStock}
-                onClearFilter={() => setFilterLowStock(false)}
-                tankStock={tankStock}
-                setSpeciesState={setSpeciesState}
-                setTankStock={setTankStock}
-                tanks={tanks}
-              />
-            )}
-            {activeTab === 'tanks' && (
-              <TanksTab
-                key="tanks"
-                species={species}
-                tankStock={tankStock}
-                quarantinedTanks={quarantinedTanks}
-                setQuarantinedTanks={setQuarantinedTanks}
-                onConfirmLog={handleAdminStatusLog}
-                onTransferStock={handleTransferStockAction}
-                onAddSpeciesToTank={handleAddSpeciesToTank}
-              />
-            )}
-            {activeTab === 'reports' && (
-              <ReportsTab key="reports" species={species} />
-            )}
-            {activeTab === 'finances' && (
-              <FinancesTab
-                key="finances"
-                expenses={expenses}
-                setExpenses={setExpenses}
-                sales={sales}
-              />
-            )}
-            {activeTab === 'sales' && (
-              <SalesTab
-                key="sales"
-                sales={sales}
-                setSales={setSales}
-                species={species}
-                customers={customers}
-                setCustomers={setCustomers}
-                onDeductStock={deductStock}
-                onOpenInvoice={setActiveInvoice}
-              />
-            )}
-            {activeTab === 'customers' && (
-              <CustomersTab
-                key="customers"
-                customers={customers}
-                setCustomers={setCustomers}
-              />
-            )}
-            {activeTab === 'workers' && (
-              <WorkersTab
-                key="workers"
-                workers={workers}
-                setWorkers={setWorkers}
-                workerSubmissions={workerSubmissions}
-              />
-            )}
-            {activeTab === 'equipment' && (
-              <EquipmentTab
-                key="equipment"
-                equipment={equipment}
-                setEquipment={setEquipment}
-                setExpenses={setExpenses}
-                tanks={tanks}
-              />
-            )}
-            {activeTab === 'water' && (
-              <WaterQualityTab
-                key="water"
-                waterLog={waterLog}
-                setWaterLog={setWaterLog}
-                tanks={tanks}
-              />
-            )}
+            <ErrorBoundary key={activeTab}>
+              {activeTab === 'dashboard' && (
+                <DashboardTab
+                  key="dashboard"
+                  species={species}
+                  activity={activity}
+                  alertRef={alertRef}
+                  tanks={tanks}
+                  getTankTotal={getTankTotal}
+                  getContentsOfTank={getContentsOfTank}
+                  onViewAllLowStock={handleViewAllLowStock}
+                  onConfirmLog={handleConfirmLog}
+                  kpiFlash={kpiFlash}
+                  tankStock={tankStock}
+                  totalRevenue={totalRevenue}
+                  pendingRevenue={pendingRevenue}
+                  totalExpenses={totalExpenses}
+                  netProfit={netProfit}
+                  pendingSales={pendingSales}
+                  overdueCount={overdueCount}
+                  waterWarnings={waterWarnings}
+                  onNavigateTab={setActiveTab}
+                  highUrgentIssues={highUrgentIssues}
+                />
+              )}
+              {activeTab === 'inventory' && (
+                <InventoryTab
+                  key="inventory"
+                  species={species}
+                  search={search}
+                  onConfirmLog={handleConfirmLog}
+                  filterLowStock={filterLowStock}
+                  onClearFilter={() => setFilterLowStock(false)}
+                  tankStock={tankStock}
+                  setSpeciesState={setSpeciesState}
+                  setTankStock={setTankStock}
+                  tanks={tanks}
+                />
+              )}
+              {activeTab === 'tanks' && (
+                <TanksTab
+                  key="tanks"
+                  species={species}
+                  tankStock={tankStock}
+                  setTankStock={setTankStock}
+                  tanks={tanks}
+                  setTanks={setTanks}
+                  quarantinedTanks={quarantinedTanks}
+                  setQuarantinedTanks={setQuarantinedTanks}
+                  onConfirmLog={handleAdminStatusLog}
+                  onTransferStock={handleTransferStockAction}
+                  onAddSpeciesToTank={handleAddSpeciesToTank}
+                  sales={sales}
+                  setActivity={setActivity}
+                />
+              )}
+              {activeTab === 'reports' && (
+                <ReportsTab key="reports" species={species} tankStock={tankStock} />
+              )}
+              {activeTab === 'finances' && (
+                <FinancesTab
+                  key="finances"
+                  expenses={expenses}
+                  setExpenses={setExpenses}
+                  sales={sales}
+                  species={species}
+                  tanks={tanks}
+                  onAddStock={addStock}
+                />
+              )}
+              {activeTab === 'sales' && (
+                <SalesTab
+                  key="sales"
+                  sales={sales}
+                  setSales={setSales}
+                  species={species}
+                  customers={customers}
+                  setCustomers={setCustomers}
+                  onDeductStock={deductStock}
+                  onLogLocalToast={() => {}}
+                  onOpenInvoice={setActiveInvoice}
+                />
+              )}
+              {activeTab === 'customers' && (
+                <CustomersTab
+                  key="customers"
+                  customers={customers}
+                  setCustomers={setCustomers}
+                />
+              )}
+              {activeTab === 'workers' && (
+                <WorkersTab
+                  key="workers"
+                  workers={workers}
+                  setWorkers={setWorkers}
+                  workerSubmissions={workerSubmissions}
+                />
+              )}
+              {activeTab === 'equipment' && (
+                <EquipmentTab
+                  key="equipment"
+                  equipment={equipment}
+                  setEquipment={setEquipment}
+                  setExpenses={setExpenses}
+                  tanks={tanks}
+                />
+              )}
+              {activeTab === 'water' && (
+                <WaterQualityTab
+                  key="water"
+                  waterLog={waterLog}
+                  setWaterLog={setWaterLog}
+                  tanks={tanks}
+                />
+              )}
+            </ErrorBoundary>
           </main>
         </div>
       ) : (
