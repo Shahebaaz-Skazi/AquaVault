@@ -5118,7 +5118,8 @@ function WorkerApp({ isMobile,
   setWaterLog,
   onTransferStock,
   onConfirmLog,
-  setView
+  setView,
+  tanks
 }) {
   
   // LOG A SALE STEPS STATE
@@ -5760,7 +5761,7 @@ function WorkerApp({ isMobile,
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Feeding Done</span>
           <form onSubmit={handleFeedingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <select value={feedTank} onChange={e => setFeedTank(e.target.value)}>
-              {TANKS_DATA.map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
+              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
             </select>
 
             <button
@@ -5778,7 +5779,7 @@ function WorkerApp({ isMobile,
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Tank Maintenance</span>
           <form onSubmit={handleMaintSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <select value={maintTank} onChange={e => setMaintTank(e.target.value)}>
-              {TANKS_DATA.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
             </select>
             
             <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
@@ -5820,7 +5821,7 @@ function WorkerApp({ isMobile,
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Water Quality</span>
           <form onSubmit={handleWqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <select value={wqTank} onChange={e => setWqTank(e.target.value)}>
-              {TANKS_DATA.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
             </select>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
@@ -5872,7 +5873,7 @@ function WorkerApp({ isMobile,
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Report an Issue</span>
           <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <select value={issueTank} onChange={e => setIssueTank(e.target.value)}>
-              {TANKS_DATA.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
             </select>
 
             <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
@@ -5947,7 +5948,7 @@ function WorkerApp({ isMobile,
                 <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>TO TANK</span>
                 <select value={trToTank} onChange={e => setTrToTank(e.target.value)}>
                   <option value="">Select Target</option>
-                  {TANKS_DATA.filter(t => t.id !== trFromTank).map(t => (
+                  {tanks.filter(t => t.id !== trFromTank).map(t => (
                     <option key={t.id} value={t.id}>Tank {t.id}</option>
                   ))}
                 </select>
@@ -6211,6 +6212,12 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
   const [workerId, setWorkerId] = useState(workers[0]?.id || '');
   const [workerPin, setWorkerPin] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (workers.length > 0 && !workerId) {
+      setWorkerId(workers[0].id);
+    }
+  }, [workers, workerId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -7780,6 +7787,7 @@ export default function App() {
             onTransferStock={handleTransferStockAction}
             onConfirmLog={handleConfirmLog}
             setView={setView}
+            tanks={tanks}
           />
         </div>
       )}
