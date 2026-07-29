@@ -1782,43 +1782,81 @@ function TanksTab({ isMobile,
 
   // State mutations
   const deductStock = (speciesId, ageGroup, tankId, qty) => {
-    setTankStock(prev => ({
-      ...prev,
-      [speciesId]: {
-        ...prev[speciesId],
-        [ageGroup]: {
-          ...prev[speciesId]?.[ageGroup],
-          [tankId]: Math.max(0, (prev[speciesId]?.[ageGroup]?.[tankId] ?? 0) - qty),
+    setTankStock(prev => {
+      const current = prev[speciesId]?.[ageGroup]?.[tankId] ?? 0;
+      const nextCount = Math.max(0, current - qty);
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: tankId,
+        count: nextCount
+      }).catch(err => console.error(err));
+      return {
+        ...prev,
+        [speciesId]: {
+          ...prev[speciesId],
+          [ageGroup]: {
+            ...prev[speciesId]?.[ageGroup],
+            [tankId]: nextCount,
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
   const addStock = (speciesId, ageGroup, tankId, qty) => {
-    setTankStock(prev => ({
-      ...prev,
-      [speciesId]: {
-        ...prev[speciesId],
-        [ageGroup]: {
-          ...prev[speciesId]?.[ageGroup],
-          [tankId]: (prev[speciesId]?.[ageGroup]?.[tankId] ?? 0) + qty,
+    setTankStock(prev => {
+      const current = prev[speciesId]?.[ageGroup]?.[tankId] ?? 0;
+      const nextCount = current + qty;
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: tankId,
+        count: nextCount
+      }).catch(err => console.error(err));
+      return {
+        ...prev,
+        [speciesId]: {
+          ...prev[speciesId],
+          [ageGroup]: {
+            ...prev[speciesId]?.[ageGroup],
+            [tankId]: nextCount,
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
   const transferStock = (speciesId, ageGroup, fromTank, toTank, qty) => {
-    setTankStock(prev => ({
-      ...prev,
-      [speciesId]: {
-        ...prev[speciesId],
-        [ageGroup]: {
-          ...prev[speciesId]?.[ageGroup],
-          [fromTank]: Math.max(0, (prev[speciesId]?.[ageGroup]?.[fromTank] ?? 0) - qty),
-          [toTank]: (prev[speciesId]?.[ageGroup]?.[toTank] ?? 0) + qty,
+    setTankStock(prev => {
+      const fromCount = prev[speciesId]?.[ageGroup]?.[fromTank] ?? 0;
+      const nextFrom = Math.max(0, fromCount - qty);
+      const toCount = prev[speciesId]?.[ageGroup]?.[toTank] ?? 0;
+      const nextTo = toCount + qty;
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: fromTank,
+        count: nextFrom
+      }).catch(err => console.error(err));
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: toTank,
+        count: nextTo
+      }).catch(err => console.error(err));
+      return {
+        ...prev,
+        [speciesId]: {
+          ...prev[speciesId],
+          [ageGroup]: {
+            ...prev[speciesId]?.[ageGroup],
+            [fromTank]: nextFrom,
+            [toTank]: nextTo,
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
   const promoteStock = (speciesId, fromAge, toAge, tankId, qty) => {
@@ -1856,6 +1894,16 @@ function TanksTab({ isMobile,
     };
 
     setTanks(prev => [...prev, newTank]);
+    setTankStock(prev => {
+      const copy = { ...prev };
+      Object.keys(copy).forEach(spId => {
+        Object.keys(copy[spId] || {}).forEach(ag => {
+          if (!copy[spId][ag]) copy[spId][ag] = {};
+          copy[spId][ag][id] = 0;
+        });
+      });
+      return copy;
+    });
     setShowAddTankPanel(false);
     
     // Clear inputs
@@ -2393,6 +2441,12 @@ function TanksTab({ isMobile,
                                               onBlur={() => {
                                                 const newVal = parseInt(editCountVal, 10);
                                                 if (!isNaN(newVal) && newVal >= 0) {
+                                                  api.updateTankStock({
+                                                    species_id: sp.id,
+                                                    age_group: ageGroup,
+                                                    tank_id: tankId,
+                                                    count: newVal
+                                                  }).catch(err => console.error(err));
                                                   setTankStock(prev => ({
                                                     ...prev,
                                                     [sp.id]: {
@@ -2500,6 +2554,12 @@ function TanksTab({ isMobile,
                                               title="Remove assignment"
                                               onClick={() => {
                                                 if (window.confirm("Remove this tank assignment?")) {
+                                                  api.updateTankStock({
+                                                    species_id: sp.id,
+                                                    age_group: ageGroup,
+                                                    tank_id: tankId,
+                                                    count: 0
+                                                  }).catch(err => console.error(err));
                                                   setTankStock(prev => {
                                                     const updatedGroup = { ...prev[sp.id]?.[ageGroup] };
                                                     delete updatedGroup[tankId];
@@ -4219,10 +4279,12 @@ function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
     }
 
     const initials = cleanName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
     const newWorker = {
       id: Date.now(),
       name: cleanName,
       role: cleanRole,
+      pin: randomPin,
       avatar: initials || 'W'
     };
 
@@ -4397,6 +4459,7 @@ function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, marginTop: 4 }}>
+                    <div>PIN: <strong style={{ color: 'var(--secondary)' }}>{w.pin || '—'}</strong></div>
                     <div>Sales: <strong>{salesCount}</strong> ({"\u20B9"}{salesTotal.toLocaleString('en-IN')})</div>
                     <div>Tasks Done: <strong>{taskCount}</strong> logs</div>
                   </div>
@@ -7177,45 +7240,83 @@ export default function App() {
 
   // Deduct stock — now requires ageGroup
   const deductStock = useCallback((speciesId, ageGroup, tankId, qty) => {
-    setTankStock(prev => ({
-      ...prev,
-      [speciesId]: {
-        ...prev[speciesId],
-        [ageGroup]: {
-          ...prev[speciesId]?.[ageGroup],
-          [tankId]: Math.max(0, (prev[speciesId]?.[ageGroup]?.[tankId] ?? 0) - qty),
+    setTankStock(prev => {
+      const current = prev[speciesId]?.[ageGroup]?.[tankId] ?? 0;
+      const nextCount = Math.max(0, current - qty);
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: tankId,
+        count: nextCount
+      }).catch(err => console.error(err));
+      return {
+        ...prev,
+        [speciesId]: {
+          ...prev[speciesId],
+          [ageGroup]: {
+            ...prev[speciesId]?.[ageGroup],
+            [tankId]: nextCount,
+          }
         }
-      }
-    }));
+      };
+    });
   }, []);
 
   // Add stock (births, stock-in events)
   const addStock = useCallback((speciesId, ageGroup, tankId, qty) => {
-    setTankStock(prev => ({
-      ...prev,
-      [speciesId]: {
-        ...prev[speciesId],
-        [ageGroup]: {
-          ...prev[speciesId]?.[ageGroup],
-          [tankId]: (prev[speciesId]?.[ageGroup]?.[tankId] ?? 0) + qty,
+    setTankStock(prev => {
+      const current = prev[speciesId]?.[ageGroup]?.[tankId] ?? 0;
+      const nextCount = current + qty;
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: tankId,
+        count: nextCount
+      }).catch(err => console.error(err));
+      return {
+        ...prev,
+        [speciesId]: {
+          ...prev[speciesId],
+          [ageGroup]: {
+            ...prev[speciesId]?.[ageGroup],
+            [tankId]: nextCount,
+          }
         }
-      }
-    }));
+      };
+    });
   }, []);
 
   // Transfer between tanks (same species, same age group)
   const transferStock = useCallback((speciesId, ageGroup, fromTank, toTank, qty) => {
-    setTankStock(prev => ({
-      ...prev,
-      [speciesId]: {
-        ...prev[speciesId],
-        [ageGroup]: {
-          ...prev[speciesId]?.[ageGroup],
-          [fromTank]: Math.max(0, (prev[speciesId]?.[ageGroup]?.[fromTank] ?? 0) - qty),
-          [toTank]: (prev[speciesId]?.[ageGroup]?.[toTank] ?? 0) + qty,
+    setTankStock(prev => {
+      const fromCount = prev[speciesId]?.[ageGroup]?.[fromTank] ?? 0;
+      const nextFrom = Math.max(0, fromCount - qty);
+      const toCount = prev[speciesId]?.[ageGroup]?.[toTank] ?? 0;
+      const nextTo = toCount + qty;
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: fromTank,
+        count: nextFrom
+      }).catch(err => console.error(err));
+      api.updateTankStock({
+        species_id: speciesId,
+        age_group: ageGroup,
+        tank_id: toTank,
+        count: nextTo
+      }).catch(err => console.error(err));
+      return {
+        ...prev,
+        [speciesId]: {
+          ...prev[speciesId],
+          [ageGroup]: {
+            ...prev[speciesId]?.[ageGroup],
+            [fromTank]: nextFrom,
+            [toTank]: nextTo,
+          }
         }
-      }
-    }));
+      };
+    });
   }, []);
 
   // Promote fish between age groups (e.g. newborn {"\u2192"} semi-adult)

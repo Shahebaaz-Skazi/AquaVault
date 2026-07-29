@@ -128,7 +128,11 @@ app.get('/api/tanks', async (req, res) => {
 });
 app.post('/api/tanks', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('tanks').insert([req.body]).select();
+    const payload = { ...req.body };
+    if (!payload.added_date) {
+      payload.added_date = new Date().toISOString().split('T')[0];
+    }
+    const { data, error } = await supabase.from('tanks').insert([payload]).select();
     if (error) return res.status(500).json({ error: error.message });
     res.json(data ? data[0] : null);
   } catch (e) {
@@ -166,7 +170,11 @@ app.get('/api/sales', async (req, res) => {
 });
 app.post('/api/sales', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('sales').insert([req.body]).select();
+    const payload = { ...req.body };
+    if (!payload.date) {
+      payload.date = new Date().toISOString().split('T')[0];
+    }
+    const { data, error } = await supabase.from('sales').insert([payload]).select();
     if (error) return res.status(500).json({ error: error.message });
     res.json(data ? data[0] : null);
   } catch (e) {
@@ -262,7 +270,11 @@ app.get('/api/workers', async (req, res) => {
 });
 app.post('/api/workers', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('workers').insert([req.body]).select();
+    const payload = { ...req.body };
+    if (!payload.pin) {
+      payload.pin = Math.floor(1000 + Math.random() * 9000).toString();
+    }
+    const { data, error } = await supabase.from('workers').insert([payload]).select();
     if (error) return res.status(500).json({ error: error.message });
     res.json(data ? data[0] : null);
   } catch (e) {
