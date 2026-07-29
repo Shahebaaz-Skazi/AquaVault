@@ -3,9 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <meta name="description" content="AquaVault — Professional aquarium fish inventory management system. Track births, exports, deaths, and tank health in real time." />
     <title>AquaVault — Fish Inventory Management</title>
+    <style>
+      /* Prevent horizontal scroll on body */
+      html, body {
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+        margin: 0;
+        padding: 0;
+        background: #000000;
+      }
+
+      /* Smooth scrolling */
+      * {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Minimum touch target size */
+      button {
+        min-height: 36px;
+        min-width: 36px;
+      }
+
+      /* Prevent text selection on tap */
+      button, .nav-item {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+
+      /* iOS safe area padding for bottom nav */
+      .bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* Fix font sizes — prevent iOS auto zoom on input focus */
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+
+      /* Worker app touch target helper */
+      .worker-app-wrapper input,
+      .worker-app-wrapper select,
+      .worker-app-wrapper textarea,
+      .worker-app-wrapper button {
+        min-height: 44px !important;
+        min-width: 44px !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

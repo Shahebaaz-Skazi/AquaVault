@@ -9,7 +9,7 @@ import {
   BarChart3, LayoutDashboard, Database, Waves, ArrowRightLeft,
   Users, Wrench, FileText, Check, RotateCw, Printer, Trash2,
   ChevronRight, ChevronDown, User, ShieldAlert,
-  Shell, Wallet, ShoppingCart, HardHat, Egg, PackageCheck, IndianRupee, Pencil
+  Shell, Wallet, ShoppingCart, HardHat, Egg, PackageCheck, IndianRupee, Pencil, MoreHorizontal
 } from 'lucide-react';
 import './index.css';
 import ErrorBoundary from './ErrorBoundary';
@@ -499,7 +499,7 @@ function TaxInvoiceOverlay({ sale, onClose }) {
 
 // ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
 
-function DashboardTab({
+function DashboardTab({ isMobile,
   species,
   activity,
   alertRef,
@@ -653,29 +653,36 @@ function DashboardTab({
     <div className="tab-content" style={{ display:'flex', flexDirection:'column', gap:20 }}>
       
       {/* Finance summary strip */}
-      <div className="card" style={{ padding: '14px 20px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ flex: 1, minWidth: 120 }}>
+      <div className="card" style={{
+        padding: '14px 20px',
+        display: isMobile ? 'grid' : 'flex',
+        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : undefined,
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: isMobile ? 12 : 16
+      }}>
+        <div style={{ flex: 1, minWidth: isMobile ? undefined : 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL REVENUE</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginTop: 4 }}>
             {"\u20B9"}{totalRevenue.toLocaleString('en-IN')}
           </div>
         </div>
-        <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
-        <div style={{ flex: 1, minWidth: 120 }}>
+        {!isMobile && <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />}
+        <div style={{ flex: 1, minWidth: isMobile ? undefined : 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>PENDING REVENUE</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#888888', marginTop: 4 }}>
             {"\u20B9"}{pendingRevenue.toLocaleString('en-IN')}
           </div>
         </div>
-        <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
-        <div style={{ flex: 1, minWidth: 120 }}>
+        {!isMobile && <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />}
+        <div style={{ flex: 1, minWidth: isMobile ? undefined : 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL EXPENSES</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--secondary)', marginTop: 4 }}>
             {"\u20B9"}{totalExpenses.toLocaleString('en-IN')}
           </div>
         </div>
-        <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
-        <div style={{ flex: 1, minWidth: 120 }}>
+        {!isMobile && <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />}
+        <div style={{ flex: 1, minWidth: isMobile ? undefined : 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>NET PROFIT</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: netProfit >= 0 ? '#FFFFFF' : '#666666', marginTop: 4 }}>
             {"\u20B9"}{netProfit.toLocaleString('en-IN')}
@@ -818,7 +825,7 @@ function DashboardTab({
       </div>
 
       {/* KPI Grid */}
-      <div className="kpi-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+      <div className="kpi-grid" style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4,1fr)', gap:12 }}>
         <div className="card" style={{ padding:'18px 16px', display:'flex', flexDirection:'column', position:'relative' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
             <span style={{ fontSize:10, fontWeight:600, letterSpacing:'0.6px', color:'var(--muted)' }}>TOTAL FISH</span>
@@ -872,7 +879,7 @@ function DashboardTab({
       </div>
 
       {/* Section 3 — Main Two-Column Row */}
-      <div className="grid-2col" style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16 }}>
+      <div className="grid-2col" style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap:16 }}>
         
         {/* Left Column — Quick Log Panel */}
         <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', background: '#0D0D0D' }}>
@@ -969,7 +976,7 @@ function DashboardTab({
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
               {/* Tank select */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted)' }}>Tank</span>
@@ -1145,7 +1152,7 @@ function DashboardTab({
           </button>
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:10 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(6,1fr)', gap:10 }}>
           {tanks.map(tank => {
             const tankContents = getContentsOfTank(tank.id);
             const uniqueSpeciesCount = new Set(tankContents.map(item => item.species.id)).size;
@@ -1221,7 +1228,7 @@ function DashboardTab({
           </div>
         </div>
         
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={isMobile ? 140 : 200}>
           <AreaChart data={TREND_DATA} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
             <XAxis dataKey="month" tick={{ fill:'#555555', fontSize:11 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill:'#555555', fontSize:11 }} axisLine={false} tickLine={false} />
@@ -1246,7 +1253,7 @@ function DashboardTab({
 
 // ─── INVENTORY TAB ────────────────────────────────────────────────────────────
 
-function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks }) {
+function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks }) {
   const filtered = useMemo(() => {
     let result = species;
     if (search.trim()) {
@@ -1425,7 +1432,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>BASE PRICE ({"\u20B9"})</span>
                 <input
@@ -1465,14 +1472,14 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
       )}
 
       {/* Table */}
-      <div className="card" style={{ overflowX:'auto' }}>
-        <table>
+      <div className="card" style={{ overflowX:'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ minWidth: isMobile ? '600px' : '100%' }}>
           <thead>
             <tr>
               <th>Species</th>
               <th>Tanks Mapped</th>
               <th>Stock</th>
-              <th>Trend</th>
+              <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Trend</th>
               <th>Born</th>
               <th>Exported</th>
               <th>Status</th>
@@ -1498,7 +1505,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
                       <AnimatedNumber value={sp.stock} />
                     </span>
                   </td>
-                  <td><Sparkline born={sp.born} exported={sp.exported} /></td>
+                  <td style={{ display: isMobile ? 'none' : 'table-cell' }}><Sparkline born={sp.born} exported={sp.exported} /></td>
                   <td style={{ color:'#FFFFFF', fontWeight:600 }}>+{sp.born}</td>
                   <td style={{ color:'#AAAAAA', fontWeight:600 }}>{sp.exported}</td>
                   <td><StatusPill status={status} /></td>
@@ -1577,7 +1584,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
 
 // ─── TANKS TAB (OVERHAULED) ──────────────────────────────────────────────────
 
-function TanksTab({
+function TanksTab({ isMobile,
   species,
   tankStock,
   setTankStock,
@@ -1886,10 +1893,10 @@ function TanksTab({
       {/* Top row */}
       <div style={{
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: isMobile ? 'stretch' : 'center',
         marginBottom: 10,
-        flexWrap: 'wrap',
         gap: 10
       }}>
         {/* View Toggle */}
@@ -1930,7 +1937,7 @@ function TanksTab({
         </div>
 
         {/* Search */}
-        <div style={{ position: 'relative', width: 220 }}>
+        <div style={{ position: 'relative', width: isMobile ? '100%' : 220 }}>
           <Search size={13} color="#555555" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
@@ -2002,7 +2009,7 @@ function TanksTab({
               <div style={{ color: '#FF6666', fontSize: 11, fontWeight: 600 }}>{addTankError}</div>
             )}
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>TANK ID</span>
                 <input
@@ -2034,7 +2041,7 @@ function TanksTab({
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>CAPACITY (FISH)</span>
                 <input
@@ -2293,7 +2300,7 @@ function TanksTab({
                                   )}
 
                                   {/* Tank Sub-cards Grid */}
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+                                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
                                     {assignedTanks.map(({ tankId, count, tankData }) => {
                                       const isQuarantined = !!quarantinedTanks[tankId];
                                       const subCardKey = `${sp.id}-${ageGroup}-${tankId}`;
@@ -2582,7 +2589,7 @@ function TanksTab({
 
       {/* View 2: By Tank Grid view */}
       {viewType === 'tank' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
           {tanks
             .filter(t => t.displayName.toLowerCase().includes(searchQuery.toLowerCase()) || t.id.toLowerCase().includes(searchQuery.toLowerCase()))
             .map(tank => {
@@ -2813,7 +2820,7 @@ function TanksTab({
       {viewType === 'all' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ padding: '18px 0', overflowX: 'auto' }}>
-            <table style={{ width: '100%' }}>
+            <table style={{ width: '100%', minWidth: isMobile ? '600px' : '100%' }}>
               <thead>
                 <tr>
                   <th style={{ paddingLeft: 18 }}>Tank</th>
@@ -2881,7 +2888,7 @@ function TanksTab({
 
 // ─── REPORTS TAB ─────────────────────────────────────────────────────────────
 
-function ReportsTab({ species, tankStock }) {
+function ReportsTab({ isMobile, species, tankStock }) {
   // Stacked chart of age group distribution per species
   const stackedData = useMemo(() => {
     return species.map(sp => {
@@ -2928,7 +2935,7 @@ function ReportsTab({ species, tankStock }) {
   return (
     <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Charts Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
         {/* Card 1: Stacked Age Group Distribution Chart */}
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 16 }}>
@@ -2967,7 +2974,7 @@ function ReportsTab({ species, tankStock }) {
       </div>
 
       {/* Summaries Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
         <div className="card" style={{ padding: 14, textAlign: 'center', background: '#0D0D0D' }}>
           <div style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600 }}>TOTAL NEWBORNS</div>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginTop: 4 }}>{summaries.newbornTotal}</div>
@@ -2987,7 +2994,7 @@ function ReportsTab({ species, tankStock }) {
 }
 
 
-function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock }) {
+function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, onAddStock }) {
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -3264,7 +3271,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
       )}
 
       {/* Section 1 — P&L Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>REVENUE</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>
@@ -3299,16 +3306,22 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
       {/* Section 2 — Add Expense Form */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Record Expense</div>
-        <form onSubmit={handleAddExpense} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <form onSubmit={handleAddExpense} style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: 10,
+          flexWrap: 'wrap',
+          alignItems: isMobile ? 'stretch' : 'flex-end'
+        }}>
           
-          <div style={{ flex: 1, minWidth: 120 }}>
+          <div style={{ flex: 1, minWidth: isMobile ? undefined : 120 }}>
             <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>CATEGORY</span>
             <select value={category} onChange={e => setCategory(e.target.value)} style={{ height: 34 }}>
               {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
-          <div style={{ width: 100 }}>
+          <div style={{ width: isMobile ? '100%' : 100 }}>
             <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>AMOUNT ({"\u20B9"})</span>
             <input
               type="number"
@@ -3319,7 +3332,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
             />
           </div>
 
-          <div style={{ flex: 2, minWidth: 150 }}>
+          <div style={{ flex: 2, minWidth: isMobile ? undefined : 150 }}>
             <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>DESCRIPTION</span>
             <input
               type="text"
@@ -3330,7 +3343,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
             />
           </div>
 
-          <div style={{ width: 120 }}>
+          <div style={{ width: isMobile ? '100%' : 120 }}>
             <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>DATE</span>
             <input
               type="date"
@@ -3340,7 +3353,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
             />
           </div>
 
-          <div style={{ width: 90 }}>
+          <div style={{ width: isMobile ? '100%' : 90 }}>
             <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TANK</span>
             <select value={tankId} onChange={e => setTankId(e.target.value)} style={{ height: 34 }}>
               <option value="All">All Tanks</option>
@@ -3352,7 +3365,8 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
             type="submit"
             style={{
               height: 34, padding: '0 16px', background: '#FFFFFF', color: '#000000',
-              fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer'
+              fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer',
+              width: isMobile ? '100%' : 'auto'
             }}
           >
             Record
@@ -3490,7 +3504,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
 }
 
 
-function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductStock, onLogLocalToast, onOpenInvoice }) {
+function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers, onDeductStock, onLogLocalToast, onOpenInvoice }) {
   // Confirmed Sales
   const confirmed = useMemo(() => sales.filter(s => s.approved), [sales]);
   const confirmedValue = confirmed.reduce((sum,s) => sum + s.total, 0);
@@ -3619,7 +3633,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
     <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       
       {/* Section 1 — Sales summaries */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>CONFIRMED SALES</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>
@@ -3666,7 +3680,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
             {pending.map(s => (
-              <div key={s.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: 12, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div key={s.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: isMobile ? 12 : 16, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.08)',
@@ -3890,7 +3904,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
 
 // ─── CUSTOMERS TAB ───────────────────────────────────────────────────────────
 
-function CustomersTab({ customers, setCustomers }) {
+function CustomersTab({ isMobile, customers, setCustomers }) {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
@@ -3967,7 +3981,7 @@ function CustomersTab({ customers, setCustomers }) {
       )}
 
       {/* Section 1 — Grid list */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
         {customers.map(c => {
           const initials = c.name.split(' ').map(w => w[0]).join('').slice(0,2);
           const isEditing = editingCustomerId === c.id;
@@ -4075,22 +4089,22 @@ function CustomersTab({ customers, setCustomers }) {
           <thead>
             <tr>
               <th>Customer</th>
-              <th>Contact</th>
-              <th>Total Orders</th>
+              <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Contact</th>
+              <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Total Orders</th>
               <th>Lifetime Value</th>
-              <th>Top Species</th>
-              <th>Last Order</th>
+              <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Top Species</th>
+              <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Last Order</th>
             </tr>
           </thead>
           <tbody>
             {customers.map(c => (
               <tr key={c.id}>
                 <td style={{ fontWeight: 600 }}>{c.name}</td>
-                <td style={{ color: 'var(--secondary)' }}>{c.contact}</td>
-                <td>{c.totalOrders}</td>
+                <td style={{ color: 'var(--secondary)', display: isMobile ? 'none' : 'table-cell' }}>{c.contact}</td>
+                <td style={{ display: isMobile ? 'none' : 'table-cell' }}>{c.totalOrders}</td>
                 <td style={{ fontWeight: 700 }}>{"\u20B9"}{c.totalValue.toLocaleString('en-IN')}</td>
-                <td style={{ color: 'var(--secondary)' }}>{c.topSpecies || '—'}</td>
-                <td style={{ color: 'var(--muted)' }}>{c.lastOrder !== '—' ? formatDate(c.lastOrder) : '—'}</td>
+                <td style={{ color: 'var(--secondary)', display: isMobile ? 'none' : 'table-cell' }}>{c.topSpecies || '—'}</td>
+                <td style={{ color: 'var(--muted)', display: isMobile ? 'none' : 'table-cell' }}>{c.lastOrder !== '—' ? formatDate(c.lastOrder) : '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -4104,7 +4118,7 @@ function CustomersTab({ customers, setCustomers }) {
 
 // ─── WORKERS TAB ─────────────────────────────────────────────────────────────
 
-function WorkersTab({ workers, setWorkers, workerSubmissions }) {
+function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
@@ -4249,7 +4263,7 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
       )}
 
       {/* Section 1 — Worker Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
         {workers.map(w => {
           // get worker submissions today count
           const todayStr = today();
@@ -4372,7 +4386,7 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
 
 // ─── EQUIPMENT TAB ───────────────────────────────────────────────────────────
 
-function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
+function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks }) {
   const [eqId, setEqId] = useState(equipment[0]?.id || '');
   const [cost, setCost] = useState('');
   const [repairDesc, setRepairDesc] = useState('');
@@ -4637,7 +4651,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
       )}
 
       {/* Section 1 — Status summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>OVERDUE SERVICE</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: overdueCount > 0 ? '#FF6666' : '#FFFFFF', marginTop: 6 }}>
@@ -4869,7 +4883,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
 
 // ─── WATER QUALITY TAB ───────────────────────────────────────────────────────
 
-function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
+function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
   const [showLogPanel, setShowLogPanel] = useState(false);
   const [wqTank, setWqTank] = useState(tanks[0]?.id || 'A');
   const [wqPh, setWqPh] = useState('');
@@ -5015,7 +5029,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
       )}
 
       {/* Section 1 — Today's readings grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
         {waterLog.slice(0, 6).map(w => {
           const status = getWaterStatus(w.ph, w.temp, w.ammonia);
           const statusColor = status === 'critical' ? '#666666' : status === 'warning' ? '#888888' : '#FFFFFF';
@@ -5063,7 +5077,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
           7-Day pH Trends
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 16 }}>
           {waterLog.slice(0, 6).map(w => {
             const chartData = get7DayPhData(w.tank, w.ph);
             return (
@@ -5088,7 +5102,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
 }
 
 
-function WorkerApp({
+function WorkerApp({ isMobile,
   workers,
   activeWorker,
   setActiveWorker,
@@ -5405,7 +5419,7 @@ function WorkerApp({
   // ─── 1. SELECT WORKER SCREEN ───
   if (!activeWorker) {
     return (
-      <div style={{
+      <div className="worker-app-wrapper" style={{
         maxWidth: 480, margin: '40px auto', padding: 16, display: 'flex',
         flexDirection: 'column', gap: 24, alignItems: 'center'
       }}>
@@ -5456,7 +5470,7 @@ function WorkerApp({
 
   // ─── 2. WORKER DASHBOARD VIEW ───
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 8px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="worker-app-wrapper" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 8px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Top Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -5485,10 +5499,10 @@ function WorkerApp({
       </h3>
 
       {/* Grid of log entries */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
         
         {/* Card 1 — Log a Sale */}
-        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid #FFFFFF' }}>
+        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid #FFFFFF', gridColumn: isMobile ? 'span 1' : 'span 2' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log a Sale</span>
             <ShoppingCart size={18} />
@@ -5528,7 +5542,7 @@ function WorkerApp({
 
             {/* Step 2: Pick Age Group */}
             {saleStep >= 2 && selectedSp && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: isMobile ? 16 : 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>STEP 2: SELECT AGE GROUP</span>
                   <button type="button" onClick={() => { setSaleStep(1); setSaleSpId(''); }} style={{ background: 'none', border: 'none', color: '#888888', fontSize: 9, cursor: 'pointer' }}>Change Species</button>
@@ -5574,7 +5588,7 @@ function WorkerApp({
 
             {/* Step 3: Pick Tank */}
             {saleStep >= 3 && selectedSp && saleAgeGroup && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: isMobile ? 16 : 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>STEP 3: SELECT TANK</span>
                   <button type="button" onClick={() => { setSaleStep(2); setSaleTankId(''); }} style={{ background: 'none', border: 'none', color: '#888888', fontSize: 9, cursor: 'pointer' }}>Change Age Group</button>
@@ -5979,6 +5993,177 @@ function WorkerApp({
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
+const TAB_TITLES = {
+  dashboard: 'Dashboard',
+  inventory: 'Inventory',
+  tanks: 'Tanks',
+  reports: 'Reports',
+  finances: 'Finances',
+  sales: 'Sales & Orders',
+  customers: 'Customers',
+  workers: 'Workers',
+  equipment: 'Equipment',
+  water: 'Water Quality'
+};
+
+const BOTTOM_NAV = [
+  { id: 'dashboard',    label: 'Home',     Icon: LayoutDashboard },
+  { id: 'inventory',    label: 'Stock',    Icon: Fish            },
+  { id: 'tanks',        label: 'Tanks',    Icon: Waves           },
+  { id: 'finances',     label: 'Finance',  Icon: Wallet          },
+  { id: 'sales',        label: 'Sales',    Icon: ShoppingCart    },
+];
+
+const MORE_NAV = [
+  { id: 'reports',      label: 'Reports',  Icon: BarChart3       },
+  { id: 'customers',    label: 'Clients',  Icon: Users           },
+  { id: 'workers',      label: 'Workers',  Icon: HardHat         },
+  { id: 'equipment',    label: 'Equipment',Icon: Wrench          },
+  { id: 'water',        label: 'Water',    Icon: Droplets        },
+];
+
+function BottomNav({ activeTab, setActiveTab, badges }) {
+  const [showMore, setShowMore] = useState(false);
+
+  return (
+    <>
+      {/* More drawer overlay */}
+      {showMore && (
+        <div
+          onClick={() => setShowMore(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            zIndex: 98,
+          }}
+        />
+      )}
+
+      {/* More drawer panel */}
+      {showMore && (
+        <div style={{
+          position: 'fixed',
+          bottom: '64px',
+          left: 0, right: 0,
+          background: '#0D0D0D',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '16px 16px 0 0',
+          padding: '16px',
+          zIndex: 99,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: '8px',
+        }}>
+          {MORE_NAV.map(({ id, label, Icon }) => {
+            const badge = badges?.[id];
+            return (
+              <button
+                key={id}
+                onClick={() => { setActiveTab(id); setShowMore(false); }}
+                style={{
+                  background: activeTab === id
+                    ? 'rgba(255,255,255,0.10)' : 'transparent',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '10px',
+                  padding: '12px 6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  color: activeTab === id ? '#FFFFFF' : '#555555',
+                  position: 'relative'
+                }}
+              >
+                <Icon size={20} />
+                <span style={{ fontSize: '10px', fontWeight: 500 }}>{label}</span>
+                {badge > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 4, right: 4,
+                    background: '#FFFFFF', color: '#000000',
+                    borderRadius: '50%', minWidth: '12px', height: '12px',
+                    fontSize: '8px', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>{badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Bottom nav bar */}
+      <div className="bottom-nav" style={{
+        position: 'fixed',
+        bottom: 0, left: 0, right: 0,
+        height: '64px',
+        background: '#080808',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        display: 'flex',
+        alignItems: 'center',
+        zIndex: 100,
+      }}>
+        {BOTTOM_NAV.map(({ id, label, Icon }) => {
+          const badge = badges?.[id];
+          return (
+            <button
+              key={id}
+              onClick={() => { setActiveTab(id); setShowMore(false); }}
+              style={{
+                flex: 1,
+                height: '100%',
+                background: 'none',
+                border: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                cursor: 'pointer',
+                color: activeTab === id ? '#FFFFFF' : '#555555',
+                borderTop: activeTab === id
+                  ? '2px solid #FFFFFF' : '2px solid transparent',
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <Icon size={18} />
+                {badge > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -5, right: -10,
+                    background: '#FFFFFF', color: '#000000',
+                    borderRadius: '50%', minWidth: '12px', height: '12px',
+                    fontSize: '8px', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>{badge}</span>
+                )}
+              </div>
+              <span style={{ fontSize: '9px', fontWeight: 500 }}>{label}</span>
+            </button>
+          );
+        })}
+
+        {/* More button */}
+        <button
+          onClick={() => setShowMore(prev => !prev)}
+          style={{
+            flex: 1, height: '100%',
+            background: 'none', border: 'none',
+            borderTop: showMore ? '2px solid #FFFFFF' : '2px solid transparent',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: '4px', cursor: 'pointer',
+            color: showMore ? '#FFFFFF' : '#555555',
+          }}
+        >
+          <MoreHorizontal size={18} />
+          <span style={{ fontSize: '9px', fontWeight: 500 }}>More</span>
+        </button>
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   // states
   const [speciesState, setSpeciesState] = useState(SPECIES_INIT);
@@ -6002,6 +6187,13 @@ export default function App() {
   const [workerSubmissions, setWorkerSubmissions] = useState([]);
   
   const [view, setView] = useState('admin'); // 'admin' | 'worker'
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [activeInvoice, setActiveInvoice] = useState(null);
 
@@ -6282,7 +6474,7 @@ export default function App() {
   const pendingNotificationCount = pendingSales.length + overdueCount + waterWarnings.length + highUrgentIssues.length;
 
   return (
-    <div className="app-grid">
+    <div className={isMobile ? "" : "app-grid"} style={{ display: isMobile ? "flex" : undefined, flexDirection: isMobile ? "column" : "row", minHeight: "100vh", background: "#000000" }}>
       
       {/* Render Tax Invoice overlay if selected */}
       {activeInvoice && (
@@ -6290,7 +6482,7 @@ export default function App() {
       )}
 
       {/* ─── SIDEBAR (Hidden in Worker View unless layout adapts) ─── */}
-      {view === 'admin' && (
+      {view === 'admin' && !isMobile && (
         <aside className="sidebar-wrapper" style={{
           background: '#0D0D0D',
           borderRight: '1px solid rgba(255,255,255,0.08)',
@@ -6584,41 +6776,60 @@ export default function App() {
 
       {/* ─── MAIN CONTENT AREA (Adapts to Worker view too) ─── */}
       {view === 'admin' ? (
-        <div className="main-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'hidden' }}>
+        <>
+          <div className="main-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, paddingBottom: (isMobile && view === 'admin') ? '70px' : '0' }}>
           {/* Top Bar */}
           <header style={{
-            height: 56,
-            background: '#000000',
+            height: isMobile ? '52px' : '56px',
+            background: '#050505',
             borderBottom: '1px solid rgba(255,255,255,0.08)',
-            padding: '0 24px',
+            padding: isMobile ? '0 16px' : '0 24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            flexShrink: 0
+            flexShrink: 0,
+            position: 'sticky',
+            top: 0,
+            zIndex: 50,
           }}>
-            <h1 style={{ fontWeight: 700, fontSize: 18, color: '#fff', textTransform: 'capitalize' }}>
-              {activeTab === 'water' ? 'Water Quality' : activeTab === 'sales' ? 'Sales & Orders' : activeTab}
-            </h1>
+            {/* Mobile: show logo + title */}
+            {isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shell size={16} color="#FFFFFF" />
+                <span style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>
+                  {TAB_TITLES[activeTab]}
+                </span>
+              </div>
+            )}
+
+            {/* Desktop: just the title */}
+            {!isMobile && (
+              <h1 style={{ fontWeight: 700, fontSize: 18, color: '#fff', textTransform: 'capitalize' }}>
+                {TAB_TITLES[activeTab]}
+              </h1>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              {/* Global Search */}
-              <div style={{ position: 'relative', width: 220 }}>
-                <Search size={14} color="#555555" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search species..."
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: 8,
-                    padding: '7px 12px 7px 34px',
-                    color: 'var(--text)',
-                    fontSize: 13
-                  }}
-                />
-              </div>
+              {/* Global Search — Desktop Only */}
+              {!isMobile && (
+                <div style={{ position: 'relative', width: isMobile ? '100%' : 220 }}>
+                  <Search size={14} color="#555555" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Search species..."
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: 8,
+                      padding: '7px 12px 7px 34px',
+                      color: 'var(--text)',
+                      fontSize: 13
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Alert Bell */}
               <button
@@ -6645,24 +6856,26 @@ export default function App() {
                 )}
               </button>
 
-              {/* Date Chip */}
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 8, padding: '6px 12px', fontSize: 11, color: 'var(--muted)'
-              }}>
-                <Calendar size={11} />
-                <span>{formattedDate}</span>
-              </div>
+              {/* Date Chip — Desktop Only */}
+              {!isMobile && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 8, padding: '6px 12px', fontSize: 11, color: 'var(--muted)'
+                }}>
+                  <Calendar size={11} />
+                  <span>{formattedDate}</span>
+                </div>
+              )}
             </div>
           </header>
 
           {/* Scrollable Content Body */}
-          <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+          <main style={{ flex: 1, padding: isMobile ? '12px' : '24px', overflowY: 'auto', overflowX: 'hidden' }}>
             <ErrorBoundary key={activeTab}>
               {activeTab === 'dashboard' && (
-                <DashboardTab
+                <DashboardTab isMobile={isMobile}
                   key="dashboard"
                   species={species}
                   activity={activity}
@@ -6686,7 +6899,7 @@ export default function App() {
                 />
               )}
               {activeTab === 'inventory' && (
-                <InventoryTab
+                <InventoryTab isMobile={isMobile}
                   key="inventory"
                   species={species}
                   search={search}
@@ -6700,7 +6913,7 @@ export default function App() {
                 />
               )}
               {activeTab === 'tanks' && (
-                <TanksTab
+                <TanksTab isMobile={isMobile}
                   key="tanks"
                   species={species}
                   tankStock={tankStock}
@@ -6717,10 +6930,10 @@ export default function App() {
                 />
               )}
               {activeTab === 'reports' && (
-                <ReportsTab key="reports" species={species} tankStock={tankStock} />
+                <ReportsTab isMobile={isMobile} key="reports" species={species} tankStock={tankStock} />
               )}
               {activeTab === 'finances' && (
-                <FinancesTab
+                <FinancesTab isMobile={isMobile}
                   key="finances"
                   expenses={expenses}
                   setExpenses={setExpenses}
@@ -6731,7 +6944,7 @@ export default function App() {
                 />
               )}
               {activeTab === 'sales' && (
-                <SalesTab
+                <SalesTab isMobile={isMobile}
                   key="sales"
                   sales={sales}
                   setSales={setSales}
@@ -6744,14 +6957,14 @@ export default function App() {
                 />
               )}
               {activeTab === 'customers' && (
-                <CustomersTab
+                <CustomersTab isMobile={isMobile}
                   key="customers"
                   customers={customers}
                   setCustomers={setCustomers}
                 />
               )}
               {activeTab === 'workers' && (
-                <WorkersTab
+                <WorkersTab isMobile={isMobile}
                   key="workers"
                   workers={workers}
                   setWorkers={setWorkers}
@@ -6759,7 +6972,7 @@ export default function App() {
                 />
               )}
               {activeTab === 'equipment' && (
-                <EquipmentTab
+                <EquipmentTab isMobile={isMobile}
                   key="equipment"
                   equipment={equipment}
                   setEquipment={setEquipment}
@@ -6768,7 +6981,7 @@ export default function App() {
                 />
               )}
               {activeTab === 'water' && (
-                <WaterQualityTab
+                <WaterQualityTab isMobile={isMobile}
                   key="water"
                   waterLog={waterLog}
                   setWaterLog={setWaterLog}
@@ -6777,11 +6990,24 @@ export default function App() {
               )}
             </ErrorBoundary>
           </main>
-        </div>
+          </div>
+          {isMobile && (
+            <BottomNav
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              badges={{
+                tanks: tanksBadge,
+                sales: pendingSales.length,
+                equipment: overdueCount,
+                water: waterWarnings.length
+              }}
+            />
+          )}
+        </>
       ) : (
         /* WORKER VIEW dashboard replacement */
         <div style={{ flex: 1, background: '#000000', minHeight: '100vh', overflowY: 'auto' }}>
-          <WorkerApp
+          <WorkerApp isMobile={isMobile}
             workers={workers}
             activeWorker={activeWorker}
             setActiveWorker={setActiveWorker}
