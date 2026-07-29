@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -5138,6 +5138,7 @@ function WorkerApp({ isMobile,
   const [showBuyerSuggests, setShowBuyerSuggests] = useState(false);
   const buyerSuggestions = useMemo(() => {
     if (!saleBuyer.trim()) return [];
+    if (!customers || !Array.isArray(customers)) return [];
     return customers.filter(c => c.name.toLowerCase().includes(saleBuyer.toLowerCase()));
   }, [saleBuyer, customers]);
 
@@ -7796,23 +7797,25 @@ export default function App() {
       ) : (
         /* WORKER VIEW dashboard replacement */
         <div style={{ flex: 1, background: '#000000', minHeight: '100vh', overflowY: 'auto' }}>
-          <WorkerApp isMobile={isMobile} onLogout={handleLogout}
-            workers={workers}
-            activeWorker={activeWorker}
-            setActiveWorker={setActiveWorker}
-            species={species}
-            tankStock={tankStock}
-            quarantinedTanks={quarantinedTanks}
-            customers={customers}
-            workerSubmissions={workerSubmissions}
-            setWorkerSubmissions={setWorkerSubmissions}
-            setSales={setSales}
-            setWaterLog={setWaterLog}
-            onTransferStock={handleTransferStockAction}
-            onConfirmLog={handleConfirmLog}
-            setView={setView}
-            tanks={tanks}
-          />
+          <ErrorBoundary>
+            <WorkerApp isMobile={isMobile} onLogout={handleLogout}
+              workers={workers || []}
+              activeWorker={activeWorker}
+              setActiveWorker={setActiveWorker}
+              species={species || []}
+              tankStock={tankStock || {}}
+              quarantinedTanks={quarantinedTanks || {}}
+              customers={customers || []}
+              workerSubmissions={workerSubmissions || []}
+              setWorkerSubmissions={setWorkerSubmissions}
+              setSales={setSales}
+              setWaterLog={setWaterLog}
+              onTransferStock={handleTransferStockAction}
+              onConfirmLog={handleConfirmLog}
+              setView={setView}
+              tanks={tanks || []}
+            />
+          </ErrorBoundary>
         </div>
       )}
 
