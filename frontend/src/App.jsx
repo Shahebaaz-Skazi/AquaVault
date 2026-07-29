@@ -5169,6 +5169,7 @@ function WorkerApp({ isMobile,
   // TRANSFER STOCK STATE
   const [trSpId, setTrSpId] = useState('');
   const [trFromTank, setTrFromTank] = useState('');
+  const [trAgeGroup, setTrAgeGroup] = useState('adult');
   const [trToTank, setTrToTank] = useState('');
   const [trCount, setTrCount] = useState('');
   const [trSuccess, setTrSuccess] = useState(false);
@@ -5391,11 +5392,11 @@ function WorkerApp({ isMobile,
     if (!trSpId || !trFromTank || !trToTank || !qtyVal || qtyVal <= 0) return;
 
     // verify quantity limit
-    const tankMax = tankStock[trSpId]?.[trFromTank] ?? 0;
+    const tankMax = tankStock[trSpId]?.[trAgeGroup]?.[trFromTank] ?? 0;
     if (qtyVal > tankMax) return;
 
     // Trigger state transfer
-    onTransferStock(Number(trSpId), trFromTank, trToTank, qtyVal);
+    onTransferStock(Number(trSpId), trAgeGroup, trFromTank, trToTank, qtyVal);
 
     // Prepend to submissions feed
     const newSub = {
@@ -5934,11 +5935,34 @@ function WorkerApp({ isMobile,
             {trSpId && (
               <>
                 <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>FROM TANK</span>
-                <select value={trFromTank} onChange={e => setTrFromTank(e.target.value)}>
+                <select value={trFromTank ? `${trFromTank}:${trAgeGroup}` : ''} onChange={e => {
+                  const val = e.target.value;
+                  if (val) {
+                    const [tId, ag] = val.split(':');
+                    setTrFromTank(tId);
+                    setTrAgeGroup(ag);
+                  } else {
+                    setTrFromTank('');
+                    setTrAgeGroup('');
+                  }
+                }}>
                   <option value="">Select Source</option>
-                  {Object.entries(tankStock[trSpId] || {}).map(([tkId, cnt]) => (
-                    <option key={tkId} value={tkId}>Tank {tkId} ({cnt} fish)</option>
-                  ))}
+                  {(() => {
+                    const list = [];
+                    const ageGroupsObj = tankStock[trSpId] || {};
+                    Object.entries(ageGroupsObj).forEach(([ag, tanksObj]) => {
+                      Object.entries(tanksObj || {}).forEach(([tkId, count]) => {
+                        if (count > 0) {
+                          list.push({ tkId, ag, count });
+                        }
+                      });
+                    });
+                    return list.map(item => (
+                      <option key={`${item.tkId}-${item.ag}`} value={`${item.tkId}:${item.ag}`}>
+                        Tank {item.tkId} ({AGE_GROUP_LABELS[item.ag]?.label || item.ag}: {item.count} fish)
+                      </option>
+                    ));
+                  })()}
                 </select>
               </>
             )}
@@ -5958,8 +5982,8 @@ function WorkerApp({ isMobile,
                   type="number"
                   required
                   min={1}
-                  max={tankStock[trSpId]?.[trFromTank] ?? 0}
-                  placeholder={`Qty (max ${tankStock[trSpId]?.[trFromTank] ?? 0})`}
+                  max={tankStock[trSpId]?.[trAgeGroup]?.[trFromTank] ?? 0}
+                  placeholder={`Qty (max ${tankStock[trSpId]?.[trAgeGroup]?.[trFromTank] ?? 0})`}
                   value={trCount}
                   onChange={e => setTrCount(e.target.value)}
                 />
