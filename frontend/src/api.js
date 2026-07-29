@@ -2,35 +2,64 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-const getJSON = (url) => fetch(url).then(r => {
-  if (!r.ok) throw new Error('API request failed');
-  return r.json();
-});
+let onErrorListener = null;
+export const registerErrorListener = (listener) => {
+  onErrorListener = listener;
+};
 
-const postJSON = (url, data) => fetch(url, {
-  method: 'POST',
-  body: JSON.stringify(data),
-  headers: { 'Content-Type': 'application/json' }
-}).then(r => {
-  if (!r.ok) throw new Error('API request failed');
-  return r.json();
-});
+const getJSON = async (url) => {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('API request failed');
+    return await r.json();
+  } catch (err) {
+    if (onErrorListener) onErrorListener(err);
+    throw { message: err.message || 'Network error', status: 500 };
+  }
+};
 
-const putJSON = (url, data) => fetch(url, {
-  method: 'PUT',
-  body: JSON.stringify(data),
-  headers: { 'Content-Type': 'application/json' }
-}).then(r => {
-  if (!r.ok) throw new Error('API request failed');
-  return r.json();
-});
+const postJSON = async (url, data) => {
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!r.ok) throw new Error('API request failed');
+    return await r.json();
+  } catch (err) {
+    if (onErrorListener) onErrorListener(err);
+    throw { message: err.message || 'Network error', status: 500 };
+  }
+};
 
-const deleteJSON = (url) => fetch(url, {
-  method: 'DELETE'
-}).then(r => {
-  if (!r.ok) throw new Error('API request failed');
-  return r.json();
-});
+const putJSON = async (url, data) => {
+  try {
+    const r = await fetch(url, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!r.ok) throw new Error('API request failed');
+    return await r.json();
+  } catch (err) {
+    if (onErrorListener) onErrorListener(err);
+    throw { message: err.message || 'Network error', status: 500 };
+  }
+};
+
+const deleteJSON = async (url) => {
+  try {
+    const r = await fetch(url, {
+      method: 'DELETE'
+    });
+    if (!r.ok) throw new Error('API request failed');
+    return await r.json();
+  } catch (err) {
+    if (onErrorListener) onErrorListener(err);
+    throw { message: err.message || 'Network error', status: 500 };
+  }
+};
 
 // Authentication
 export const login = (credentials) => postJSON(`${BASE_URL}/api/auth/login`, credentials);

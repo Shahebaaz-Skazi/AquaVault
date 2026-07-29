@@ -291,14 +291,44 @@ function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
   const [shake, setShake] = useState(false);
   const countRef = useRef(null);
 
-  // Get list of tanks for this species
-  const tanks = useMemo(() => {
-    return Object.keys(tankStock[species.id] || {});
-  }, [species, tankStock]);
+  const getAgeGroupTotal = useCallback((spId, ag) => {
+    const groupObj = tankStock[spId]?.[ag] || {};
+    return Object.values(groupObj).reduce((a, b) => a + b, 0);
+  }, [tankStock]);
+
+  const getCount = useCallback((spId, ag, tId) => {
+    return tankStock[spId]?.[ag]?.[tId] || 0;
+  }, [tankStock]);
+
+  const ageGroupsAvailable = useMemo(() => {
+    return ['adult', 'semi-adult', 'newborn'].filter(ag => getAgeGroupTotal(species.id, ag) > 0);
+  }, [species.id, getAgeGroupTotal]);
+
+  const [ageGroup, setAgeGroup] = useState('adult');
 
   useEffect(() => {
-    if (tanks.length > 0) setTank(tanks[0]);
-  }, [tanks]);
+    if (ageGroupsAvailable.length > 0) {
+      setAgeGroup(ageGroupsAvailable[0]);
+    } else {
+      setAgeGroup('');
+    }
+  }, [ageGroupsAvailable]);
+
+  const tanksAvailable = useMemo(() => {
+    if (!ageGroup) return [];
+    const tankObj = tankStock[species.id]?.[ageGroup] || {};
+    return Object.entries(tankObj)
+      .filter(([, count]) => count > 0)
+      .map(([tId]) => tId);
+  }, [species.id, ageGroup, tankStock]);
+
+  useEffect(() => {
+    if (tanksAvailable.length > 0) {
+      setTank(tanksAvailable[0]);
+    } else {
+      setTank('');
+    }
+  }, [tanksAvailable]);
 
   const textColors = {
     birth: '#FFFFFF',
@@ -318,13 +348,13 @@ function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
 
   const handleConfirm = () => {
     const val = parseInt(count, 10);
-    if (!val || val <= 0 || !tank) {
+    if (!val || val <= 0 || !tank || !ageGroup) {
       setShake(true);
       countRef.current?.focus();
       setTimeout(() => setShake(false), 400);
       return;
     }
-    onConfirm({ type, species, tankId: tank, count: val, note: note.trim() });
+    onConfirm({ type, species, ageGroup, tankId: tank, count: val, note: note.trim() });
     onClose();
   };
 
@@ -337,7 +367,8 @@ function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
       gap: 12,
       padding: '10px 14px',
       background: 'rgba(255, 255, 255, 0.02)',
-      borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+      borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+      flexWrap: 'wrap'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         <span style={{ fontSize: 13, textTransform: 'capitalize', fontWeight: 600, color: textColors[type] }}>
@@ -345,10 +376,21 @@ function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
         </span>
       </div>
       <div style={{ width: 100, flexShrink: 0 }}>
-        <select value={tank} onChange={e => setTank(e.target.value)} style={{ height: 32, padding: '4px 8px' }}>
-          {tanks.map(tId => (
-            <option key={tId} value={tId}>Tank {tId}</option>
+        <select value={ageGroup} onChange={e => setAgeGroup(e.target.value)} style={{ height: 32, padding: '4px 8px' }}>
+          {ageGroupsAvailable.map(ag => (
+            <option key={ag} value={ag}>{AGE_GROUP_LABELS[ag]?.label || ag}</option>
           ))}
+        </select>
+      </div>
+      <div style={{ width: 120, flexShrink: 0 }}>
+        <select value={tank} onChange={e => setTank(e.target.value)} style={{ height: 32, padding: '4px 8px' }} disabled={tanksAvailable.length === 0}>
+          {tanksAvailable.length === 0 ? (
+            <option value="">No Tank</option>
+          ) : (
+            tanksAvailable.map(tId => (
+              <option key={tId} value={tId}>Tank {tId} ({getCount(species.id, ageGroup, tId)} fish)</option>
+            ))
+          )}
         </select>
       </div>
       <div style={{ width: 100, flexShrink: 0 }}>
@@ -363,18 +405,24 @@ function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
           style={{ border: shake ? '1px solid #666666' : undefined, height: 32, padding: '4px 8px' }}
         />
       </div>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 150 }}>
         <input
           type="text"
           value={note}
           onChange={e => setNote(e.target.value)}
           placeholder={placeholders[type]}
-          style={{ height: 32, padding: '4px 8px' }}
+          style={{ height: 32, padding: '4px 8px', width: '100%' }}
         />
       </div>
+      {tanksAvailable.length === 0 && (
+        <div style={{ fontSize: 11, color: '#FF6666', width: '100%', marginTop: 2 }}>
+          No stock in any tank for this selection
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         <button
           onClick={handleConfirm}
+          disabled={tanksAvailable.length === 0}
           style={{
             height: 32,
             padding: '0 12px',
@@ -383,7 +431,9 @@ function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
             fontSize: 11,
             background: btnCfg.bg,
             color: btnCfg.text,
-            border: type === 'death' ? '1px solid rgba(255, 255, 255, 0.12)' : 'none'
+            border: type === 'death' ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
+            opacity: tanksAvailable.length === 0 ? 0.5 : 1,
+            cursor: tanksAvailable.length === 0 ? 'not-allowed' : 'pointer'
           }}
         >
           Confirm
@@ -540,40 +590,35 @@ function DashboardTab({ isMobile,
   
   const quickCountRef = useRef(null);
 
-  // Available age groups
-  const quickAgeGroupsAvailable = useMemo(() => {
-    if (quickType === 'birth') return ['newborn', 'semi-adult', 'adult'];
-    return ['adult', 'semi-adult', 'newborn'].filter(ag => {
-      const groupStockObj = tankStock[quickSpeciesId]?.[ag] || {};
-      return Object.values(groupStockObj).reduce((a, b) => a + b, 0) > 0;
-    });
-  }, [quickType, quickSpeciesId, tankStock]);
+  const getAgeGroupTotal = (spId, ag) => {
+    const groupObj = tankStock[spId]?.[ag] || {};
+    return Object.values(groupObj).reduce((a, b) => a + b, 0);
+  };
+  const getCount = (spId, ag, tId) => {
+    return tankStock[spId]?.[ag]?.[tId] || 0;
+  };
 
-  // When quickType or quickSpeciesId changes, set default ageGroup
+  // Available age groups (Fix 5: dynamic filtering based on getAgeGroupTotal)
+  const quickAgeGroupsAvailable = useMemo(() => {
+    return ['adult', 'semi-adult', 'newborn'].filter(ag => getAgeGroupTotal(quickSpeciesId, ag) > 0);
+  }, [quickSpeciesId, tankStock]);
+
+  // When quickSpeciesId changes, set default ageGroup
   useEffect(() => {
-    if (quickType === 'birth') {
-      setQuickAgeGroup('newborn');
-    } else if (quickAgeGroupsAvailable.length > 0) {
+    if (quickAgeGroupsAvailable.length > 0) {
       if (!quickAgeGroupsAvailable.includes(quickAgeGroup)) {
         setQuickAgeGroup(quickAgeGroupsAvailable[0]);
       }
     } else {
-      setQuickAgeGroup('adult');
+      setQuickAgeGroup('');
     }
-  }, [quickType, quickSpeciesId, quickAgeGroupsAvailable]);
+  }, [quickSpeciesId, quickAgeGroupsAvailable]);
 
-  // Available tanks
+  // Available tanks (Fix 5: dynamic filtering based on getCount)
   const quickTanksAvailable = useMemo(() => {
-    if (quickType === 'birth') {
-      return tanks;
-    }
-    const groupStockObj = tankStock[quickSpeciesId]?.[quickAgeGroup] || {};
-    return Object.entries(groupStockObj)
-      .filter(([, count]) => count > 0)
-      .map(([tId]) => {
-        return tanks.find(t => t.id === tId) || { id: tId, displayName: `Tank ${tId}` };
-      });
-  }, [quickType, quickSpeciesId, quickAgeGroup, tankStock, tanks]);
+    if (!quickAgeGroup) return [];
+    return tanks.filter(t => getCount(quickSpeciesId, quickAgeGroup, t.id) > 0);
+  }, [quickSpeciesId, quickAgeGroup, tanks, tankStock]);
 
   useEffect(() => {
     if (quickTanksAvailable.length > 0) {
@@ -685,7 +730,7 @@ function DashboardTab({ isMobile,
         {!isMobile && <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />}
         <div style={{ flex: 1, minWidth: isMobile ? undefined : 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>NET PROFIT</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: netProfit >= 0 ? '#FFFFFF' : '#666666', marginTop: 4 }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: netProfit >= 0 ? '#FFFFFF' : '#FF4757', marginTop: 4 }}>
             {"\u20B9"}{netProfit.toLocaleString('en-IN')}
           </div>
         </div>
@@ -987,11 +1032,16 @@ function DashboardTab({ isMobile,
                   ) : (
                     quickTanksAvailable.map(t => (
                       <option key={t.id} value={t.id}>
-                        {t.displayName} ({quickType === 'birth' ? `${getTankTotal(t.id)}/${t.capacity}` : `${getCount(quickSpeciesId, quickAgeGroup, t.id)} stock`})
+                        {t.displayName} ({getCount(quickSpeciesId, quickAgeGroup, t.id)} stock)
                       </option>
                     ))
                   )}
                 </select>
+                {quickTanksAvailable.length === 0 && (
+                  <span style={{ fontSize: 10, color: '#FF6666', marginTop: 4, display: 'block' }}>
+                    No stock in any tank for this selection
+                  </span>
+                )}
               </div>
 
               {/* Count */}
@@ -1025,11 +1075,14 @@ function DashboardTab({ isMobile,
           {/* Confirm Button */}
           <button
             onClick={handleQuickLogConfirm}
+            disabled={quickTanksAvailable.length === 0}
             style={{
               width: '100%', height: 44, borderRadius: 10, fontWeight: 700, fontSize: 14,
               marginTop: 16, border: quickType === 'death' ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
               color: cfg.btnText,
-              background: confirmFlash ? '#FFFFFF' : cfg.bg
+              background: confirmFlash ? '#FFFFFF' : cfg.bg,
+              opacity: quickTanksAvailable.length === 0 ? 0.5 : 1,
+              cursor: quickTanksAvailable.length === 0 ? 'not-allowed' : 'pointer'
             }}
           >
             {confirmFlash ? '{"\u2713"} Recorded' : cfg.label}
@@ -1441,7 +1494,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                   min={0}
                   value={newSpPrice}
                   onChange={e => setNewSpPrice(e.target.value)}
-                  placeholder="e.g. 80"
+                  placeholder="\u20B980"
                   required
                 />
               </div>
@@ -2235,7 +2288,7 @@ function TanksTab({ isMobile,
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setShowAssignTankKey(showAssignTankKey === ageKey ? null : ageKey);
-                                        setAssignTankId(tanks[0]?.id || '');
+                                        setAssignTankId(tanks.find(t => !quarantinedTanks[t.id])?.id || '');
                                         setAssignCount('');
                                       }}
                                       style={{ background: 'none', border: 'none', color: '#A0A0A0', cursor: 'pointer', fontSize: 10, fontWeight: 700 }}
@@ -2254,7 +2307,7 @@ function TanksTab({ isMobile,
                                       <div style={{ flex: 2, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <span style={{ fontSize: 9, color: 'var(--muted)' }}>SELECT TANK</span>
                                         <select value={assignTankId} onChange={e => setAssignTankId(e.target.value)} style={{ height: 32 }}>
-                                          {tanks.map(t => (
+                                          {tanks.filter(t => !quarantinedTanks[t.id]).map(t => (
                                             <option key={t.id} value={t.id}>
                                               {t.displayName} — ({getTankTotal(t.id)}/{t.capacity} fish)
                                             </option>
@@ -2404,7 +2457,7 @@ function TanksTab({ isMobile,
                                               title="Transfer"
                                               onClick={() => {
                                                 setActiveTransferKey(isTransferActive ? null : subCardKey);
-                                                setTransferToTankId(tanks.find(t => t.id !== tankId)?.id || '');
+                                                setTransferToTankId(tanks.find(t => t.id !== tankId && !quarantinedTanks[t.id])?.id || '');
                                                 setTransferCount('');
                                                 setActivePromoteKey(null);
                                                 setActiveEditCountKey(null);
@@ -2476,7 +2529,7 @@ function TanksTab({ isMobile,
                                             }}>
                                               <div style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Transfer Fish</div>
                                               <select value={transferToTankId} onChange={e => setTransferToTankId(e.target.value)} style={{ height: 26, fontSize: 10 }}>
-                                                {tanks.filter(t => t.id !== tankId).map(t => (
+                                                {tanks.filter(t => t.id !== tankId && !quarantinedTanks[t.id]).map(t => (
                                                   <option key={t.id} value={t.id}>{t.displayName}</option>
                                                 ))}
                                               </select>
@@ -2685,6 +2738,27 @@ function TanksTab({ isMobile,
                       <div style={{ height: 6, width: '100%', background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden', margin: '4px 0 10px 0' }}>
                         <div style={{ height: '100%', width: `${pct}%`, background: fillCol }} />
                       </div>
+
+                      {isQuarantined && (
+                        <div style={{
+                          background: 'rgba(255,71,87,0.08)',
+                          border: '1px solid rgba(255,71,87,0.20)',
+                          borderRadius: '8px',
+                          padding: '10px 14px',
+                          marginBottom: 12,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 2
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '12px', color: '#FFFFFF', fontWeight: 600 }}>
+                            <Lock size={12} color="#FF4757" />
+                            <span>Quarantined — {quarantinedTanks[tank.id]?.reason || 'Quarantined'}</span>
+                          </div>
+                          <span style={{ fontSize: '10px', color: 'var(--muted)', marginLeft: 18 }}>
+                            Since {formatDate('2026-07-28')}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Stats Row */}
                       <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>
@@ -3235,7 +3309,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
                   required
                   value={stockBuyPrice}
                   onChange={e => setStockBuyPrice(e.target.value)}
-                  placeholder="e.g. 40"
+                  placeholder="\u20B940"
                 />
               </div>
 
@@ -3328,7 +3402,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
               type="number"
               value={amount}
               onChange={e => setAmount(e.target.value)}
-              placeholder="e.g. 1500"
+              placeholder="\u20B91500"
               style={{ height: 34 }}
             />
           </div>
@@ -4621,7 +4695,7 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
                   min={0}
                   value={newEqCost}
                   onChange={e => setNewEqCost(e.target.value)}
-                  placeholder="e.g. 14500"
+                  placeholder="\u20B914500"
                   required
                 />
               </div>
@@ -4839,7 +4913,7 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
               type="number"
               value={cost}
               onChange={e => setCost(e.target.value)}
-              placeholder="Cost"
+              placeholder="\u20B9500"
               style={{ height: 34 }}
             />
           </div>
@@ -5121,7 +5195,22 @@ function WorkerApp({ isMobile,
   setView,
   tanks
 }) {
+  const [feedSuccessMsg, setFeedSuccessMsg] = useState('');
+  const [maintSuccessMsg, setMaintSuccessMsg] = useState('');
+  const [wqSuccessMsg, setWqSuccessMsg] = useState('');
+  const [issueSuccessMsg, setIssueSuccessMsg] = useState('');
   
+  const buyerRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (buyerRef.current && !buyerRef.current.contains(event.target)) {
+        setShowBuyerSuggests(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // LOG A SALE STEPS STATE
   const [saleStep, setSaleStep] = useState(1); // 1, 2, 3, 4
   const [saleSpId, setSaleSpId] = useState('');
@@ -5255,7 +5344,7 @@ function WorkerApp({ isMobile,
     };
     setWorkerSubmissions(prev => [newSub, ...prev]);
 
-    setSaleSuccessMsg(`Sale submitted {"\u2713"} — ${qtyVal} ${selectedSp.name} (${AGE_GROUP_LABELS[saleAgeGroup].label}) from Tank ${saleTankId} for {"\u20B9"}${totalVal}. Waiting for admin approval.`);
+    setSaleSuccessMsg(`Sale submitted: ${qtyVal} ${selectedSp.name} (${AGE_GROUP_LABELS[saleAgeGroup].label}) from Tank ${saleTankId} for {"\u20B9"}${totalVal}. Waiting for admin approval.`);
 
     // Reset Form
     setSaleStep(1);
@@ -5267,7 +5356,7 @@ function WorkerApp({ isMobile,
     setSaleBuyer('');
     setSaleNote('');
 
-    setTimeout(() => setSaleSuccessMsg(null), 4000);
+    setTimeout(() => setSaleSuccessMsg(null), 3000);
   };
 
   const handleFeedingSubmit = (e) => {
@@ -5285,8 +5374,12 @@ function WorkerApp({ isMobile,
     };
 
     setWorkerSubmissions(prev => [newSub, ...prev]);
+    setFeedSuccessMsg(feedDetails);
     setFeedSuccess(true);
-    setTimeout(() => setFeedSuccess(false), 2000);
+    setTimeout(() => {
+      setFeedSuccess(false);
+      setFeedSuccessMsg('');
+    }, 3000);
   };
 
   const handleMaintSubmit = (e) => {
@@ -5304,9 +5397,13 @@ function WorkerApp({ isMobile,
     };
 
     setWorkerSubmissions(prev => [newSub, ...prev]);
+    setMaintSuccessMsg(maintDetails);
     setMaintSuccess(true);
     setMaintNotes('');
-    setTimeout(() => setMaintSuccess(false), 2000);
+    setTimeout(() => {
+      setMaintSuccess(false);
+      setMaintSuccessMsg('');
+    }, 3000);
   };
 
   const handleWqSubmit = (e) => {
@@ -5345,6 +5442,7 @@ function WorkerApp({ isMobile,
     };
 
     setWorkerSubmissions(prev => [newSub, ...prev]);
+    setWqSuccessMsg(`Tank ${wqTank} readings: pH ${phVal} | Temp ${tempVal}°C | Ammonia ${ammVal}`);
     setWqSuccess(true);
     
     // Warn if abnormal
@@ -5359,7 +5457,8 @@ function WorkerApp({ isMobile,
     setTimeout(() => {
       setWqSuccess(false);
       setWqWarning(false);
-    }, 4000);
+      setWqSuccessMsg('');
+    }, 3000);
   };
 
   const handleIssueSubmit = (e) => {
@@ -5380,10 +5479,14 @@ function WorkerApp({ isMobile,
     };
 
     setWorkerSubmissions(prev => [newSub, ...prev]);
+    setIssueSuccessMsg(details);
     setIssueSuccess(true);
     setIssueDesc('');
     
-    setTimeout(() => setIssueSuccess(false), 2000);
+    setTimeout(() => {
+      setIssueSuccess(false);
+      setIssueSuccessMsg('');
+    }, 3000);
   };
 
   // Transfer Fish Between Tanks
@@ -5418,7 +5521,7 @@ function WorkerApp({ isMobile,
     setTrToTank('');
     setTrCount('');
 
-    setTimeout(() => setTrSuccess(false), 2000);
+    setTimeout(() => setTrSuccess(false), 3000);
   };
 
   // ─── 1. SELECT WORKER SCREEN ───
@@ -5524,36 +5627,44 @@ function WorkerApp({ isMobile,
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Step 1: Pick Species */}
-            <div>
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>STEP 1: SELECT SPECIES</span>
-              <select
-                value={saleSpId}
-                onChange={e => {
-                  const val = e.target.value;
-                  setSaleSpId(val);
-                  setSaleAgeGroup('');
-                  setSaleTankId('');
-                  setSaleQty('');
-                  setSalePrice('');
-                  if (val) {
-                    setSaleStep(2);
-                  } else {
-                    setSaleStep(1);
-                  }
-                }}
-              >
-                <option value="">Select Species</option>
-                {species.map(s => {
-                  const isAvailable = s.stock > 0;
-                  return (
-                    <option key={s.id} value={s.id} disabled={!isAvailable}>
-                      {s.name} ({s.stock} available)
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+            {saleSuccessMsg ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12, padding: 10 }}>
+                <Check size={48} color="var(--secondary)" />
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{saleSuccessMsg}</span>
+              </div>
+            ) : (
+              <>
+                {/* Step 1: Pick Species */}
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>STEP 1: SELECT SPECIES</span>
+                  <select
+                    value={saleSpId}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setSaleSpId(val);
+                      setSaleAgeGroup('');
+                      setSaleTankId('');
+                      setSaleQty('');
+                      setSalePrice('');
+                      if (val) {
+                        setSaleStep(2);
+                      } else {
+                        setSaleStep(1);
+                      }
+                    }}
+                  >
+                    <option value="">Select Species</option>
+                    {species.map(s => {
+                      const isAvailable = s.stock > 0;
+                      return (
+                        <option key={s.id} value={s.id} disabled={!isAvailable}>
+                          {s.name} ({s.stock} available)
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
 
             {/* Step 2: Pick Age Group */}
             {saleStep >= 2 && selectedSp && (
@@ -5682,7 +5793,7 @@ function WorkerApp({ isMobile,
                 </div>
 
                 {/* Autocomplete buyer */}
-                <div style={{ position: 'relative' }}>
+                <div ref={buyerRef} style={{ position: 'relative' }}>
                   <input
                     type="text"
                     required
@@ -5693,12 +5804,14 @@ function WorkerApp({ isMobile,
                       setShowBuyerSuggests(true);
                     }}
                     onFocus={() => setShowBuyerSuggests(true)}
+                    style={{ paddingRight: '28px' }}
                   />
+                  <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted)' }} />
                   {showBuyerSuggests && buyerSuggestions.length > 0 && (
                     <div style={{
                       position: 'absolute', top: '100%', left: 0, right: 0,
-                      background: '#141414', border: '1px solid var(--border)',
-                      borderRadius: 8, zIndex: 10, maxHeight: 120, overflowY: 'auto'
+                      background: '#141414', border: '1px solid #FFFFFF',
+                      borderRadius: 8, zIndex: 50, maxHeight: 120, overflowY: 'auto'
                     }}>
                       {buyerSuggestions.map(s => (
                         <div
@@ -5747,173 +5860,198 @@ function WorkerApp({ isMobile,
               </form>
             )}
 
-            {saleSuccessMsg && (
-              <div style={{
-                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 8, padding: 10, color: '#fff', fontSize: 12, textAlign: 'center'
-              }}>
-                {saleSuccessMsg}
-              </div>
+              </>
             )}
           </div>
         </div>
 
         {/* Card 2 — Log Feeding Done */}
         <div className="card" style={{ padding: 18 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Feeding Done</span>
-          <form onSubmit={handleFeedingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <select value={feedTank} onChange={e => setFeedTank(e.target.value)}>
-              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
-            </select>
+          {feedSuccess ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 120, gap: 12 }}>
+              <Check size={48} color="var(--secondary)" />
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{feedSuccessMsg}</span>
+            </div>
+          ) : (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Feeding Done</span>
+              <form onSubmit={handleFeedingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <select value={feedTank} onChange={e => setFeedTank(e.target.value)}>
+                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
+                </select>
 
-            <button
-              type="submit"
-              style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-            >
-              Log Feeding
-            </button>
-            {feedSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Feeding logged {"\u2713"}</div>}
-          </form>
+                <button
+                  type="submit"
+                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                >
+                  Log Feeding
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         {/* Card 3 — Log Tank Maintenance */}
         <div className="card" style={{ padding: 18 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Tank Maintenance</span>
-          <form onSubmit={handleMaintSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <select value={maintTank} onChange={e => setMaintTank(e.target.value)}>
-              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-            </select>
-            
-            <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-              {['Water Change', 'Filter Clean', 'Glass Wipe'].map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setMaintType(type)}
-                  style={{
-                    flex: 1, padding: '6px', fontSize: 10,
-                    background: maintType === type ? '#FFFFFF' : 'transparent',
-                    color: maintType === type ? '#000000' : 'var(--secondary)'
-                  }}
-                >
-                  {type}
-                </button>
-              ))}
+          {maintSuccess ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
+              <Check size={48} color="var(--secondary)" />
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{maintSuccessMsg}</span>
             </div>
+          ) : (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Tank Maintenance</span>
+              <form onSubmit={handleMaintSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <select value={maintTank} onChange={e => setMaintTank(e.target.value)}>
+                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                </select>
+                
+                <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                  {['Water Change', 'Filter Clean', 'Glass Wipe'].map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setMaintType(type)}
+                      style={{
+                        flex: 1, padding: '6px', fontSize: 10,
+                        background: maintType === type ? '#FFFFFF' : 'transparent',
+                        color: maintType === type ? '#000000' : 'var(--secondary)'
+                      }}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
 
-            <input
-              type="text"
-              placeholder="Maintenance Notes (optional)"
-              value={maintNotes}
-              onChange={e => setMaintNotes(e.target.value)}
-            />
+                <input
+                  type="text"
+                  placeholder="Maintenance Notes (optional)"
+                  value={maintNotes}
+                  onChange={e => setMaintNotes(e.target.value)}
+                />
 
-            <button
-              type="submit"
-              style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-            >
-              Log Maintenance
-            </button>
-            {maintSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Maintenance logged {"\u2713"}</div>}
-          </form>
+                <button
+                  type="submit"
+                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                >
+                  Log Maintenance
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         {/* Card 4 — Log Water Quality */}
         <div className="card" style={{ padding: 18 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Water Quality</span>
-          <form onSubmit={handleWqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <select value={wqTank} onChange={e => setWqTank(e.target.value)}>
-              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-            </select>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-              <input
-                type="text"
-                required
-                placeholder="pH"
-                value={wqPh}
-                onChange={e => setWqPh(e.target.value)}
-              />
-              <input
-                type="text"
-                required
-                placeholder="Temp (°C)"
-                value={wqTemp}
-                onChange={e => setWqTemp(e.target.value)}
-              />
-              <input
-                type="text"
-                required
-                placeholder="Ammonia"
-                value={wqAmmonia}
-                onChange={e => setWqAmmonia(e.target.value)}
-              />
+          {wqSuccess ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
+              <Check size={48} color="var(--secondary)" />
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{wqSuccessMsg}</span>
+              {wqWarning && (
+                <div style={{ color: '#FF4757', fontSize: 11, textAlign: 'center', fontWeight: 'bold', marginTop: 4 }}>
+                  [Alert] Reading outside safe range — admin will be alerted.
+                </div>
+              )}
             </div>
+          ) : (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Water Quality</span>
+              <form onSubmit={handleWqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <select value={wqTank} onChange={e => setWqTank(e.target.value)}>
+                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                </select>
 
-            <button
-              type="submit"
-              style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-            >
-              Submit Reading
-            </button>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                  <input
+                    type="text"
+                    required
+                    placeholder="pH"
+                    value={wqPh}
+                    onChange={e => setWqPh(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Temp (°C)"
+                    value={wqTemp}
+                    onChange={e => setWqTemp(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ammonia"
+                    value={wqAmmonia}
+                    onChange={e => setWqAmmonia(e.target.value)}
+                  />
+                </div>
 
-            {wqWarning && (
-              <div style={{ color: '#FF4757', fontSize: 11, textAlign: 'center', fontWeight: 'bold' }}>
-                [Alert] Reading outside safe range — admin will be alerted.
-              </div>
-            )}
-            {wqSuccess && !wqWarning && (
-              <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>
-                Water reading logged {"\u2713"}
-              </div>
-            )}
-          </form>
+                <button
+                  type="submit"
+                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                >
+                  Submit Reading
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         {/* Card 5 — Report an Issue */}
         <div className="card" style={{ padding: 18 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Report an Issue</span>
-          <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <select value={issueTank} onChange={e => setIssueTank(e.target.value)}>
-              {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-            </select>
-
-            <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-              {['Low', 'Medium', 'High'].map(urg => (
-                <button
-                  key={urg}
-                  type="button"
-                  onClick={() => setIssueUrgency(urg)}
-                  style={{
-                    flex: 1, padding: '6px', fontSize: 11,
-                    background: issueUrgency === urg ? '#FFFFFF' : 'transparent',
-                    color: issueUrgency === urg ? '#000000' : 'var(--secondary)'
-                  }}
-                >
-                  {urg} Urgency
-                </button>
-              ))}
+          {issueSuccess ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
+              <Check size={48} color="var(--secondary)" />
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{issueSuccessMsg}</span>
             </div>
+          ) : (
+            <>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Report an Issue</span>
+              <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <select value={issueTank} onChange={e => setIssueTank(e.target.value)}>
+                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                </select>
 
-            <textarea
-              required
-              placeholder="Describe observation/issue details..."
-              value={issueDesc}
-              onChange={e => setIssueDesc(e.target.value)}
-              style={{
-                fontFamily: 'inherit', background: '#0A0A0A', border: '1px solid rgba(255,255,255,0.10)',
-                borderRadius: 8, padding: 8, color: '#fff', height: 60, outline: 'none'
-              }}
-            />
+                <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                  {['Low', 'Medium', 'High'].map(urg => (
+                    <button
+                      key={urg}
+                      type="button"
+                      onClick={() => setIssueUrgency(urg)}
+                      style={{
+                        flex: 1, padding: '6px', fontSize: 11,
+                        background: issueUrgency === urg ? '#FFFFFF' : 'transparent',
+                        color: issueUrgency === urg ? '#000000' : 'var(--secondary)'
+                      }}
+                    >
+                      {urg} Urgency
+                    </button>
+                  ))}
+                </div>
 
-            <button
-              type="submit"
-              style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-            >
-              Report Issue
-            </button>
-            {issueSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Issue submitted {"\u2713"}</div>}
-          </form>
+                <textarea
+                  required
+                  placeholder="Describe observation/issue details..."
+                  value={issueDesc}
+                  onChange={e => setIssueDesc(e.target.value)}
+                  style={{
+                    fontFamily: 'inherit', background: '#0A0A0A', border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: 8, padding: 8, color: '#fff', height: 60, outline: 'none'
+                  }}
+                />
+
+                <button
+                  type="submit"
+                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                >
+                  Report Issue
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         {/* Card 6 — Move Fish (Transfer) */}
@@ -6048,7 +6186,8 @@ const transformTankStock = (dbStock) => {
 
 const formatActivityTime = (isoString) => {
   if (!isoString) return 'Just now';
-  const diff = Date.now() - new Date(isoString).getTime();
+  const date = new Date(isoString.endsWith('Z') ? isoString : isoString + 'Z');
+  const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'Just now';
   if (mins < 60) return `${mins}m ago`;
@@ -6325,6 +6464,7 @@ export default function App() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [apiError, setApiError] = useState(null);
   
   const [session, setSession] = useState(() => {
     const stored = localStorage.getItem('aquavault_session');
@@ -6387,6 +6527,22 @@ export default function App() {
     }
     return false;
   };
+  useEffect(() => {
+    api.registerErrorListener((err) => {
+      if (!loading) {
+        setApiError('Connection lost. Please check your internet and try again.');
+      }
+    });
+    return () => api.registerErrorListener(null);
+  }, [loading]);
+
+  useEffect(() => {
+    if (apiError) {
+      const timer = setTimeout(() => setApiError(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [apiError]);
+
   // Sync state values on mount or session change
   useEffect(() => {
     if (!session) {
@@ -7827,6 +7983,17 @@ export default function App() {
       ) : (
         /* WORKER VIEW dashboard replacement */
         <div style={{ flex: 1, background: '#000000', minHeight: '100vh', overflowY: 'auto' }}>
+          {apiError && (
+            <div style={{
+              background: 'rgba(255,71,87,0.10)', border: '1px solid #FF4757',
+              color: '#FFFFFF', padding: '10px 14px', margin: '12px 12px 0 12px',
+              borderRadius: 8, display: 'flex', justifyContent: 'space-between',
+              alignItems: 'center', fontSize: 13, fontWeight: 500
+            }}>
+              <span>{apiError}</span>
+              <button onClick={() => setApiError(null)} style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontSize: 15, fontWeight: 'bold' }}>X</button>
+            </div>
+          )}
           <ErrorBoundary>
             <WorkerApp isMobile={isMobile} onLogout={handleLogout}
               workers={workers || []}
