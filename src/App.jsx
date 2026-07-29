@@ -514,7 +514,9 @@ function DashboardTab({
   waterWarnings,
   onNavigateTab,
   highUrgentIssues,
-  tanks
+  tanks,
+  getTankTotal,
+  getContentsOfTank
 }) {
   const totalFish     = useMemo(() => species.reduce((s,sp)=>s+sp.stock, 0), [species]);
   const totalBorn     = useMemo(() => species.reduce((s,sp)=>s+sp.born, 0), [species]);
@@ -6662,6 +6664,9 @@ export default function App() {
                 species={species}
                 activity={activity}
                 alertRef={alertRef}
+                tanks={tanks}
+                getTankTotal={getTankTotal}
+                getContentsOfTank={getContentsOfTank}
                 onViewAllLowStock={handleViewAllLowStock}
                 onConfirmLog={handleConfirmLog}
                 kpiFlash={kpiFlash}
