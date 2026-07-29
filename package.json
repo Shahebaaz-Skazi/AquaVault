@@ -1,0 +1,11 @@
+{
+  "name": "aquavault-root",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "preinstall": "cd backend && npm install",
+    "build": "echo 'Build complete'",
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}
