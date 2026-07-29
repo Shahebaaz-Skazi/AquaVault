@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, Legend, CartesianGrid, LineChart, Line
@@ -6004,6 +6005,33 @@ function WorkerApp({ isMobile,
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
+
+const transformTankStock = (dbStock) => {
+  const stockObj = {};
+  dbStock.forEach(entry => {
+    const spId = entry.species_id;
+    const ag = entry.age_group;
+    const tId = entry.tank_id;
+    const count = entry.count;
+    if (!stockObj[spId]) stockObj[spId] = {};
+    if (!stockObj[spId][ag]) stockObj[spId][ag] = {};
+    stockObj[spId][ag][tId] = count;
+  });
+  return stockObj;
+};
+
+const formatActivityTime = (isoString) => {
+  if (!isoString) return 'Just now';
+  const diff = Date.now() - new Date(isoString).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+};
+
 const TAB_TITLES = {
   dashboard: 'Dashboard',
   inventory: 'Inventory',
@@ -6184,14 +6212,14 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
   const [workerPin, setWorkerPin] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (loginType === 'admin') {
-      const ok = onAdminLogin(adminUser, adminPass);
+      const ok = await onAdminLogin(adminUser, adminPass);
       if (!ok) setError('Invalid admin username or password');
     } else {
-      const ok = onWorkerLogin(Number(workerId), workerPin);
+      const ok = await onWorkerLogin(Number(workerId), workerPin);
       if (!ok) setError('Invalid worker PIN');
     }
   };
@@ -6244,38 +6272,34 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
 
 export default function App() {
   // states
-  const [speciesState, setSpeciesState] = useState(SPECIES_INIT);
-  const [tankStock,    setTankStock]    = useState(TANK_STOCK_INIT);
+  const [speciesStateAll, setSpeciesStateAll] = useState([]);
+  const [tankStock,    setTankStock]    = useState({});
   
-  const [activity,   setActivity] = useState(ACTIVITY_INIT);
+  const [activity,   setActivity] = useState([]);
   const [activeTab,  setActiveTab]= useState('dashboard');
   const [search,     setSearch]   = useState('');
   const [filterLowStock, setFilterLowStock] = useState(false);
   const [kpiFlash,   setKpiFlash] = useState(false);
 
   // v3.0 New states
-  const [expenses, setExpenses] = useState(EXPENSES_INIT);
-  const [sales, setSales] = useState(SALES_INIT);
-  const [customers, setCustomers] = useState(CUSTOMERS_INIT);
-  const [equipment, setEquipment] = useState(EQUIPMENT_INIT);
-  const [waterLog, setWaterLog] = useState(WATER_LOG_INIT);
-  const [workers, setWorkers] = useState(WORKERS_INIT);
+  const [expenses, setExpenses] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [equipment, setEquipment] = useState([]);
+  const [waterLog, setWaterLog] = useState([]);
+  const [workers, setWorkers] = useState([]);
+  const [tanks, setTanks] = useState([]);
+  const [quarantinedTanks, setQuarantinedTanks] = useState({});
+
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   
   const [session, setSession] = useState(() => {
     const stored = localStorage.getItem('aquavault_session');
     return stored ? JSON.parse(stored) : null;
   });
 
-  const [activeWorker, setActiveWorker] = useState(() => {
-    const stored = localStorage.getItem('aquavault_session');
-    if (stored) {
-      const s = JSON.parse(stored);
-      if (s.role === 'worker') {
-        return WORKERS_INIT.find(w => w.id === s.workerId) || null;
-      }
-    }
-    return null;
-  });
+  const [activeWorker, setActiveWorker] = useState(null);
   const [workerSubmissions, setWorkerSubmissions] = useState([]);
   
   const [view, setView] = useState(() => {
@@ -6296,34 +6320,581 @@ export default function App() {
 
   const [activeInvoice, setActiveInvoice] = useState(null);
 
-  const [tanks, setTanks] = useState(TANKS_INIT);
-  const handleAdminLogin = (username, password) => {
-    if (username === 'admin' && password === 'aquavault2026') {
-      const s = { role: 'admin' };
-      localStorage.setItem('aquavault_session', JSON.stringify(s));
-      setSession(s);
-      setView('admin');
-      setActiveWorker(null);
-      return true;
+
+  const handleAdminLogin = async (username, password) => {
+    try {
+      const res = await api.login({ username, password });
+      if (res && res.role === 'admin') {
+        const s = { role: 'admin' };
+        localStorage.setItem('aquavault_session', JSON.stringify(s));
+        setSession(s);
+        setView('admin');
+        setActiveWorker(null);
+        return true;
+      }
+    } catch (err) {
+      console.error(err);
     }
     return false;
   };
 
-  const handleWorkerLogin = (workerId, pin) => {
-    const expectedPin = String(workerId).padStart(4, '0');
-    if (pin === expectedPin) {
-      const worker = workers.find(w => w.id === workerId);
-      if (worker) {
-        const s = { role: 'worker', workerId: worker.id, workerName: worker.name };
+  const handleWorkerLogin = async (workerId, pin) => {
+    try {
+      const res = await api.login({ workerId, pin });
+      if (res && res.role === 'worker') {
+        const worker = workers.find(w => w.id === workerId);
+        const s = { role: 'worker', workerId: res.workerId, workerName: res.workerName };
         localStorage.setItem('aquavault_session', JSON.stringify(s));
         setSession(s);
         setView('worker');
-        setActiveWorker(worker);
+        setActiveWorker(worker || { id: res.workerId, name: res.workerName });
         return true;
       }
+    } catch (err) {
+      console.error(err);
     }
     return false;
   };
+  // Sync state values on mount or session change
+  useEffect(() => {
+    if (!session) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadError(null);
+    Promise.all([
+      api.getSpecies(),
+      api.getTankStock(),
+      api.getTanks(),
+      api.getSales(),
+      api.getExpenses(),
+      api.getCustomers(),
+      api.getWorkers(),
+      api.getEquipment(),
+      api.getWaterLogs(),
+      api.getActivity()
+    ])
+      .then(([spData, tsData, tData, sData, eData, cData, wData, eqData, wlData, actData]) => {
+        setSpeciesStateAll(spData);
+        setTankStock(transformTankStock(tsData));
+        setTanks(tData);
+        setSales(sData);
+        setExpenses(eData);
+        setCustomers(cData);
+        setWorkers(wData);
+        if (session.role === 'worker') {
+          const w = wData.find(x => x.id === session.workerId);
+          if (w) setActiveWorker(w);
+        }
+        setEquipment(eqData);
+        setWaterLog(wlData);
+        
+        // Setup quarantinedTanks lookup from tanks data
+        const qMap = {};
+        tData.forEach(t => {
+          if (t.is_quarantined) {
+            qMap[t.id] = { reason: t.quarantine_reason || 'Quarantined' };
+          }
+        });
+        setQuarantinedTanks(qMap);
+
+        setActivity(actData.map(a => {
+          try {
+            return { id: a.id, type: a.type, time: formatActivityTime(a.created_at), ...JSON.parse(a.description) };
+          } catch(err) {
+            return { id: a.id, type: a.type, time: formatActivityTime(a.created_at), note: a.description };
+          }
+        }));
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading AquaVault data:', err);
+        setLoadError('Failed to sync data with AquaVault server. Please check your connection.');
+        setLoading(false);
+      });
+  }, [session]);
+
+  const handleSetSpeciesState = async (updater) => {
+    const current = speciesStateAll;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    for (const sp of added) {
+      try {
+        const saved = await api.addSpecies({
+          name: sp.name,
+          price: sp.price,
+          min_threshold: sp.min
+        });
+        if (saved) {
+          setSpeciesStateAll(prev => [...prev, {
+            id: saved.id,
+            name: saved.name,
+            min: saved.min_threshold,
+            price: saved.price,
+            stock: 0,
+            born: 0,
+            exported: 0,
+            died: 0
+          }]);
+        }
+      } catch (err) { console.error(err); }
+    }
+  };
+
+  const handleSetTanks = async (updater) => {
+    const current = tanks;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    const deleted = current.filter(c => !next.some(n => n.id === c.id));
+    const updated = next.filter(n => {
+      const c = current.find(x => x.id === n.id);
+      return c && JSON.stringify(c) !== JSON.stringify(n);
+    });
+
+    if (added.length > 0) {
+      for (const t of added) {
+        try {
+          const res = await api.addTank({
+            id: t.id,
+            display_name: t.displayName,
+            capacity: t.capacity,
+            temp: t.temp,
+            ph: t.ph,
+            type: t.type,
+            added_date: t.addedDate,
+            is_quarantined: t.isQuarantined,
+            quarantine_reason: t.quarantineReason
+          });
+          if (res) {
+            setTanks(prev => [...prev, {
+              id: res.id,
+              displayName: res.display_name,
+              capacity: res.capacity,
+              temp: res.temp,
+              ph: res.ph,
+              type: res.type,
+              addedDate: res.added_date,
+              isQuarantined: res.is_quarantined,
+              quarantineReason: res.quarantine_reason
+            }]);
+          }
+        } catch(e) { console.error(e); }
+      }
+    } else if (deleted.length > 0) {
+      for (const t of deleted) {
+        try {
+          await api.deleteTank(t.id);
+          setTanks(prev => prev.filter(x => x.id !== t.id));
+        } catch(e) { console.error(e); }
+      }
+    } else if (updated.length > 0) {
+      for (const t of updated) {
+        try {
+          const res = await api.updateTank(t.id, {
+            display_name: t.displayName,
+            capacity: t.capacity,
+            temp: t.temp,
+            ph: t.ph,
+            type: t.type,
+            added_date: t.addedDate,
+            is_quarantined: t.isQuarantined,
+            quarantine_reason: t.quarantineReason
+          });
+          if (res) {
+            setTanks(prev => prev.map(x => x.id === t.id ? {
+              id: res.id,
+              displayName: res.display_name,
+              capacity: res.capacity,
+              temp: res.temp,
+              ph: res.ph,
+              type: res.type,
+              addedDate: res.added_date,
+              isQuarantined: res.is_quarantined,
+              quarantineReason: res.quarantine_reason
+            } : x));
+          }
+        } catch(e) { console.error(e); }
+      }
+    }
+  };
+
+  const handleSetQuarantinedTanks = async (updater) => {
+    const current = quarantinedTanks;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const currentKeys = Object.keys(current);
+    const nextKeys = Object.keys(next);
+    const added = nextKeys.filter(k => !currentKeys.includes(k));
+    const lifted = currentKeys.filter(k => !nextKeys.includes(k));
+
+    if (added.length > 0) {
+      for (const tankId of added) {
+        try {
+          const reason = next[tankId].reason;
+          await api.updateTank(tankId, { is_quarantined: true, quarantine_reason: reason });
+          setQuarantinedTanks(prev => ({ ...prev, [tankId]: { reason } }));
+          setTanks(prev => prev.map(t => t.id === tankId ? { ...t, isQuarantined: true, quarantineReason: reason } : t));
+        } catch(e) { console.error(e); }
+      }
+    } else if (lifted.length > 0) {
+      for (const tankId of lifted) {
+        try {
+          await api.updateTank(tankId, { is_quarantined: false, quarantine_reason: null });
+          setQuarantinedTanks(prev => {
+            const copy = { ...prev };
+            delete copy[tankId];
+            return copy;
+          });
+          setTanks(prev => prev.map(t => t.id === tankId ? { ...t, isQuarantined: false, quarantineReason: null } : t));
+        } catch(e) { console.error(e); }
+      }
+    }
+  };
+
+  const handleSetSales = async (updater) => {
+    const current = sales;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    const updated = next.filter(n => {
+      const c = current.find(x => x.id === n.id);
+      return c && JSON.stringify(c) !== JSON.stringify(n);
+    });
+
+    if (added.length > 0) {
+      for (const s of added) {
+        try {
+          const res = await api.addSale({
+            species_id: s.speciesId,
+            species_name: s.speciesName,
+            age_group: s.ageGroup,
+            tank_id: s.tankId,
+            qty: s.qty,
+            unit_price: s.unitPrice,
+            total: s.total,
+            buyer: s.buyer,
+            pay_mode: s.payMode,
+            pay_status: s.payStatus,
+            worker_name: s.worker || 'Admin',
+            approved: s.approved,
+            date: s.date,
+            note: s.note
+          });
+          if (res) {
+            setSales(prev => [ {
+              id: res.id,
+              speciesId: res.species_id,
+              speciesName: res.species_name,
+              ageGroup: res.age_group,
+              tankId: res.tank_id,
+              qty: res.qty,
+              unitPrice: res.unit_price,
+              total: res.total,
+              buyer: res.buyer,
+              payMode: res.pay_mode,
+              payStatus: res.pay_status,
+              worker: res.worker_name,
+              approved: res.approved,
+              date: res.date,
+              note: res.note
+            }, ...prev ]);
+          }
+        } catch(e) { console.error(e); }
+      }
+    } else if (updated.length > 0) {
+      for (const s of updated) {
+        try {
+          const original = current.find(x => x.id === s.id);
+          let res;
+          if (s.approved && !original.approved) {
+            res = await api.approveSale(s.id);
+          } else if (s.payStatus === 'paid' && original.payStatus !== 'paid') {
+            res = await api.paySale(s.id);
+          }
+          if (res) {
+            setSales(prev => prev.map(x => x.id === s.id ? {
+              id: res.id,
+              speciesId: res.species_id,
+              speciesName: res.species_name,
+              ageGroup: res.age_group,
+              tankId: res.tank_id,
+              qty: res.qty,
+              unitPrice: res.unit_price,
+              total: res.total,
+              buyer: res.buyer,
+              payMode: res.pay_mode,
+              payStatus: res.pay_status,
+              worker: res.worker_name,
+              approved: res.approved,
+              date: res.date,
+              note: res.note
+            } : x));
+          }
+        } catch(e) { console.error(e); }
+      }
+    }
+  };
+
+  const handleSetExpenses = async (updater) => {
+    const current = expenses;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    const deleted = current.filter(c => !next.some(n => n.id === c.id));
+
+    if (added.length > 0) {
+      for (const e of added) {
+        try {
+          const res = await api.addExpense({
+            category: e.category,
+            amount: e.amount,
+            description: e.description,
+            date: e.date,
+            tank_id: e.tankId || null,
+            worker_name: e.worker || null
+          });
+          if (res) {
+            setExpenses(prev => [ {
+              id: res.id,
+              category: res.category,
+              amount: res.amount,
+              description: res.description,
+              date: res.date,
+              tankId: res.tank_id,
+              worker: res.worker_name
+            }, ...prev ]);
+          }
+        } catch(err) { console.error(err); }
+      }
+    } else if (deleted.length > 0) {
+      for (const e of deleted) {
+        try {
+          await api.deleteExpense(e.id);
+          setExpenses(prev => prev.filter(x => x.id !== e.id));
+        } catch(err) { console.error(err); }
+      }
+    }
+  };
+
+  const handleSetCustomers = async (updater) => {
+    const current = customers;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    const updated = next.filter(n => {
+      const c = current.find(x => x.id === n.id);
+      return c && JSON.stringify(c) !== JSON.stringify(n);
+    });
+
+    if (added.length > 0) {
+      for (const c of added) {
+        try {
+          const res = await api.addCustomer({
+            name: c.name,
+            contact: c.contact,
+            total_orders: c.totalOrders,
+            total_value: c.totalValue,
+            last_order: c.lastOrder,
+            top_species: c.topSpecies
+          });
+          if (res) {
+            setCustomers(prev => [...prev, {
+              id: res.id,
+              name: res.name,
+              contact: res.contact,
+              totalOrders: res.total_orders,
+              totalValue: res.total_value,
+              lastOrder: res.last_order,
+              topSpecies: res.top_species
+            }]);
+          }
+        } catch(err) { console.error(err); }
+      }
+    } else if (updated.length > 0) {
+      for (const c of updated) {
+        try {
+          const res = await api.updateCustomer(c.id, {
+            name: c.name,
+            contact: c.contact,
+            total_orders: c.totalOrders,
+            total_value: c.totalValue,
+            last_order: c.lastOrder,
+            top_species: c.topSpecies
+          });
+          if (res) {
+            setCustomers(prev => prev.map(x => x.id === c.id ? {
+              id: res.id,
+              name: res.name,
+              contact: res.contact,
+              totalOrders: res.total_orders,
+              totalValue: res.total_value,
+              lastOrder: res.last_order,
+              topSpecies: res.top_species
+            } : x));
+          }
+        } catch(err) { console.error(err); }
+      }
+    }
+  };
+
+  const handleSetWorkers = async (updater) => {
+    const current = workers;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    const deleted = current.filter(c => !next.some(n => n.id === c.id));
+
+    if (added.length > 0) {
+      for (const w of added) {
+        try {
+          const res = await api.addWorker({
+            name: w.name,
+            role: w.role,
+            pin: w.pin
+          });
+          if (res) {
+            setWorkers(prev => [...prev, {
+              id: res.id,
+              name: res.name,
+              role: res.role,
+              pin: res.pin
+            }]);
+          }
+        } catch(err) { console.error(err); }
+      }
+    } else if (deleted.length > 0) {
+      for (const w of deleted) {
+        try {
+          await api.deleteWorker(w.id);
+          setWorkers(prev => prev.filter(x => x.id !== w.id));
+        } catch(err) { console.error(err); }
+      }
+    }
+  };
+
+  const handleSetEquipment = async (updater) => {
+    const current = equipment;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    const updated = next.filter(n => {
+      const c = current.find(x => x.id === n.id);
+      return c && JSON.stringify(c) !== JSON.stringify(n);
+    });
+
+    if (added.length > 0) {
+      for (const eq of added) {
+        try {
+          const res = await api.addEquipment({
+            name: eq.name,
+            type: eq.type,
+            tank_id: eq.tankId,
+            purchase_date: eq.purchaseDate,
+            last_service: eq.lastService,
+            next_service: eq.nextService,
+            cost: eq.cost,
+            status: eq.status
+          });
+          if (res) {
+            setEquipment(prev => [...prev, {
+              id: res.id,
+              name: res.name,
+              type: res.type,
+              tankId: res.tank_id,
+              purchaseDate: res.purchase_date,
+              lastService: res.last_service,
+              nextService: res.next_service,
+              cost: res.cost,
+              status: res.status
+            }]);
+          }
+        } catch(err) { console.error(err); }
+      }
+    } else if (updated.length > 0) {
+      for (const eq of updated) {
+        try {
+          const res = await api.updateEquipment(eq.id, {
+            name: eq.name,
+            type: eq.type,
+            tank_id: eq.tankId,
+            purchase_date: eq.purchaseDate,
+            last_service: eq.lastService,
+            next_service: eq.nextService,
+            cost: eq.cost,
+            status: eq.status
+          });
+          if (res) {
+            setEquipment(prev => prev.map(x => x.id === eq.id ? {
+              id: res.id,
+              name: res.name,
+              type: res.type,
+              tankId: res.tank_id,
+              purchaseDate: res.purchase_date,
+              lastService: res.last_service,
+              nextService: res.next_service,
+              cost: res.cost,
+              status: res.status
+            } : x));
+          }
+        } catch(err) { console.error(err); }
+      }
+    }
+  };
+
+  const handleSetWaterLog = async (updater) => {
+    const current = waterLog;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    if (added.length > 0) {
+      for (const w of added) {
+        try {
+          const res = await api.addWaterLog({
+            tank_id: w.tank,
+            date: w.date,
+            ph: w.ph,
+            temp: w.temp,
+            ammonia: w.ammonia,
+            logged_by: w.loggedBy,
+            status: w.status
+          });
+          if (res) {
+            setWaterLog(prev => [ {
+              id: res.id,
+              tank: res.tank_id,
+              date: res.date,
+              ph: res.ph,
+              temp: res.temp,
+              ammonia: res.ammonia,
+              loggedBy: res.logged_by,
+              status: res.status
+            }, ...prev ]);
+          }
+        } catch(err) { console.error(err); }
+      }
+    }
+  };
+
+  const handleSetActivity = async (updater) => {
+    const current = activity;
+    const next = typeof updater === 'function' ? updater(current) : updater;
+    const added = next.filter(n => !current.some(c => c.id === n.id));
+    if (added.length > 0) {
+      for (const a of added) {
+        try {
+          const { id, type, time, ...details } = a;
+          const res = await api.addActivity({
+            type: a.type,
+            description: JSON.stringify(details),
+            worker_name: session?.workerName || 'Admin'
+          });
+          if (res) {
+            setActivity(prev => [ {
+              id: res.id,
+              type: res.type,
+              time: 'Just now',
+              ...details
+            }, ...prev ]);
+          }
+        } catch(err) { console.error(err); }
+      }
+    }
+  };
+
 
   const handleLogout = () => {
     localStorage.removeItem('aquavault_session');
@@ -6332,16 +6903,7 @@ export default function App() {
     setActiveWorker(null);
   };
 
-  const [customSpecies, setCustomSpecies] = useState([]);
-
-  // Quarantine State
-  const [quarantinedTanks, setQuarantinedTanks] = useState({
-    C: { reason: 'pH imbalance — monitoring', since: '2026-07-26' }
-  });
-
-  const speciesStateAll = useMemo(() => {
-    return [...speciesState, ...customSpecies];
-  }, [speciesState, customSpecies]);
+  // customSpecies and duplicate quarantinedTanks removed
 
   // Total stock for a species across all age groups and tanks
   const getSpeciesTotal = useCallback((speciesId) => {
@@ -6380,7 +6942,7 @@ export default function App() {
       Object.entries(ageGroups).forEach(([ageGroup, tankCounts]) => {
         const count = tankCounts[tankId];
         if (count > 0) {
-          const sp = speciesStateAll.find(s => s.id === parseInt(speciesId));
+          const sp = computedSpeciesStateAll.find(s => s.id === parseInt(speciesId));
           if (sp) {
             results.push({ species: sp, ageGroup, count });
           }
@@ -6444,12 +7006,21 @@ export default function App() {
     addStock(speciesId, toAge, tankId, qty);
   }, [deductStock, addStock]);
 
+  const computedSpeciesStateAll = useMemo(() => {
+    return speciesStateAll.map(s => {
+      const born = activity.filter(a => a.type === 'birth' && a.species === s.name).reduce((sum, a) => sum + (a.count || 0), 0);
+      const died = activity.filter(a => a.type === 'death' && a.species === s.name).reduce((sum, a) => sum + (a.count || 0), 0);
+      const exported = sales.filter(sale => sale.speciesId === s.id && sale.approved).reduce((sum, sale) => sum + (sale.qty || 0), 0);
+      return { ...s, born, died, exported };
+    });
+  }, [speciesStateAll, activity, sales]);
+
   const species = useMemo(() => {
-    return speciesStateAll.map(s => ({
+    return computedSpeciesStateAll.map(s => ({
       ...s,
       stock: getSpeciesTotal(s.id)
     }));
-  }, [speciesStateAll, getSpeciesTotal]);
+  }, [computedSpeciesStateAll, getSpeciesTotal]);
 
   // Derived financial values
   const totalRevenue = useMemo(() => {
@@ -6546,7 +7117,7 @@ export default function App() {
   const handleAddSpeciesToTank = useCallback((spId, ageGroup, tId, count) => {
     addStock(spId, ageGroup, tId, count);
 
-    const spName = speciesStateAll.find(s => s.id === spId)?.name || '';
+    const spName = computedSpeciesStateAll.find(s => s.id === spId)?.name || '';
 
     // Prepend to activity feed
     setActivity(prev => [{
@@ -6565,7 +7136,7 @@ export default function App() {
   const handleTransferStockAction = useCallback((spId, ageGroup, fromT, toT, count) => {
     transferStock(spId, ageGroup, fromT, toT, count);
 
-    const spName = speciesStateAll.find(s => s.id === spId)?.name || '';
+    const spName = computedSpeciesStateAll.find(s => s.id === spId)?.name || '';
 
     setActivity(prev => [{
       id: Date.now(),
@@ -6614,6 +7185,29 @@ export default function App() {
         onWorkerLogin={handleWorkerLogin}
         workers={workers}
       />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#000000', color: '#FFFFFF', gap: 16 }}>
+        <div style={{ width: 40, height: 40, border: '4px solid rgba(255,255,255,0.1)', borderTop: '4px solid #FFFFFF', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: 13, color: 'var(--secondary)' }}>Syncing with AquaVault Cloud...</span>
+        <style>{`
+          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#000000', color: '#FFFFFF', gap: 16, padding: 20, textAlign: 'center' }}>
+        <span style={{ fontSize: 48 }}>⚠️</span>
+        <h3 style={{ margin: 0, fontSize: 18, color: '#FF6666' }}>Connection Error</h3>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--secondary)', maxWidth: 360 }}>{loadError}</p>
+        <button onClick={() => window.location.reload()} style={{ height: 38, padding: '0 20px', background: '#FFFFFF', color: '#000000', borderRadius: 8, fontWeight: 700, border: 'none', cursor: 'pointer', marginTop: 10 }}>Retry Connection</button>
+      </div>
     );
   }
 
@@ -7071,7 +7665,7 @@ export default function App() {
                   filterLowStock={filterLowStock}
                   onClearFilter={() => setFilterLowStock(false)}
                   tankStock={tankStock}
-                  setSpeciesState={setSpeciesState}
+                  setSpeciesState={handleSetSpeciesState}
                   setTankStock={setTankStock}
                   tanks={tanks}
                 />
@@ -7083,14 +7677,14 @@ export default function App() {
                   tankStock={tankStock}
                   setTankStock={setTankStock}
                   tanks={tanks}
-                  setTanks={setTanks}
+                  setTanks={handleSetTanks}
                   quarantinedTanks={quarantinedTanks}
-                  setQuarantinedTanks={setQuarantinedTanks}
+                  setQuarantinedTanks={handleSetQuarantinedTanks}
                   onConfirmLog={handleAdminStatusLog}
                   onTransferStock={handleTransferStockAction}
                   onAddSpeciesToTank={handleAddSpeciesToTank}
                   sales={sales}
-                  setActivity={setActivity}
+                  setActivity={handleSetActivity}
                 />
               )}
               {activeTab === 'reports' && (
@@ -7100,7 +7694,7 @@ export default function App() {
                 <FinancesTab isMobile={isMobile}
                   key="finances"
                   expenses={expenses}
-                  setExpenses={setExpenses}
+                  setExpenses={handleSetExpenses}
                   sales={sales}
                   species={species}
                   tanks={tanks}
@@ -7111,10 +7705,10 @@ export default function App() {
                 <SalesTab isMobile={isMobile}
                   key="sales"
                   sales={sales}
-                  setSales={setSales}
+                  setSales={handleSetSales}
                   species={species}
                   customers={customers}
-                  setCustomers={setCustomers}
+                  setCustomers={handleSetCustomers}
                   onDeductStock={deductStock}
                   onLogLocalToast={() => {}}
                   onOpenInvoice={setActiveInvoice}
@@ -7124,14 +7718,14 @@ export default function App() {
                 <CustomersTab isMobile={isMobile}
                   key="customers"
                   customers={customers}
-                  setCustomers={setCustomers}
+                  setCustomers={handleSetCustomers}
                 />
               )}
               {activeTab === 'workers' && (
                 <WorkersTab isMobile={isMobile}
                   key="workers"
                   workers={workers}
-                  setWorkers={setWorkers}
+                  setWorkers={handleSetWorkers}
                   workerSubmissions={workerSubmissions}
                 />
               )}
@@ -7139,8 +7733,8 @@ export default function App() {
                 <EquipmentTab isMobile={isMobile}
                   key="equipment"
                   equipment={equipment}
-                  setEquipment={setEquipment}
-                  setExpenses={setExpenses}
+                  setEquipment={handleSetEquipment}
+                  setExpenses={handleSetExpenses}
                   tanks={tanks}
                 />
               )}
@@ -7148,7 +7742,7 @@ export default function App() {
                 <WaterQualityTab isMobile={isMobile}
                   key="water"
                   waterLog={waterLog}
-                  setWaterLog={setWaterLog}
+                  setWaterLog={handleSetWaterLog}
                   tanks={tanks}
                 />
               )}
