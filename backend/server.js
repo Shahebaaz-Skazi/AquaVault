@@ -21,13 +21,6 @@ const supabase = createClient(
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.get('/api/temp-env-dump', (req, res) => {
-  res.json({
-    url: process.env.SUPABASE_URL,
-    key: process.env.SUPABASE_KEY
-  });
-});
-
 // Auth
 app.post('/api/auth/login', async (req, res) => {
   try {
