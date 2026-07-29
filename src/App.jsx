@@ -5103,6 +5103,7 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
 
 
 function WorkerApp({ isMobile,
+  onLogout,
   workers,
   activeWorker,
   setActiveWorker,
@@ -5477,22 +5478,32 @@ function WorkerApp({ isMobile,
           <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Hi {activeWorker.name}</h2>
           <span style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{formatDate(today())}</span>
         </div>
-        <button
-          onClick={() => setActiveWorker(null)}
-          style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 6, fontSize: 11, color: 'var(--secondary)' }}
-        >
-          Switch Worker
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setActiveWorker(null)}
+            style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 6, fontSize: 11, color: 'var(--secondary)' }}
+          >
+            Switch Worker
+          </button>
+          <button
+            onClick={onLogout}
+            style={{ padding: '6px 12px', background: 'rgba(255,102,102,0.15)', border: '1px solid rgba(255,102,102,0.3)', borderRadius: 6, fontSize: 11, color: '#FF6666' }}
+          >
+            Log Out
+          </button>
+        </div>
       </div>
 
-      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 10 }}>
-        <button
-          onClick={() => setView('admin')}
-          style={{ padding: '6px 12px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, fontSize: 11 }}
-        >
-          {"\u2190"} Back to Admin view
-        </button>
-      </div>
+      {view === 'worker' && localStorage.getItem('aquavault_session') && JSON.parse(localStorage.getItem('aquavault_session')).role === 'admin' && (
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 10 }}>
+          <button
+            onClick={() => setView('admin')}
+            style={{ padding: '6px 12px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, fontSize: 11 }}
+          >
+            {"\u2190"} Back to Admin view
+          </button>
+        </div>
+      )}
 
       <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', textAlign: 'center' }}>
         What do you want to log?
@@ -6164,6 +6175,73 @@ function BottomNav({ activeTab, setActiveTab, badges }) {
   );
 }
 
+
+function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
+  const [loginType, setLoginType] = useState('admin');
+  const [adminUser, setAdminUser] = useState('');
+  const [adminPass, setAdminPass] = useState('');
+  const [workerId, setWorkerId] = useState(workers[0]?.id || '');
+  const [workerPin, setWorkerPin] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+    if (loginType === 'admin') {
+      const ok = onAdminLogin(adminUser, adminPass);
+      if (!ok) setError('Invalid admin username or password');
+    } else {
+      const ok = onWorkerLogin(Number(workerId), workerPin);
+      if (!ok) setError('Invalid worker PIN');
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '20px', color: '#FFFFFF' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '30px 24px', background: '#0D0D0D', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <Shell size={40} color="#FFFFFF" />
+          <h2 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.5px', color: '#FFFFFF', margin: 0 }}>AquaVault</h2>
+          <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Facility Access Portal</span>
+        </div>
+        <div style={{ display: 'flex', background: '#050505', borderRadius: '8px', padding: '2px', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <button type="button" onClick={() => { setLoginType('admin'); setError(''); }} style={{ flex: 1, height: '36px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 700, background: loginType === 'admin' ? '#FFFFFF' : 'transparent', color: loginType === 'admin' ? '#000000' : 'var(--secondary)', cursor: 'pointer' }}>Admin Login</button>
+          <button type="button" onClick={() => { setLoginType('worker'); setError(''); }} style={{ flex: 1, height: '36px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 700, background: loginType === 'worker' ? '#FFFFFF' : 'transparent', color: loginType === 'worker' ? '#000000' : 'var(--secondary)', cursor: 'pointer' }}>Worker Login</button>
+        </div>
+        {error && <div style={{ fontSize: '12px', color: '#FF6666', fontWeight: 600, textAlign: 'center', background: 'rgba(255,102,102,0.08)', border: '1px solid rgba(255,102,102,0.2)', padding: '8px 12px', borderRadius: '6px' }}>{error}</div>}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {loginType === 'admin' ? (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Username</span>
+                <input type="text" required placeholder="Enter admin username" value={adminUser} onChange={e => setAdminUser(e.target.value)} style={{ height: '40px', background: '#050505', width: '100%' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Password</span>
+                <input type="password" required placeholder="Enter password" value={adminPass} onChange={e => setAdminPass(e.target.value)} style={{ height: '40px', background: '#050505', width: '100%' }} />
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Select Worker Name</span>
+                <select value={workerId} onChange={e => setWorkerId(e.target.value)} style={{ height: '40px', background: '#050505', width: '100%' }}>
+                  {workers.map(w => <option key={w.id} value={w.id}>{w.name} ({w.role})</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Enter PIN</span>
+                <input type="password" required pattern="[0-9]*" inputMode="numeric" placeholder="4-digit PIN (e.g. 0001)" maxLength={4} value={workerPin} onChange={e => setWorkerPin(e.target.value.replace(/\D/g, ''))} style={{ height: '40px', background: '#050505', width: '100%' }} />
+              </div>
+            </>
+          )}
+          <button type="submit" style={{ height: '44px', marginTop: '10px', background: '#FFFFFF', color: '#000000', fontWeight: 800, fontSize: '13px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>Access AquaVault</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   // states
   const [speciesState, setSpeciesState] = useState(SPECIES_INIT);
@@ -6183,10 +6261,31 @@ export default function App() {
   const [waterLog, setWaterLog] = useState(WATER_LOG_INIT);
   const [workers, setWorkers] = useState(WORKERS_INIT);
   
-  const [activeWorker, setActiveWorker] = useState(null);
+  const [session, setSession] = useState(() => {
+    const stored = localStorage.getItem('aquavault_session');
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  const [activeWorker, setActiveWorker] = useState(() => {
+    const stored = localStorage.getItem('aquavault_session');
+    if (stored) {
+      const s = JSON.parse(stored);
+      if (s.role === 'worker') {
+        return WORKERS_INIT.find(w => w.id === s.workerId) || null;
+      }
+    }
+    return null;
+  });
   const [workerSubmissions, setWorkerSubmissions] = useState([]);
   
-  const [view, setView] = useState('admin'); // 'admin' | 'worker'
+  const [view, setView] = useState(() => {
+    const stored = localStorage.getItem('aquavault_session');
+    if (stored) {
+      const s = JSON.parse(stored);
+      return s.role === 'worker' ? 'worker' : 'admin';
+    }
+    return 'admin';
+  }); // 'admin' | 'worker'
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -6198,6 +6297,41 @@ export default function App() {
   const [activeInvoice, setActiveInvoice] = useState(null);
 
   const [tanks, setTanks] = useState(TANKS_INIT);
+  const handleAdminLogin = (username, password) => {
+    if (username === 'admin' && password === 'aquavault2026') {
+      const s = { role: 'admin' };
+      localStorage.setItem('aquavault_session', JSON.stringify(s));
+      setSession(s);
+      setView('admin');
+      setActiveWorker(null);
+      return true;
+    }
+    return false;
+  };
+
+  const handleWorkerLogin = (workerId, pin) => {
+    const expectedPin = String(workerId).padStart(4, '0');
+    if (pin === expectedPin) {
+      const worker = workers.find(w => w.id === workerId);
+      if (worker) {
+        const s = { role: 'worker', workerId: worker.id, workerName: worker.name };
+        localStorage.setItem('aquavault_session', JSON.stringify(s));
+        setSession(s);
+        setView('worker');
+        setActiveWorker(worker);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('aquavault_session');
+    setSession(null);
+    setView('admin');
+    setActiveWorker(null);
+  };
+
   const [customSpecies, setCustomSpecies] = useState([]);
 
   // Quarantine State
@@ -6472,6 +6606,16 @@ export default function App() {
   
   // Total pending alerts count for topbar bell badge
   const pendingNotificationCount = pendingSales.length + overdueCount + waterWarnings.length + highUrgentIssues.length;
+
+  if (!session) {
+    return (
+      <LoginScreen
+        onAdminLogin={handleAdminLogin}
+        onWorkerLogin={handleWorkerLogin}
+        workers={workers}
+      />
+    );
+  }
 
   return (
     <div className={isMobile ? "" : "app-grid"} style={{ display: isMobile ? "flex" : undefined, flexDirection: isMobile ? "column" : "row", minHeight: "100vh", background: "#000000" }}>
@@ -6770,6 +6914,26 @@ export default function App() {
                 </span>
               </div>
             </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                marginTop: 18,
+                width: '100%',
+                height: '36px',
+                background: 'rgba(255,102,102,0.1)',
+                border: '1px solid rgba(255,102,102,0.2)',
+                borderRadius: '8px',
+                color: '#FF6666',
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              Log Out
+            </button>
           </div>
         </aside>
       )}
@@ -7007,7 +7171,7 @@ export default function App() {
       ) : (
         /* WORKER VIEW dashboard replacement */
         <div style={{ flex: 1, background: '#000000', minHeight: '100vh', overflowY: 'auto' }}>
-          <WorkerApp isMobile={isMobile}
+          <WorkerApp isMobile={isMobile} onLogout={handleLogout}
             workers={workers}
             activeWorker={activeWorker}
             setActiveWorker={setActiveWorker}
