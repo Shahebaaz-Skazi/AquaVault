@@ -9,7 +9,7 @@ const cssMatch = html.match(/href="\.\/assets\/(index-[^"]+\.css)"/);
 if (cssMatch) {
   const cssFile = cssMatch[1];
   const cssContent = fs.readFileSync(path.join(distPath, 'assets', cssFile), 'utf8');
-  html = html.replace(/<link rel="stylesheet"[^>]+>/, `<style>${cssContent}</style>`);
+  html = html.replace(/<link rel="stylesheet"[^>]+>/, () => `<style>${cssContent}</style>`);
   console.log('Inlined CSS:', cssFile);
 } else {
   console.log('No CSS match found');
@@ -20,7 +20,7 @@ const jsMatch = html.match(/src="\.\/assets\/(index-[^"]+\.js)"/);
 if (jsMatch) {
   const jsFile = jsMatch[1];
   const jsContent = fs.readFileSync(path.join(distPath, 'assets', jsFile), 'utf8');
-  html = html.replace(/<script type="module"[^>]+><\/script>/, `<script type="module">${jsContent}</script>`);
+  html = html.replace(/<script type="module"[^>]+><\/script>/, () => `<script type="module">${jsContent}</script>`);
   console.log('Inlined JS:', jsFile);
 } else {
   console.log('No JS match found');

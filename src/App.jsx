@@ -934,7 +934,7 @@ function DashboardTab({
                 {['adult', 'semi-adult', 'newborn'].map(ag => {
                   const isAvailable = quickAgeGroupsAvailable.includes(ag);
                   const isSelected = quickAgeGroup === ag;
-                  const stock = getAgeGroupTotal(quickSpeciesId, ag);
+                  const stock = Object.values(tankStock[quickSpeciesId]?.[ag] || {}).reduce((a, b) => a + b, 0);
                   
                   return (
                     <button
