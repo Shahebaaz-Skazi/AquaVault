@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, Legend, CartesianGrid, LineChart, Line
@@ -13,7 +13,7 @@ import {
 import './index.css';
 import ErrorBoundary from './ErrorBoundary';
 
-// ─── DATA CONSTANTS (Do not change structures) ──────────────────────────────
+// â”€â”€â”€ DATA CONSTANTS (Do not change structures) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SPECIES_INIT = [
   { id:1,  name:'Guppy (Fancy)',    born:45,  exported:30, died:5,  min:50,  price:80   },
@@ -69,12 +69,12 @@ const TANK_STOCK_INIT = {
 };
 
 const TANKS_INIT = [
-  { id:'A', displayName:'Tank A', capacity:600, temp:'26°C', ph:'7.2', type:'Freshwater', addedDate:'2024-01-10' },
-  { id:'B', displayName:'Tank B', capacity:120, temp:'27°C', ph:'6.8', type:'Freshwater', addedDate:'2024-01-10' },
-  { id:'C', displayName:'Tank C', capacity:200, temp:'28°C', ph:'6.5', type:'Freshwater', addedDate:'2024-02-15' },
-  { id:'D', displayName:'Tank D', capacity:60,  temp:'26°C', ph:'7.0', type:'Freshwater', addedDate:'2024-03-20' },
-  { id:'E', displayName:'Tank E', capacity:300, temp:'22°C', ph:'7.4', type:'Freshwater', addedDate:'2024-05-01' },
-  { id:'F', displayName:'Tank F', capacity:100, temp:'25°C', ph:'8.2', type:'Marine',     addedDate:'2025-01-08' },
+  { id:'A', displayName:'Tank A', capacity:600, temp:'26Â°C', ph:'7.2', type:'Freshwater', addedDate:'2024-01-10' },
+  { id:'B', displayName:'Tank B', capacity:120, temp:'27Â°C', ph:'6.8', type:'Freshwater', addedDate:'2024-01-10' },
+  { id:'C', displayName:'Tank C', capacity:200, temp:'28Â°C', ph:'6.5', type:'Freshwater', addedDate:'2024-02-15' },
+  { id:'D', displayName:'Tank D', capacity:60,  temp:'26Â°C', ph:'7.0', type:'Freshwater', addedDate:'2024-03-20' },
+  { id:'E', displayName:'Tank E', capacity:300, temp:'22Â°C', ph:'7.4', type:'Freshwater', addedDate:'2024-05-01' },
+  { id:'F', displayName:'Tank F', capacity:100, temp:'25Â°C', ph:'8.2', type:'Marine',     addedDate:'2025-01-08' },
 ];
 
 const AGE_GROUPS = ['adult', 'semi-adult', 'newborn'];
@@ -111,14 +111,14 @@ const WORKERS_INIT = [
 ];
 
 const EXPENSES_INIT = [
-  { id:1, category:'Fish Food',       amount:3200,  description:'Hikari pellets — 5kg',          date:'2026-07-20', tank:null,  worker:'Rajan Patil',   status:'approved' },
+  { id:1, category:'Fish Food',       amount:3200,  description:'Hikari pellets â€” 5kg',          date:'2026-07-20', tank:null,  worker:'Rajan Patil',   status:'approved' },
   { id:2, category:'Equipment Repair',amount:8500,  description:'Tank B pump replacement',        date:'2026-07-18', tank:'B',   worker:'Deepak More',   status:'approved' },
   { id:3, category:'Medications',     amount:1800,  description:'Melafix antibiotic treatment',   date:'2026-07-15', tank:'C',   worker:'Rajan Patil',   status:'approved' },
-  { id:4, category:'Utilities',       amount:4200,  description:'Electricity bill — July',        date:'2026-07-10', tank:null,  worker:null,             status:'approved' },
+  { id:4, category:'Utilities',       amount:4200,  description:'Electricity bill â€” July',        date:'2026-07-10', tank:null,  worker:null,             status:'approved' },
   { id:5, category:'Filter/Equipment',amount:2600,  description:'Carbon filter replacements x4',  date:'2026-07-08', tank:null,  worker:'Deepak More',   status:'approved' },
-  { id:6, category:'Fish Food',       amount:1400,  description:'Live bloodworms — weekly',       date:'2026-07-25', tank:null,  worker:'Suresh Kamble', status:'approved' },
+  { id:6, category:'Fish Food',       amount:1400,  description:'Live bloodworms â€” weekly',       date:'2026-07-25', tank:null,  worker:'Suresh Kamble', status:'approved' },
   { id:7, category:'Tank Repair',     amount:12000, description:'Tank E glass crack repair',      date:'2026-07-22', tank:'E',   worker:'Deepak More',   status:'approved' },
-  { id:8, category:'Labour',          amount:24000, description:'Worker wages — July',            date:'2026-07-01', tank:null,  worker:null,             status:'approved' },
+  { id:8, category:'Labour',          amount:24000, description:'Worker wages â€” July',            date:'2026-07-01', tank:null,  worker:null,             status:'approved' },
 ];
 
 const SALES_INIT = [
@@ -139,12 +139,12 @@ const CUSTOMERS_INIT = [
 ];
 
 const EQUIPMENT_INIT = [
-  { id:1, name:'Tank A — Main Filter',  type:'Filter', tank:'A', purchaseDate:'2024-03-10', lastService:'2026-04-10', nextService:'2026-07-10', cost:4500,  status:'overdue'   },
-  { id:2, name:'Tank B — Water Pump',   type:'Pump',   tank:'B', purchaseDate:'2025-01-15', lastService:'2026-06-15', nextService:'2026-09-15', cost:3200,  status:'ok'        },
-  { id:3, name:'Tank C — Heater',       type:'Heater', tank:'C', purchaseDate:'2024-08-20', lastService:'2026-05-20', nextService:'2026-08-20', cost:1800,  status:'due-soon'  },
-  { id:4, name:'Tank D — Aerator',      type:'Aerator',tank:'D', purchaseDate:'2025-06-01', lastService:'2026-06-01', nextService:'2026-09-01', cost:900,   status:'ok'        },
-  { id:5, name:'Tank E — Filter',       type:'Filter', tank:'E', purchaseDate:'2024-11-12', lastService:'2026-04-12', nextService:'2026-07-12', cost:3800,  status:'overdue'   },
-  { id:6, name:'Tank F — Marine Pump',  type:'Pump',   tank:'F', purchaseDate:'2025-03-05', lastService:'2026-05-05', nextService:'2026-08-05', cost:5500,  status:'due-soon'  },
+  { id:1, name:'Tank A â€” Main Filter',  type:'Filter', tank:'A', purchaseDate:'2024-03-10', lastService:'2026-04-10', nextService:'2026-07-10', cost:4500,  status:'overdue'   },
+  { id:2, name:'Tank B â€” Water Pump',   type:'Pump',   tank:'B', purchaseDate:'2025-01-15', lastService:'2026-06-15', nextService:'2026-09-15', cost:3200,  status:'ok'        },
+  { id:3, name:'Tank C â€” Heater',       type:'Heater', tank:'C', purchaseDate:'2024-08-20', lastService:'2026-05-20', nextService:'2026-08-20', cost:1800,  status:'due-soon'  },
+  { id:4, name:'Tank D â€” Aerator',      type:'Aerator',tank:'D', purchaseDate:'2025-06-01', lastService:'2026-06-01', nextService:'2026-09-01', cost:900,   status:'ok'        },
+  { id:5, name:'Tank E â€” Filter',       type:'Filter', tank:'E', purchaseDate:'2024-11-12', lastService:'2026-04-12', nextService:'2026-07-12', cost:3800,  status:'overdue'   },
+  { id:6, name:'Tank F â€” Marine Pump',  type:'Pump',   tank:'F', purchaseDate:'2025-03-05', lastService:'2026-05-05', nextService:'2026-08-05', cost:5500,  status:'due-soon'  },
 ];
 
 const WATER_LOG_INIT = [
@@ -159,7 +159,7 @@ const WATER_LOG_INIT = [
 const EXPENSE_CATEGORIES = ['Fish Food','Medications','Filter/Equipment','Tank Repair','Equipment Repair','Utilities','Labour','Miscellaneous'];
 const PAYMENT_MODES = ['Cash','UPI','Bank Transfer','Credit'];
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const today = () => new Date().toISOString().slice(0, 10);
 const formatDate = (dStr) => {
@@ -182,7 +182,7 @@ function getStatus(sp) {
   return 'healthy';
 }
 
-// ─── COUNTER TICK EFFECT COMPONENT ───────────────────────────────────────────
+// â”€â”€â”€ COUNTER TICK EFFECT COMPONENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AnimatedNumber({ value, prefix = "" }) {
   const isSigned = typeof value === 'string' && (value.startsWith('+') || value.startsWith('-'));
@@ -216,7 +216,7 @@ function AnimatedNumber({ value, prefix = "" }) {
   return <span className="tabular-nums">{prefix}{sign}{display.toLocaleString('en-IN')}</span>;
 }
 
-// ─── STATUS PILL ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ STATUS PILL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function StatusPill({ status }) {
   const label = status === 'critical' ? 'Critical' : status === 'low' || status === 'due-soon' || status === 'warning' ? 'Low' : 'Healthy';
@@ -232,7 +232,7 @@ function StatusPill({ status }) {
   );
 }
 
-// ─── RECHARTS TOOLTIP ────────────────────────────────────────────────────────
+// â”€â”€â”€ RECHARTS TOOLTIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -253,7 +253,7 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-// ─── INLINE SPARKLINE ────────────────────────────────────────────────────────
+// â”€â”€â”€ INLINE SPARKLINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function Sparkline({ born, exported }) {
   const net = born - exported;
@@ -280,7 +280,7 @@ function Sparkline({ born, exported }) {
   );
 }
 
-// ─── INLINE ACCORDION FORM FOR INVENTORY ROW ──────────────────────────────────
+// â”€â”€â”€ INLINE ACCORDION FORM FOR INVENTORY ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
   const [count, setCount] = useState('');
@@ -404,7 +404,7 @@ function InlineLogForm({ species, type, onConfirm, onClose, tankStock }) {
   );
 }
 
-// ─── TAX INVOICE OVERLAY VIEW ────────────────────────────────────────────────
+// â”€â”€â”€ TAX INVOICE OVERLAY VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TaxInvoiceOverlay({ sale, onClose }) {
   if (!sale) return null;
@@ -453,23 +453,23 @@ function TaxInvoiceOverlay({ sale, onClose }) {
           <tr style={{ borderBottom: '1px solid #ddd' }}>
             <td style={{ padding: '12px 0', color: '#000' }}>{sale.speciesName} (Aquarium Stock)</td>
             <td style={{ textAlign: 'center', padding: '12px 0', color: '#000' }}>{sale.qty}</td>
-            <td style={{ textAlign: 'right', padding: '12px 0', color: '#000' }}>₹{sale.unitPrice.toLocaleString('en-IN')}</td>
-            <td style={{ textAlign: 'right', padding: '12px 0', color: '#000' }}>₹{sale.total.toLocaleString('en-IN')}</td>
+            <td style={{ textAlign: 'right', padding: '12px 0', color: '#000' }}>â‚¹{sale.unitPrice.toLocaleString('en-IN')}</td>
+            <td style={{ textAlign: 'right', padding: '12px 0', color: '#000' }}>â‚¹{sale.total.toLocaleString('en-IN')}</td>
           </tr>
           <tr>
             <td colSpan={2} />
             <td style={{ textAlign: 'right', padding: '12px 0', fontWeight: 'bold' }}>Subtotal:</td>
-            <td style={{ textAlign: 'right', padding: '12px 0' }}>₹{sale.total.toLocaleString('en-IN')}</td>
+            <td style={{ textAlign: 'right', padding: '12px 0' }}>â‚¹{sale.total.toLocaleString('en-IN')}</td>
           </tr>
           <tr>
             <td colSpan={2} />
             <td style={{ textAlign: 'right', padding: '4px 0', fontWeight: 'bold' }}>Tax (0%):</td>
-            <td style={{ textAlign: 'right', padding: '4px 0' }}>₹0</td>
+            <td style={{ textAlign: 'right', padding: '4px 0' }}>â‚¹0</td>
           </tr>
           <tr style={{ borderTop: '2px solid #000' }}>
             <td colSpan={2} />
             <td style={{ textAlign: 'right', padding: '12px 0', fontWeight: 'bold', fontSize: 16 }}>Grand Total:</td>
-            <td style={{ textAlign: 'right', padding: '12px 0', fontWeight: 'bold', fontSize: 16 }}>₹{grandTotal.toLocaleString('en-IN')}</td>
+            <td style={{ textAlign: 'right', padding: '12px 0', fontWeight: 'bold', fontSize: 16 }}>â‚¹{grandTotal.toLocaleString('en-IN')}</td>
           </tr>
         </tbody>
       </table>
@@ -496,7 +496,7 @@ function TaxInvoiceOverlay({ sale, onClose }) {
   );
 }
 
-// ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
+// â”€â”€â”€ DASHBOARD TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function DashboardTab({
   species,
@@ -599,7 +599,7 @@ function DashboardTab({
     const sp = species.find(s => s.id === quickSpeciesId);
     if (!sp) return;
     if (!quickTankId) {
-      setLocalToast({ message: '⚠️ No tank selected.' });
+      setLocalToast({ message: 'âš ï¸ No tank selected.' });
       return;
     }
 
@@ -618,7 +618,7 @@ function DashboardTab({
 
     const typeLabel = quickType === 'birth' ? 'birth' : quickType === 'export' ? 'export' : 'death';
     setLocalToast({
-      message: `✓ ${val} ${sp.name} (${AGE_GROUP_LABELS[quickAgeGroup].label}) — ${typeLabel} recorded in Tank ${quickTankId}`
+      message: `âœ“ ${val} ${sp.name} (${AGE_GROUP_LABELS[quickAgeGroup].label}) â€” ${typeLabel} recorded in Tank ${quickTankId}`
     });
 
     setQuickCount('');
@@ -656,28 +656,28 @@ function DashboardTab({
         <div style={{ flex: 1, minWidth: 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL REVENUE</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginTop: 4 }}>
-            ₹{totalRevenue.toLocaleString('en-IN')}
+            â‚¹{totalRevenue.toLocaleString('en-IN')}
           </div>
         </div>
         <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
         <div style={{ flex: 1, minWidth: 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>PENDING REVENUE</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#888888', marginTop: 4 }}>
-            ₹{pendingRevenue.toLocaleString('en-IN')}
+            â‚¹{pendingRevenue.toLocaleString('en-IN')}
           </div>
         </div>
         <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
         <div style={{ flex: 1, minWidth: 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL EXPENSES</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--secondary)', marginTop: 4 }}>
-            ₹{totalExpenses.toLocaleString('en-IN')}
+            â‚¹{totalExpenses.toLocaleString('en-IN')}
           </div>
         </div>
         <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
         <div style={{ flex: 1, minWidth: 120 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>NET PROFIT</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: netProfit >= 0 ? '#FFFFFF' : '#666666', marginTop: 4 }}>
-            ₹{netProfit.toLocaleString('en-IN')}
+            â‚¹{netProfit.toLocaleString('en-IN')}
           </div>
         </div>
       </div>
@@ -700,7 +700,7 @@ function DashboardTab({
                 {lowStock.length} species need restocking
               </div>
               <div style={{ color:'var(--secondary)', fontSize:11, marginTop:1 }}>
-                {lowStock.map(s=>s.name).join(' · ')}
+                {lowStock.map(s=>s.name).join(' Â· ')}
               </div>
             </div>
             <button
@@ -840,9 +840,9 @@ function DashboardTab({
           <span style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>this month</span>
           <div style={{ fontSize:9, color:'var(--muted)', marginTop:6, display:'flex', gap:4, flexWrap:'wrap' }}>
             <span>A:{bornBreakdown.adults}</span>
-            <span>·</span>
+            <span>Â·</span>
             <span>S-A:{bornBreakdown.semiAdults}</span>
-            <span>·</span>
+            <span>Â·</span>
             <span>NBN:{bornBreakdown.newborns}</span>
           </div>
         </div>
@@ -870,10 +870,10 @@ function DashboardTab({
         </div>
       </div>
 
-      {/* Section 3 — Main Two-Column Row */}
+      {/* Section 3 â€” Main Two-Column Row */}
       <div className="grid-2col" style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16 }}>
         
-        {/* Left Column — Quick Log Panel */}
+        {/* Left Column â€” Quick Log Panel */}
         <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', background: '#0D0D0D' }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>Log Entry</div>
@@ -891,7 +891,7 @@ function DashboardTab({
                 color: quickType === 'birth' ? '#FFFFFF' : 'var(--muted)'
               }}
             >
-              🐣 Birth
+              ðŸ£ Birth
             </button>
             <button
               onClick={() => setQuickType('export')}
@@ -902,7 +902,7 @@ function DashboardTab({
                 color: quickType === 'export' ? '#AAAAAA' : 'var(--muted)'
               }}
             >
-              📦 Export
+              ðŸ“¦ Export
             </button>
             <button
               onClick={() => setQuickType('death')}
@@ -913,7 +913,7 @@ function DashboardTab({
                 color: quickType === 'death' ? '#666666' : 'var(--muted)'
               }}
             >
-              💀 Death
+              ðŸ’€ Death
             </button>
           </div>
 
@@ -1023,7 +1023,7 @@ function DashboardTab({
               background: confirmFlash ? '#FFFFFF' : cfg.bg
             }}
           >
-            {confirmFlash ? '✓ Recorded' : cfg.label}
+            {confirmFlash ? 'âœ“ Recorded' : cfg.label}
           </button>
 
           {/* Local Toast inside the panel */}
@@ -1044,7 +1044,7 @@ function DashboardTab({
           )}
         </div>
 
-        {/* Right Column — Live Activity Feed */}
+        {/* Right Column â€” Live Activity Feed */}
         <div className="card" style={{ padding: 18, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <span style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>Live Activity</span>
@@ -1066,21 +1066,21 @@ function DashboardTab({
                 tank_add: '#FFFFFF',
                 tank_del: '#666666'
               };
-              const sign = act.type === 'birth' ? '+' : act.type === 'export' ? '→' : act.type === 'death' ? '−' : '';
+              const sign = act.type === 'birth' ? '+' : act.type === 'export' ? 'â†’' : act.type === 'death' ? 'âˆ’' : '';
               const dotColor = textColors[act.type] || '#FFFFFF';
               
               const emojis = {
-                birth: '🐣',
-                export: '📦',
-                death: '💀',
-                transfer: '⇄',
-                quarantine: '🔒',
-                quarantine_lift: '✓',
-                stock_in: '📥',
-                promote: '⬆',
-                stock_fix: '✏',
-                tank_add: '🪣',
-                tank_del: '🗑'
+                birth: 'ðŸ£',
+                export: 'ðŸ“¦',
+                death: 'ðŸ’€',
+                transfer: 'â‡„',
+                quarantine: 'ðŸ”’',
+                quarantine_lift: 'âœ“',
+                stock_in: 'ðŸ“¥',
+                promote: 'â¬†',
+                stock_fix: 'âœ',
+                tank_add: 'ðŸª£',
+                tank_del: 'ðŸ—‘'
               };
 
               return (
@@ -1096,7 +1096,7 @@ function DashboardTab({
                     background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', flexShrink: 0
                   }}>
-                    <span style={{ fontSize: 13 }}>{emojis[act.type] || '⚡'}</span>
+                    <span style={{ fontSize: 13 }}>{emojis[act.type] || 'âš¡'}</span>
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -1110,11 +1110,11 @@ function DashboardTab({
                             {act.species}
                           </span>
                         ) : act.type === 'transfer' ? (
-                          <span>⇄ {act.count} {act.species} moved from Tank {act.from} → Tank {act.to}</span>
+                          <span>â‡„ {act.count} {act.species} moved from Tank {act.from} â†’ Tank {act.to}</span>
                         ) : act.type === 'quarantine' ? (
-                          <span>🔒 Tank {act.tank} quarantined — {act.note}</span>
+                          <span>ðŸ”’ Tank {act.tank} quarantined â€” {act.note}</span>
                         ) : act.type === 'quarantine_lift' ? (
-                          <span>✓ Tank {act.tank} quarantine lifted</span>
+                          <span>âœ“ Tank {act.tank} quarantine lifted</span>
                         ) : (
                           <span>{act.species}</span>
                         )}
@@ -1132,7 +1132,7 @@ function DashboardTab({
         </div>
       </div>
 
-      {/* Section 4 — Tank Overview Strip */}
+      {/* Section 4 â€” Tank Overview Strip */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Tanks</span>
@@ -1206,10 +1206,10 @@ function DashboardTab({
         </div>
       </div>
 
-      {/* Section 5 — Stock Trend Chart */}
+      {/* Section 5 â€” Stock Trend Chart */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Stock Trend — Last 6 Months</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Stock Trend â€” Last 6 Months</span>
           <div style={{ display: 'flex', gap: 12, fontSize: 11 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#FFFFFF' }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFFFFF' }} /> Born
@@ -1243,7 +1243,7 @@ function DashboardTab({
   );
 }
 
-// ─── INVENTORY TAB ────────────────────────────────────────────────────────────
+// â”€â”€â”€ INVENTORY TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks }) {
   const filtered = useMemo(() => {
@@ -1272,7 +1272,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
   const [newSpName, setNewSpName] = useState('');
   const [newSpMin, setNewSpMin] = useState('');
   const [newSpPrice, setNewSpPrice] = useState('');
-  const [newSpTemp, setNewSpTemp] = useState('24-28°C');
+  const [newSpTemp, setNewSpTemp] = useState('24-28Â°C');
   const [newSpPh, setNewSpPh] = useState('7.2');
   const [newSpError, setNewSpError] = useState(null);
 
@@ -1303,7 +1303,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
       name: cleanName,
       min: minVal,
       price: priceVal,
-      temp: newSpTemp.trim() || '24-28°C',
+      temp: newSpTemp.trim() || '24-28Â°C',
       ph: newSpPh.trim() || '7.2',
       stock: 0,
       born: 0,
@@ -1325,7 +1325,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
     setNewSpName('');
     setNewSpMin('');
     setNewSpPrice('');
-    setNewSpTemp('24-28°C');
+    setNewSpTemp('24-28Â°C');
     setNewSpPh('7.2');
     setNewSpError(null);
     setShowAddSpeciesPanel(false);
@@ -1392,7 +1392,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <span style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>Add New Species</span>
-            <button onClick={() => setShowAddSpeciesPanel(false)} style={{ background: 'none', color: '#888888', border: 'none', cursor: 'pointer', fontSize: 14 }}>✕</button>
+            <button onClick={() => setShowAddSpeciesPanel(false)} style={{ background: 'none', color: '#888888', border: 'none', cursor: 'pointer', fontSize: 14 }}>âœ•</button>
           </div>
 
           <form onSubmit={handleAddSpeciesSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1426,7 +1426,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>BASE PRICE (₹)</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>BASE PRICE (â‚¹)</span>
                 <input
                   type="number"
                   min={0}
@@ -1442,7 +1442,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
                   type="text"
                   value={newSpTemp}
                   onChange={e => setNewSpTemp(e.target.value)}
-                  placeholder="e.g. 24-28°C"
+                  placeholder="e.g. 24-28Â°C"
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1514,7 +1514,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
                         onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.12)'}
                         onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.06)'}
                       >
-                        🐣
+                        ðŸ£
                       </button>
                       <button
                         title="Log Export"
@@ -1527,7 +1527,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
                         onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.12)'}
                         onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.06)'}
                       >
-                        📦
+                        ðŸ“¦
                       </button>
                       <button
                         title="Log Death"
@@ -1540,7 +1540,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
                         onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.12)'}
                         onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.06)'}
                       >
-                        💀
+                        ðŸ’€
                       </button>
                     </div>
                   </td>
@@ -1574,7 +1574,7 @@ function InventoryTab({ species, search, onConfirmLog, filterLowStock, onClearFi
 }
 
 
-// ─── TANKS TAB (OVERHAULED) ──────────────────────────────────────────────────
+// â”€â”€â”€ TANKS TAB (OVERHAULED) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TanksTab({
   species,
@@ -1787,7 +1787,7 @@ function TanksTab({
       id,
       displayName,
       capacity: cap,
-      temp: addTankTemp.trim() || '26°C',
+      temp: addTankTemp.trim() || '26Â°C',
       ph: addTankPh.trim() || '7.2',
       type: addTankType,
       addedDate: today()
@@ -1815,7 +1815,7 @@ function TanksTab({
     setActivity(prev => [{
       id: Date.now(),
       type: 'tank_add',
-      message: `🪣 New tank '${displayName}' created`,
+      message: `ðŸª£ New tank '${displayName}' created`,
       time: 'Just now'
     }, ...prev]);
   };
@@ -1824,7 +1824,7 @@ function TanksTab({
   const handleDeleteTank = (id) => {
     const totalCount = getTankTotal(id);
     if (totalCount > 0) {
-      triggerToast("⚠️ Cannot delete tank: remove all fish first.");
+      triggerToast("âš ï¸ Cannot delete tank: remove all fish first.");
       return;
     }
     const displayName = tanks.find(t => t.id === id)?.displayName || id;
@@ -1836,7 +1836,7 @@ function TanksTab({
       setActivity(prev => [{
         id: Date.now(),
         type: 'tank_del',
-        message: `🗑 Tank '${displayName}' removed`,
+        message: `ðŸ—‘ Tank '${displayName}' removed`,
         time: 'Just now'
       }, ...prev]);
     }
@@ -1865,7 +1865,7 @@ function TanksTab({
       displayName: editTankName.trim() || `Tank ${id}`,
       capacity: cap,
       type: editTankType,
-      temp: editTankTemp.trim() || '26°C',
+      temp: editTankTemp.trim() || '26Â°C',
       ph: editTankPh.trim() || '7.2'
     } : t));
 
@@ -1962,7 +1962,7 @@ function TanksTab({
             cursor: 'pointer'
           }}
         >
-          {showAddTankPanel ? '✕ Close Panel' : '＋ Add Tank'}
+          {showAddTankPanel ? 'âœ• Close Panel' : 'ï¼‹ Add Tank'}
         </button>
       </div>
 
@@ -1993,7 +1993,7 @@ function TanksTab({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Create New Tank</span>
-            <button onClick={() => setShowAddTankPanel(false)} style={{ background: 'none', color: '#888888', border: 'none', cursor: 'pointer', fontSize: 14 }}>✕</button>
+            <button onClick={() => setShowAddTankPanel(false)} style={{ background: 'none', color: '#888888', border: 'none', cursor: 'pointer', fontSize: 14 }}>âœ•</button>
           </div>
 
           <form onSubmit={handleCreateTank} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -2051,7 +2051,7 @@ function TanksTab({
                   type="text"
                   value={addTankTemp}
                   onChange={e => setAddTankTemp(e.target.value)}
-                  placeholder="e.g. 26°C"
+                  placeholder="e.g. 26Â°C"
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -2087,7 +2087,7 @@ function TanksTab({
               const isExpanded = expandedSpecies[sp.id];
 
               return (
-                <div key={sp.id} className="card" style={{ padding: 0, borderRadius: 12, overflow: 'hidden', background: '#0C1526', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div key={sp.id} className="card" style={{ padding: 0, borderRadius: 12, overflow: 'hidden', background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)' }}>
                   
                   {/* Header */}
                   <div
@@ -2140,7 +2140,7 @@ function TanksTab({
                           }}
                           style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
                         >
-                          {showAddAgeGroupSpId === sp.id ? '✕ Cancel' : '＋ Add Age Group'}
+                          {showAddAgeGroupSpId === sp.id ? 'âœ• Cancel' : 'ï¼‹ Add Age Group'}
                         </button>
                       </div>
 
@@ -2196,7 +2196,7 @@ function TanksTab({
                           const assignedTanks = getTanksForAgeGroup(sp.id, ageGroup);
                           
                           return (
-                            <div key={ageGroup} style={{ background: '#060C18', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, overflow: 'hidden' }}>
+                            <div key={ageGroup} style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, overflow: 'hidden' }}>
                               {/* Age Group Header */}
                               <div
                                 onClick={() => toggleAgeGroupExpand(ageKey)}
@@ -2231,7 +2231,7 @@ function TanksTab({
                                       }}
                                       style={{ background: 'none', border: 'none', color: '#A0A0A0', cursor: 'pointer', fontSize: 10, fontWeight: 700 }}
                                     >
-                                      {showAssignTankKey === ageKey ? '✕ Cancel' : '＋ Assign to Tank'}
+                                      {showAssignTankKey === ageKey ? 'âœ• Cancel' : 'ï¼‹ Assign to Tank'}
                                     </button>
                                   </div>
 
@@ -2247,7 +2247,7 @@ function TanksTab({
                                         <select value={assignTankId} onChange={e => setAssignTankId(e.target.value)} style={{ height: 32 }}>
                                           {tanks.map(t => (
                                             <option key={t.id} value={t.id}>
-                                              {t.displayName} — ({getTankTotal(t.id)}/{t.capacity} fish)
+                                              {t.displayName} â€” ({getTankTotal(t.id)}/{t.capacity} fish)
                                             </option>
                                           ))}
                                         </select>
@@ -2278,7 +2278,7 @@ function TanksTab({
                                           setActivity(prev => [{
                                             id: Date.now(),
                                             type: 'stock_in',
-                                            message: `📥 +${countVal} ${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) received → ${tankName}`,
+                                            message: `ðŸ“¥ +${countVal} ${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) received â†’ ${tankName}`,
                                             time: 'Just now'
                                           }, ...prev]);
 
@@ -2319,7 +2319,7 @@ function TanksTab({
                                             <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>
                                               {tankData?.displayName || `Tank ${tankId}`}
                                             </span>
-                                            {isQuarantined && <span title="Quarantined" style={{ fontSize: 9 }}>🔒</span>}
+                                            {isQuarantined && <span title="Quarantined" style={{ fontSize: 9 }}>ðŸ”’</span>}
                                           </div>
 
                                           {/* Count display or edit input */}
@@ -2346,7 +2346,7 @@ function TanksTab({
                                                   setActivity(prev => [{
                                                     id: Date.now(),
                                                     type: 'stock_fix',
-                                                    message: `✏ ${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) count corrected in ${tankName} by admin`,
+                                                    message: `âœ ${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) count corrected in ${tankName} by admin`,
                                                     time: 'Just now'
                                                   }, ...prev]);
                                                 }
@@ -2382,7 +2382,7 @@ function TanksTab({
                                           {/* Info footer */}
                                           <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
                                             <span style={{ fontSize: 9, color: 'var(--muted)' }}>
-                                              {avgExport > 0 ? `~${Math.ceil(count / avgExport)}d drain` : '— drain'}
+                                              {avgExport > 0 ? `~${Math.ceil(count / avgExport)}d drain` : 'â€” drain'}
                                             </span>
                                             <span style={{ fontSize: 8, background: 'rgba(255,255,255,0.04)', padding: '1px 4px', borderRadius: 2, color: 'var(--muted)' }}>
                                               {tankData?.type === 'Marine' ? 'MAR' : 'FRSH'}
@@ -2402,7 +2402,7 @@ function TanksTab({
                                               }}
                                               style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: 11, padding: 0 }}
                                             >
-                                              ⇄
+                                              â‡„
                                             </button>
                                             
                                             {ageGroup !== 'adult' && (
@@ -2417,7 +2417,7 @@ function TanksTab({
                                                 }}
                                                 style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: 11, padding: 0 }}
                                               >
-                                                ⬆
+                                                â¬†
                                               </button>
                                             )}
 
@@ -2431,7 +2431,7 @@ function TanksTab({
                                               }}
                                               style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: 11, padding: 0 }}
                                             >
-                                              ✏
+                                              âœ
                                             </button>
 
                                             <button
@@ -2454,7 +2454,7 @@ function TanksTab({
                                               }}
                                               style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: 11, padding: 0 }}
                                             >
-                                              🗑
+                                              ðŸ—‘
                                             </button>
                                           </div>
 
@@ -2495,7 +2495,7 @@ function TanksTab({
                                                     setActivity(prev => [{
                                                       id: Date.now(),
                                                       type: 'transfer',
-                                                      message: `⇄ ${qty} ${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) moved ${fromName} → ${toName}`,
+                                                      message: `â‡„ ${qty} ${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) moved ${fromName} â†’ ${toName}`,
                                                       time: 'Just now'
                                                     }, ...prev]);
 
@@ -2505,7 +2505,7 @@ function TanksTab({
                                                 >
                                                   OK
                                                 </button>
-                                                <button type="button" onClick={() => setActiveTransferKey(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>✕</button>
+                                                <button type="button" onClick={() => setActiveTransferKey(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>âœ•</button>
                                               </div>
                                             </div>
                                           )}
@@ -2545,7 +2545,7 @@ function TanksTab({
                                                     setActivity(prev => [{
                                                       id: Date.now(),
                                                       type: 'promote',
-                                                      message: `⬆ ${qty} ${sp.name} promoted ${AGE_GROUP_LABELS[ageGroup].label} → ${AGE_GROUP_LABELS[promoteToAge].label} in ${tankName}`,
+                                                      message: `â¬† ${qty} ${sp.name} promoted ${AGE_GROUP_LABELS[ageGroup].label} â†’ ${AGE_GROUP_LABELS[promoteToAge].label} in ${tankName}`,
                                                       time: 'Just now'
                                                     }, ...prev]);
 
@@ -2555,7 +2555,7 @@ function TanksTab({
                                                 >
                                                   OK
                                                 </button>
-                                                <button type="button" onClick={() => setActivePromoteKey(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>✕</button>
+                                                <button type="button" onClick={() => setActivePromoteKey(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>âœ•</button>
                                               </div>
                                             </div>
                                           )}
@@ -2598,7 +2598,7 @@ function TanksTab({
                   key={tank.id}
                   className="card"
                   style={{
-                    padding: 16, display: 'flex', flexDirection: 'column', background: '#0C1526',
+                    padding: 16, display: 'flex', flexDirection: 'column', background: '#0D0D0D',
                     border: isQuarantined ? '1px solid rgba(255,71,87,0.2)' : '1px solid rgba(255,255,255,0.08)',
                     boxShadow: isHighlighted ? '0 0 16px rgba(255,255,255,0.25)' : undefined,
                     transition: 'box-shadow 0.3s ease'
@@ -2661,14 +2661,14 @@ function TanksTab({
                             }).length;
                             return lowStockSpeciesInTankCount > 0 ? (
                               <span style={{ fontSize: 9, background: 'rgba(255,184,0,0.15)', color: '#FFB800', padding: '1px 5px', borderRadius: 4, fontWeight: 700 }} title={`${lowStockSpeciesInTankCount} species below target stock`}>
-                                ⚠️ {lowStockSpeciesInTankCount} low
+                                âš ï¸ {lowStockSpeciesInTankCount} low
                               </span>
                             ) : null;
                           })()}
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">✏</button>
-                          <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: totalOccupants > 0 ? 0.3 : 1, cursor: totalOccupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={totalOccupants > 0}>🗑</button>
+                          <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">âœ</button>
+                          <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: totalOccupants > 0 ? 0.3 : 1, cursor: totalOccupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={totalOccupants > 0}>ðŸ—‘</button>
                         </div>
                       </div>
 
@@ -2679,14 +2679,14 @@ function TanksTab({
 
                       {/* Stats Row */}
                       <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>
-                        {totalOccupants} fish · {tankContents.length} active types
+                        {totalOccupants} fish Â· {tankContents.length} active types
                       </div>
 
                       {/* Quarantine Status Panel */}
                       <div style={{ marginBottom: 12, background: 'rgba(255,255,255,0.02)', padding: 8, borderRadius: 6, border: '1px solid rgba(255,255,255,0.04)' }}>
                         {isQuarantined ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <span style={{ color: '#FF6666', fontSize: 10, fontWeight: 700 }}>🔒 Quarantined: {quarantinedTanks[tank.id].reason}</span>
+                            <span style={{ color: '#FF6666', fontSize: 10, fontWeight: 700 }}>ðŸ”’ Quarantined: {quarantinedTanks[tank.id].reason}</span>
                             <button
                               onClick={() => {
                                 setQuarantinedTanks(prev => {
@@ -2699,7 +2699,7 @@ function TanksTab({
                                 setActivity(prev => [{
                                   id: Date.now(),
                                   type: 'quarantine_lift',
-                                  message: `✓ Tank ${tank.displayName} quarantine lifted`,
+                                  message: `âœ“ Tank ${tank.displayName} quarantine lifted`,
                                   time: 'Just now'
                                 }, ...prev]);
                               }}
@@ -2733,7 +2733,7 @@ function TanksTab({
                                       setActivity(prev => [{
                                         id: Date.now(),
                                         type: 'quarantine',
-                                        message: `🔒 Tank ${tank.displayName} quarantined — ${quarantineReason.trim()}`,
+                                        message: `ðŸ”’ Tank ${tank.displayName} quarantined â€” ${quarantineReason.trim()}`,
                                         time: 'Just now'
                                       }, ...prev]);
 
@@ -2744,7 +2744,7 @@ function TanksTab({
                                   >
                                     Confirm
                                   </button>
-                                  <button type="button" onClick={() => setShowQuarantineTankId(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>✕</button>
+                                  <button type="button" onClick={() => setShowQuarantineTankId(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>âœ•</button>
                                 </div>
                               </div>
                             ) : (
@@ -2842,15 +2842,15 @@ function TanksTab({
                       <td style={{ color: usageCol, fontWeight: 700 }}>{usagePct}%</td>
                       <td>
                         {isQuarantined ? (
-                          <span style={{ color: '#FF6666', fontSize: 11, fontWeight: 600 }}>🔒 Yes ({quarantinedTanks[tank.id].reason})</span>
+                          <span style={{ color: '#FF6666', fontSize: 11, fontWeight: 600 }}>ðŸ”’ Yes ({quarantinedTanks[tank.id].reason})</span>
                         ) : (
                           <span style={{ color: 'var(--muted)', fontSize: 11 }}>No</span>
                         )}
                       </td>
                       <td style={{ textAlign: 'right', paddingRight: 16 }}>
                         <div style={{ display: 'inline-flex', gap: 10 }}>
-                          <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">✏</button>
-                          <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: occupants > 0 ? 0.3 : 1, cursor: occupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={occupants > 0}>🗑</button>
+                          <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">âœ</button>
+                          <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: occupants > 0 ? 0.3 : 1, cursor: occupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={occupants > 0}>ðŸ—‘</button>
                         </div>
                       </td>
                     </tr>
@@ -2868,7 +2868,7 @@ function TanksTab({
               borderRadius: 8, color: '#A0A0A0', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
           >
-            ＋ Add Tank
+            ï¼‹ Add Tank
           </button>
         </div>
       )}
@@ -2878,7 +2878,7 @@ function TanksTab({
 }
 
 
-// ─── REPORTS TAB ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ REPORTS TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ReportsTab({ species, tankStock }) {
   // Stacked chart of age group distribution per species
@@ -2967,15 +2967,15 @@ function ReportsTab({ species, tankStock }) {
 
       {/* Summaries Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-        <div className="card" style={{ padding: 14, textAlign: 'center', background: '#0C1526' }}>
+        <div className="card" style={{ padding: 14, textAlign: 'center', background: '#0D0D0D' }}>
           <div style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600 }}>TOTAL NEWBORNS</div>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginTop: 4 }}>{summaries.newbornTotal}</div>
         </div>
-        <div className="card" style={{ padding: 14, textAlign: 'center', background: '#0C1526' }}>
+        <div className="card" style={{ padding: 14, textAlign: 'center', background: '#0D0D0D' }}>
           <div style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600 }}>TOTAL SEMI-ADULTS</div>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginTop: 4 }}>{summaries.semiAdultTotal}</div>
         </div>
-        <div className="card" style={{ padding: 14, textAlign: 'center', background: '#0C1526' }}>
+        <div className="card" style={{ padding: 14, textAlign: 'center', background: '#0D0D0D' }}>
           <div style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600 }}>TOTAL ADULTS</div>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginTop: 4 }}>{summaries.adultTotal}</div>
         </div>
@@ -3047,7 +3047,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
 
     setExpenses(prev => [newExp, ...prev]);
 
-    setLocalPanelToast(`Expense logged — ₹${val.toLocaleString('en-IN')} for ${category}`);
+    setLocalPanelToast(`Expense logged â€” â‚¹${val.toLocaleString('en-IN')} for ${category}`);
     setTimeout(() => setLocalPanelToast(null), 3000);
 
     setAmount('');
@@ -3100,7 +3100,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
     };
     setExpenses(prev => [newExp, ...prev]);
 
-    setLocalPanelToast(`Stock-In logged — ₹${totalCost.toLocaleString('en-IN')} spent. Stock added.`);
+    setLocalPanelToast(`Stock-In logged â€” â‚¹${totalCost.toLocaleString('en-IN')} spent. Stock added.`);
     setTimeout(() => setLocalPanelToast(null), 3000);
 
     // Reset Form
@@ -3219,7 +3219,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>BUY UNIT PRICE (₹)</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>BUY UNIT PRICE (â‚¹)</span>
                 <input
                   type="number"
                   min={1}
@@ -3252,7 +3252,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
               <span style={{ fontSize: 13, fontWeight: 'bold', color: '#FFFFFF' }}>
-                Total Cost: ₹{((parseInt(stockQty, 10) || 0) * (parseInt(stockBuyPrice, 10) || 0)).toLocaleString('en-IN')}
+                Total Cost: â‚¹{((parseInt(stockQty, 10) || 0) * (parseInt(stockBuyPrice, 10) || 0)).toLocaleString('en-IN')}
               </span>
               <button type="submit" style={{ height: 36, padding: '0 24px', background: '#FFFFFF', color: '#000000', fontWeight: 700, borderRadius: 8, border: 'none', cursor: 'pointer' }}>
                 Submit Stock-In & Expense
@@ -3262,12 +3262,12 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
         </div>
       )}
 
-      {/* Section 1 — P&L Cards */}
+      {/* Section 1 â€” P&L Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>REVENUE</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>
-            ₹{revenueTotal.toLocaleString('en-IN')}
+            â‚¹{revenueTotal.toLocaleString('en-IN')}
           </div>
           <span style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 4, display: 'block' }}>
             from {paidSales.length} confirmed sales
@@ -3277,17 +3277,17 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>EXPENSES</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>
-            ₹{expenseTotal.toLocaleString('en-IN')}
+            â‚¹{expenseTotal.toLocaleString('en-IN')}
           </div>
           <span style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 4, display: 'block' }}>
-            Food ₹{foodTotal.toLocaleString('en-IN')} · Repairs ₹{repairTotal.toLocaleString('en-IN')} · Utils ₹{utilTotal.toLocaleString('en-IN')}
+            Food â‚¹{foodTotal.toLocaleString('en-IN')} Â· Repairs â‚¹{repairTotal.toLocaleString('en-IN')} Â· Utils â‚¹{utilTotal.toLocaleString('en-IN')}
           </span>
         </div>
 
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>NET PROFIT</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: netTotal >= 0 ? '#FFFFFF' : '#FF6666', marginTop: 6 }}>
-            ₹{netTotal.toLocaleString('en-IN')}
+            â‚¹{netTotal.toLocaleString('en-IN')}
           </div>
           <span style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 4, display: 'block' }}>
             Margin {marginPct}%
@@ -3295,7 +3295,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
         </div>
       </div>
 
-      {/* Section 2 — Add Expense Form */}
+      {/* Section 2 â€” Add Expense Form */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Record Expense</div>
         <form onSubmit={handleAddExpense} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -3308,7 +3308,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
           </div>
 
           <div style={{ width: 100 }}>
-            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>AMOUNT (₹)</span>
+            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>AMOUNT (â‚¹)</span>
             <input
               type="number"
               value={amount}
@@ -3359,7 +3359,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
         </form>
       </div>
 
-      {/* Section 3 — Expense Table */}
+      {/* Section 3 â€” Expense Table */}
       <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', margin: '0 18px 12px 18px' }}>
           Expense Logs
@@ -3437,7 +3437,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
                     {isEditing ? (
                       <input type="number" value={editAmount} onChange={ev => setEditAmount(ev.target.value)} style={{ height: 28, fontSize: 12, width: 85 }} />
                     ) : (
-                      <span>₹{e.amount.toLocaleString('en-IN')}</span>
+                      <span>â‚¹{e.amount.toLocaleString('en-IN')}</span>
                     )}
                   </td>
 
@@ -3450,7 +3450,7 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
                       </div>
                     ) : (
                       <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                        <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">✏</button>
+                        <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">âœ</button>
                         <button onClick={() => handleDeleteExpense(e.id)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Delete"><Trash2 size={14} /></button>
                       </div>
                     )}
@@ -3461,11 +3461,11 @@ function FinancesTab({ expenses, setExpenses, sales, species, tanks, onAddStock 
           </tbody>
         </table>
         <div style={{ textAlign: 'right', margin: '14px 20px 0 0', fontSize: 13, color: '#fff' }}>
-          Total this month: <strong>₹{expenseTotal.toLocaleString('en-IN')}</strong>
+          Total this month: <strong>â‚¹{expenseTotal.toLocaleString('en-IN')}</strong>
         </div>
       </div>
 
-      {/* Section 4 — Category Bar Chart */}
+      {/* Section 4 â€” Category Bar Chart */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 16 }}>
           Expenses by Category
@@ -3617,7 +3617,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
   return (
     <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       
-      {/* Section 1 — Sales summaries */}
+      {/* Section 1 â€” Sales summaries */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>CONFIRMED SALES</div>
@@ -3625,7 +3625,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
             {confirmed.length}
           </div>
           <span style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 4, display: 'block' }}>
-            Total Value: ₹{confirmedValue.toLocaleString('en-IN')}
+            Total Value: â‚¹{confirmedValue.toLocaleString('en-IN')}
           </span>
         </div>
 
@@ -3645,12 +3645,12 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
             {topBuyer ? topBuyer.name : 'N/A'}
           </div>
           <span style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 4, display: 'block' }}>
-            {topBuyer ? `Spent ₹${topBuyer.value.toLocaleString('en-IN')}` : 'No orders recorded'}
+            {topBuyer ? `Spent â‚¹${topBuyer.value.toLocaleString('en-IN')}` : 'No orders recorded'}
           </span>
         </div>
       </div>
 
-      {/* Section 2 — Pending Approvals Panel */}
+      {/* Section 2 â€” Pending Approvals Panel */}
       {pending.length > 0 && (
         <div className="card" style={{ padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -3681,7 +3681,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
 
                 <div style={{ fontSize: 12 }}>
                   <strong>{s.speciesName}</strong> ({s.ageGroup})<br />
-                  <span style={{ color: 'var(--secondary)' }}>{s.qty} units from Tank {s.tankId} @ ₹{s.unitPrice} = ₹{s.total}</span>
+                  <span style={{ color: 'var(--secondary)' }}>{s.qty} units from Tank {s.tankId} @ â‚¹{s.unitPrice} = â‚¹{s.total}</span>
                 </div>
 
                 <div style={{ fontSize: 11, color: 'var(--muted)' }}>
@@ -3693,13 +3693,13 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
                     onClick={() => handleApproveSale(s.id)}
                     style={{ flex: 1, padding: '6px 0', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', fontSize: 11, borderRadius: 6 }}
                   >
-                    ✓ Approve
+                    âœ“ Approve
                   </button>
                   <button
                     onClick={() => handleRejectSale(s.id)}
                     style={{ flex: 1, padding: '6px 0', background: 'rgba(255, 71, 87, 0.12)', border: '1px solid rgba(255, 71, 87, 0.25)', color: '#FF4757', fontWeight: 'bold', fontSize: 11, borderRadius: 6 }}
                   >
-                    ✗ Reject
+                    âœ— Reject
                   </button>
                 </div>
               </div>
@@ -3708,7 +3708,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
         </div>
       )}
 
-      {/* Section 3 — All Sales Table */}
+      {/* Section 3 â€” All Sales Table */}
       <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', margin: '0 18px 12px 18px' }}>
           Sale & Order Logs
@@ -3721,8 +3721,8 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
               <th>Age Group</th>
               <th>Tank</th>
               <th>Qty</th>
-              <th>Unit ₹</th>
-              <th>Total ₹</th>
+              <th>Unit â‚¹</th>
+              <th>Total â‚¹</th>
               <th>Buyer</th>
               <th>Payment Mode</th>
               <th>Payment Status</th>
@@ -3774,16 +3774,16 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
                     {isEditing ? (
                       <input type="number" value={editUnitPrice} onChange={e => setEditUnitPrice(e.target.value)} style={{ width: 75, height: 28, fontSize: 12, padding: '2px 4px' }} />
                     ) : (
-                      <span>₹{s.unitPrice.toLocaleString('en-IN')}</span>
+                      <span>â‚¹{s.unitPrice.toLocaleString('en-IN')}</span>
                     )}
                   </td>
 
                   {/* Total price */}
                   <td style={{ fontWeight: 700 }}>
                     {isEditing ? (
-                      <span>₹{((parseInt(editQty, 10) || 0) * (parseInt(editUnitPrice, 10) || 0)).toLocaleString('en-IN')}</span>
+                      <span>â‚¹{((parseInt(editQty, 10) || 0) * (parseInt(editUnitPrice, 10) || 0)).toLocaleString('en-IN')}</span>
                     ) : (
-                      <span>₹{s.total.toLocaleString('en-IN')}</span>
+                      <span>â‚¹{s.total.toLocaleString('en-IN')}</span>
                     )}
                   </td>
 
@@ -3848,7 +3848,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
                             Mark Paid
                           </button>
                         )}
-                        <button onClick={() => handleStartEdit(s)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">✏</button>
+                        <button onClick={() => handleStartEdit(s)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">âœ</button>
                         {s.approved ? (
                           <button onClick={() => onOpenInvoice(s)} style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: 0 }} title="Invoice"><Printer size={14} /></button>
                         ) : (
@@ -3864,7 +3864,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
         </table>
       </div>
 
-      {/* Section 4 — Revenue Trend Chart */}
+      {/* Section 4 â€” Revenue Trend Chart */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 16 }}>
           7-Day Revenue Trend
@@ -3887,7 +3887,7 @@ function SalesTab({ sales, setSales, species, customers, setCustomers, onDeductS
 }
 
 
-// ─── CUSTOMERS TAB ───────────────────────────────────────────────────────────
+// â”€â”€â”€ CUSTOMERS TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CustomersTab({ customers, setCustomers }) {
   const [name, setName] = useState('');
@@ -3908,7 +3908,7 @@ function CustomersTab({ customers, setCustomers }) {
     // Check for duplicate name
     const exists = customers.some(c => c.name.toLowerCase() === cleanName.toLowerCase());
     if (exists) {
-      setErrorMessage(`⚠️ Customer with name "${cleanName}" already exists`);
+      setErrorMessage(`âš ï¸ Customer with name "${cleanName}" already exists`);
       setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
@@ -3919,8 +3919,8 @@ function CustomersTab({ customers, setCustomers }) {
       contact: cleanContact,
       totalOrders: 0,
       totalValue: 0,
-      lastOrder: '—',
-      topSpecies: '—'
+      lastOrder: 'â€”',
+      topSpecies: 'â€”'
     };
 
     setCustomers(prev => [...prev, newCust]);
@@ -3965,14 +3965,14 @@ function CustomersTab({ customers, setCustomers }) {
         </div>
       )}
 
-      {/* Section 1 — Grid list */}
+      {/* Section 1 â€” Grid list */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
         {customers.map(c => {
           const initials = c.name.split(' ').map(w => w[0]).join('').slice(0,2);
           const isEditing = editingCustomerId === c.id;
 
           return (
-            <div key={c.id} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10, background: '#0C1526' }}>
+            <div key={c.id} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10, background: '#0D0D0D' }}>
               {isEditing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Edit Customer</span>
@@ -4008,19 +4008,19 @@ function CustomersTab({ customers, setCustomers }) {
                       <div style={{ fontWeight: 700, color: '#fff', fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.name}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.contact}</div>
                     </div>
-                    <button onClick={() => handleStartEdit(c)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">✏</button>
+                    <button onClick={() => handleStartEdit(c)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">âœ</button>
                   </div>
 
                   <div style={{ fontSize: 12, marginTop: 4 }}>
-                    <strong>{c.totalOrders}</strong> orders · <strong>₹{c.totalValue.toLocaleString('en-IN')}</strong> lifetime
+                    <strong>{c.totalOrders}</strong> orders Â· <strong>â‚¹{c.totalValue.toLocaleString('en-IN')}</strong> lifetime
                   </div>
 
                   <div style={{ fontSize: 11, color: 'var(--secondary)' }}>
-                    Fav: {c.topSpecies || '—'}
+                    Fav: {c.topSpecies || 'â€”'}
                   </div>
 
                   <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 'auto' }}>
-                    Last order: {c.lastOrder !== '—' ? formatDate(c.lastOrder) : '—'}
+                    Last order: {c.lastOrder !== 'â€”' ? formatDate(c.lastOrder) : 'â€”'}
                   </div>
                 </>
               )}
@@ -4029,7 +4029,7 @@ function CustomersTab({ customers, setCustomers }) {
         })}
       </div>
 
-      {/* Section 2 — Add Customer Mini Form */}
+      {/* Section 2 â€” Add Customer Mini Form */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Add Customer Profile</div>
         <form onSubmit={handleAddCustomer} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -4065,7 +4065,7 @@ function CustomersTab({ customers, setCustomers }) {
         </form>
       </div>
 
-      {/* Section 3 — Table */}
+      {/* Section 3 â€” Table */}
       <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', margin: '0 18px 12px 18px' }}>
           Customer Master List
@@ -4087,9 +4087,9 @@ function CustomersTab({ customers, setCustomers }) {
                 <td style={{ fontWeight: 600 }}>{c.name}</td>
                 <td style={{ color: 'var(--secondary)' }}>{c.contact}</td>
                 <td>{c.totalOrders}</td>
-                <td style={{ fontWeight: 700 }}>₹{c.totalValue.toLocaleString('en-IN')}</td>
-                <td style={{ color: 'var(--secondary)' }}>{c.topSpecies || '—'}</td>
-                <td style={{ color: 'var(--muted)' }}>{c.lastOrder !== '—' ? formatDate(c.lastOrder) : '—'}</td>
+                <td style={{ fontWeight: 700 }}>â‚¹{c.totalValue.toLocaleString('en-IN')}</td>
+                <td style={{ color: 'var(--secondary)' }}>{c.topSpecies || 'â€”'}</td>
+                <td style={{ color: 'var(--muted)' }}>{c.lastOrder !== 'â€”' ? formatDate(c.lastOrder) : 'â€”'}</td>
               </tr>
             ))}
           </tbody>
@@ -4101,7 +4101,7 @@ function CustomersTab({ customers, setCustomers }) {
 }
 
 
-// ─── WORKERS TAB ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ WORKERS TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function WorkersTab({ workers, setWorkers, workerSubmissions }) {
   const [showAddPanel, setShowAddPanel] = useState(false);
@@ -4123,7 +4123,7 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
     // Check duplicate
     const exists = workers.some(w => w.name.toLowerCase() === cleanName.toLowerCase());
     if (exists) {
-      setErrorMessage(`⚠️ Worker with name "${cleanName}" already exists`);
+      setErrorMessage(`âš ï¸ Worker with name "${cleanName}" already exists`);
       setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
@@ -4247,7 +4247,7 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
         </div>
       )}
 
-      {/* Section 1 — Worker Cards Grid */}
+      {/* Section 1 â€” Worker Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
         {workers.map(w => {
           // get worker submissions today count
@@ -4263,7 +4263,7 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
           const isEditing = editingWorkerId === w.id;
 
           return (
-            <div key={w.id} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10, background: '#0C1526' }}>
+            <div key={w.id} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10, background: '#0D0D0D' }}>
               {isEditing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Edit Worker Profile</span>
@@ -4301,13 +4301,13 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
                     </div>
                     
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => handleStartEdit(w)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">✏</button>
-                      <button onClick={() => handleDeleteWorker(w.id)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Delete">🗑</button>
+                      <button onClick={() => handleStartEdit(w)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">âœ</button>
+                      <button onClick={() => handleDeleteWorker(w.id)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Delete">ðŸ—‘</button>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, marginTop: 4 }}>
-                    <div>Sales: <strong>{salesCount}</strong> (₹{salesTotal.toLocaleString('en-IN')})</div>
+                    <div>Sales: <strong>{salesCount}</strong> (â‚¹{salesTotal.toLocaleString('en-IN')})</div>
                     <div>Tasks Done: <strong>{taskCount}</strong> logs</div>
                   </div>
 
@@ -4328,7 +4328,7 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
         })}
       </div>
 
-      {/* Section 2 — Submissions Feed */}
+      {/* Section 2 â€” Submissions Feed */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 14 }}>
           Worker Logs Master Feed
@@ -4369,7 +4369,7 @@ function WorkersTab({ workers, setWorkers, workerSubmissions }) {
 }
 
 
-// ─── EQUIPMENT TAB ───────────────────────────────────────────────────────────
+// â”€â”€â”€ EQUIPMENT TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
   const [eqId, setEqId] = useState(equipment[0]?.id || '');
@@ -4424,7 +4424,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
 
     setExpenses(prev => [newExp, ...prev]);
 
-    setLocalPanelToast(`Repair logged to Finances — ₹${costVal.toLocaleString('en-IN')}`);
+    setLocalPanelToast(`Repair logged to Finances â€” â‚¹${costVal.toLocaleString('en-IN')}`);
     setTimeout(() => setLocalPanelToast(null), 3000);
 
     setCost('');
@@ -4599,7 +4599,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>COST (₹)</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>COST (â‚¹)</span>
                 <input
                   type="number"
                   min={0}
@@ -4635,7 +4635,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
         </div>
       )}
 
-      {/* Section 1 — Status summary */}
+      {/* Section 1 â€” Status summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>OVERDUE SERVICE</div>
@@ -4668,7 +4668,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
         </div>
       </div>
 
-      {/* Section 2 — Table */}
+      {/* Section 2 â€” Table */}
       <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', margin: '0 18px 12px 18px' }}>
           Equipment Schedule
@@ -4757,7 +4757,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
                     {isEditing ? (
                       <input type="number" value={editEqCost} onChange={ev => setEditEqCost(ev.target.value)} style={{ height: 28, fontSize: 12, width: 80 }} />
                     ) : (
-                      <span>₹{e.cost.toLocaleString('en-IN')}</span>
+                      <span>â‚¹{e.cost.toLocaleString('en-IN')}</span>
                     )}
                   </td>
 
@@ -4794,7 +4794,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
                         ) : (
                           <span style={{ fontSize: 11, color: 'var(--muted)' }}>All Clear</span>
                         )}
-                        <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">✏</button>
+                        <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit">âœ</button>
                       </div>
                     )}
                   </td>
@@ -4805,7 +4805,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
         </table>
       </div>
 
-      {/* Section 3 — Log Repair Form */}
+      {/* Section 3 â€” Log Repair Form */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Log Repair Expense</div>
         <form onSubmit={handleLogRepair} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -4818,7 +4818,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
           </div>
 
           <div style={{ width: 100 }}>
-            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>COST (₹)</span>
+            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>COST (â‚¹)</span>
             <input
               type="number"
               value={cost}
@@ -4866,7 +4866,7 @@ function EquipmentTab({ equipment, setEquipment, setExpenses, tanks }) {
 }
 
 
-// ─── WATER QUALITY TAB ───────────────────────────────────────────────────────
+// â”€â”€â”€ WATER QUALITY TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
   const [showLogPanel, setShowLogPanel] = useState(false);
@@ -4950,7 +4950,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
         }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Record Water Metrics</div>
           {wqSuccess ? (
-            <div style={{ color: 'var(--secondary)', fontSize: 13, fontWeight: 'bold', padding: '10px 0' }}>✓ Reading logged successfully!</div>
+            <div style={{ color: 'var(--secondary)', fontSize: 13, fontWeight: 'bold', padding: '10px 0' }}>âœ“ Reading logged successfully!</div>
           ) : (
             <form onSubmit={handleLogReadingSubmit} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div style={{ flex: 1, minWidth: 100 }}>
@@ -4974,7 +4974,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
               </div>
 
               <div style={{ width: 80 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TEMP (°C)</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TEMP (Â°C)</span>
                 <input
                   type="number"
                   step="0.5"
@@ -5013,7 +5013,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
         </div>
       )}
 
-      {/* Section 1 — Today's readings grid */}
+      {/* Section 1 â€” Today's readings grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {waterLog.slice(0, 6).map(w => {
           const status = getWaterStatus(w.ph, w.temp, w.ammonia);
@@ -5039,7 +5039,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
                 </div>
                 <div>
                   <div style={{ fontSize: 10, color: 'var(--muted)' }}>Temp</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: (w.temp < 22 || w.temp > 28) ? statusColor : '#FFFFFF' }}>{w.temp}°C</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: (w.temp < 22 || w.temp > 28) ? statusColor : '#FFFFFF' }}>{w.temp}Â°C</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10, color: 'var(--muted)' }}>Ammonia</div>
@@ -5056,7 +5056,7 @@ function WaterQualityTab({ waterLog, setWaterLog, tanks }) {
         })}
       </div>
 
-      {/* Section 2 — 7-Day Trend Per Tank */}
+      {/* Section 2 â€” 7-Day Trend Per Tank */}
       <div className="card" style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 16 }}>
           7-Day pH Trends
@@ -5227,7 +5227,7 @@ function WorkerApp({
       id: Date.now(),
       worker: activeWorker.name,
       type: 'sale',
-      details: `${qtyVal} ${selectedSp.name} (${AGE_GROUP_LABELS[saleAgeGroup].label}) from Tank ${saleTankId} (₹${totalVal})`,
+      details: `${qtyVal} ${selectedSp.name} (${AGE_GROUP_LABELS[saleAgeGroup].label}) from Tank ${saleTankId} (â‚¹${totalVal})`,
       time: 'Just now',
       date: today(),
       status: 'pending',
@@ -5235,7 +5235,7 @@ function WorkerApp({
     };
     setWorkerSubmissions(prev => [newSub, ...prev]);
 
-    setSaleSuccessMsg(`Sale submitted ✓ — ${qtyVal} ${selectedSp.name} (${AGE_GROUP_LABELS[saleAgeGroup].label}) from Tank ${saleTankId} for ₹${totalVal}. Waiting for admin approval.`);
+    setSaleSuccessMsg(`Sale submitted âœ“ â€” ${qtyVal} ${selectedSp.name} (${AGE_GROUP_LABELS[saleAgeGroup].label}) from Tank ${saleTankId} for â‚¹${totalVal}. Waiting for admin approval.`);
 
     // Reset Form
     setSaleStep(1);
@@ -5271,7 +5271,7 @@ function WorkerApp({
 
   const handleMaintSubmit = (e) => {
     e.preventDefault();
-    const maintDetails = `Tank ${maintTank} maintenance (${maintType}) ${maintNotes ? '— ' + maintNotes : ''}`;
+    const maintDetails = `Tank ${maintTank} maintenance (${maintType}) ${maintNotes ? 'â€” ' + maintNotes : ''}`;
 
     const newSub = {
       id: Date.now(),
@@ -5318,7 +5318,7 @@ function WorkerApp({
       id: Date.now(),
       worker: activeWorker.name,
       type: 'water_log',
-      details: `Tank ${wqTank} readings: pH ${phVal} | Temp ${tempVal}°C | Ammonia ${ammVal}`,
+      details: `Tank ${wqTank} readings: pH ${phVal} | Temp ${tempVal}Â°C | Ammonia ${ammVal}`,
       time: 'Just now',
       date: today(),
       status: 'approved'
@@ -5346,7 +5346,7 @@ function WorkerApp({
     e.preventDefault();
     if (!issueDesc.trim()) return;
 
-    const details = `Tank ${issueTank} Urgency: ${issueUrgency} — ${issueDesc.trim()}`;
+    const details = `Tank ${issueTank} Urgency: ${issueUrgency} â€” ${issueDesc.trim()}`;
 
     const newSub = {
       id: Date.now(),
@@ -5401,7 +5401,7 @@ function WorkerApp({
     setTimeout(() => setTrSuccess(false), 2000);
   };
 
-  // ─── 1. SELECT WORKER SCREEN ───
+  // â”€â”€â”€ 1. SELECT WORKER SCREEN â”€â”€â”€
   if (!activeWorker) {
     return (
       <div style={{
@@ -5413,7 +5413,7 @@ function WorkerApp({
             onClick={() => setView('admin')}
             style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', borderRadius: 6, color: '#fff' }}
           >
-            ← Back to Admin
+            â† Back to Admin
           </button>
         </div>
 
@@ -5453,13 +5453,13 @@ function WorkerApp({
     );
   }
 
-  // ─── 2. WORKER DASHBOARD VIEW ───
+  // â”€â”€â”€ 2. WORKER DASHBOARD VIEW â”€â”€â”€
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 8px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Top Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>👋 Hi {activeWorker.name}</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>ðŸ‘‹ Hi {activeWorker.name}</h2>
           <span style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{formatDate(today())}</span>
         </div>
         <button
@@ -5475,7 +5475,7 @@ function WorkerApp({
           onClick={() => setView('admin')}
           style={{ padding: '6px 12px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, fontSize: 11 }}
         >
-          ← Back to Admin view
+          â† Back to Admin view
         </button>
       </div>
 
@@ -5486,11 +5486,11 @@ function WorkerApp({
       {/* Grid of log entries */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         
-        {/* Card 1 — Log a Sale */}
+        {/* Card 1 â€” Log a Sale */}
         <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid #FFFFFF' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log a Sale</span>
-            <span>📦</span>
+            <span>ðŸ“¦</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -5563,7 +5563,7 @@ function WorkerApp({
                       >
                         <div style={{ fontWeight: 'bold', fontSize: 11 }}>{AGE_GROUP_LABELS[ag].label}</div>
                         <div style={{ fontSize: 9, marginTop: 2 }}>{stock} fish</div>
-                        <div style={{ fontSize: 8, color: isSelected ? '#333' : 'var(--secondary)', marginTop: 2 }}>₹{targetPrice}</div>
+                        <div style={{ fontSize: 8, color: isSelected ? '#333' : 'var(--secondary)', marginTop: 2 }}>â‚¹{targetPrice}</div>
                       </button>
                     );
                   })}
@@ -5602,7 +5602,7 @@ function WorkerApp({
                         }}
                       >
                         <div style={{ fontWeight: 'bold', fontSize: 12 }}>
-                          Tank {t.tankId} {t.isQuarantined && '🔒'}
+                          Tank {t.tankId} {t.isQuarantined && 'ðŸ”’'}
                         </div>
                         <div style={{ fontSize: 10, marginTop: 2 }}>{t.count} fish</div>
                         {isRecommended && !isSelected && (
@@ -5644,7 +5644,7 @@ function WorkerApp({
                   <div>
                     <input
                       type="number"
-                      placeholder={`Price (₹${Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier)})`}
+                      placeholder={`Price (â‚¹${Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier)})`}
                       value={salePrice}
                       onChange={e => setSalePrice(e.target.value)}
                     />
@@ -5705,7 +5705,7 @@ function WorkerApp({
                 </div>
 
                 <div style={{ fontSize: 13, fontWeight: 'bold', color: '#fff', margin: '4px 0' }}>
-                  Total: ₹{((parseInt(saleQty, 10) || 0) * (parseInt(salePrice, 10) || Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier))).toLocaleString('en-IN')}
+                  Total: â‚¹{((parseInt(saleQty, 10) || 0) * (parseInt(salePrice, 10) || Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier))).toLocaleString('en-IN')}
                 </div>
 
                 <button
@@ -5728,7 +5728,7 @@ function WorkerApp({
           </div>
         </div>
 
-        {/* Card 2 — Log Feeding Done */}
+        {/* Card 2 â€” Log Feeding Done */}
         <div className="card" style={{ padding: 18 }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Feeding Done</span>
           <form onSubmit={handleFeedingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -5742,11 +5742,11 @@ function WorkerApp({
             >
               Log Feeding
             </button>
-            {feedSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Feeding logged ✓</div>}
+            {feedSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Feeding logged âœ“</div>}
           </form>
         </div>
 
-        {/* Card 3 — Log Tank Maintenance */}
+        {/* Card 3 â€” Log Tank Maintenance */}
         <div className="card" style={{ padding: 18 }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Tank Maintenance</span>
           <form onSubmit={handleMaintSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -5784,11 +5784,11 @@ function WorkerApp({
             >
               Log Maintenance
             </button>
-            {maintSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Maintenance logged ✓</div>}
+            {maintSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Maintenance logged âœ“</div>}
           </form>
         </div>
 
-        {/* Card 4 — Log Water Quality */}
+        {/* Card 4 â€” Log Water Quality */}
         <div className="card" style={{ padding: 18 }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Water Quality</span>
           <form onSubmit={handleWqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -5807,7 +5807,7 @@ function WorkerApp({
               <input
                 type="text"
                 required
-                placeholder="Temp (°C)"
+                placeholder="Temp (Â°C)"
                 value={wqTemp}
                 onChange={e => setWqTemp(e.target.value)}
               />
@@ -5829,18 +5829,18 @@ function WorkerApp({
 
             {wqWarning && (
               <div style={{ color: '#FF4757', fontSize: 11, textAlign: 'center', fontWeight: 'bold' }}>
-                ⚠ Reading outside safe range — admin will be alerted.
+                âš  Reading outside safe range â€” admin will be alerted.
               </div>
             )}
             {wqSuccess && !wqWarning && (
               <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>
-                Water reading logged ✓
+                Water reading logged âœ“
               </div>
             )}
           </form>
         </div>
 
-        {/* Card 5 — Report an Issue */}
+        {/* Card 5 â€” Report an Issue */}
         <div className="card" style={{ padding: 18 }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Report an Issue</span>
           <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -5871,7 +5871,7 @@ function WorkerApp({
               value={issueDesc}
               onChange={e => setIssueDesc(e.target.value)}
               style={{
-                fontFamily: 'inherit', background: '#060C18', border: '1px solid rgba(255,255,255,0.12)',
+                fontFamily: 'inherit', background: '#0A0A0A', border: '1px solid rgba(255,255,255,0.10)',
                 borderRadius: 8, padding: 8, color: '#fff', height: 60, outline: 'none'
               }}
             />
@@ -5882,13 +5882,13 @@ function WorkerApp({
             >
               Report Issue
             </button>
-            {issueSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Issue submitted ✓</div>}
+            {issueSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Issue submitted âœ“</div>}
           </form>
         </div>
 
-        {/* Card 6 — Move Fish (Transfer) */}
+        {/* Card 6 â€” Move Fish (Transfer) */}
         <div className="card" style={{ padding: 18 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Move Fish (⇄)</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Move Fish (â‡„)</span>
           <form onSubmit={handleTransferSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             
             <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>SELECT SPECIES</span>
@@ -5944,7 +5944,7 @@ function WorkerApp({
             >
               Transfer Fish
             </button>
-            {trSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Transfer complete ✓</div>}
+            {trSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Transfer complete âœ“</div>}
           </form>
         </div>
 
@@ -5976,7 +5976,7 @@ function WorkerApp({
   );
 }
 
-// ─── MAIN APP ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ MAIN APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function App() {
   // states
@@ -6009,7 +6009,7 @@ export default function App() {
 
   // Quarantine State
   const [quarantinedTanks, setQuarantinedTanks] = useState({
-    C: { reason: 'pH imbalance — monitoring', since: '2026-07-26' }
+    C: { reason: 'pH imbalance â€” monitoring', since: '2026-07-26' }
   });
 
   const speciesStateAll = useMemo(() => {
@@ -6068,7 +6068,7 @@ export default function App() {
     return getContentsOfTank(tankId).reduce((a, item) => a + item.count, 0);
   }, [getContentsOfTank]);
 
-  // Deduct stock — now requires ageGroup
+  // Deduct stock â€” now requires ageGroup
   const deductStock = useCallback((speciesId, ageGroup, tankId, qty) => {
     setTankStock(prev => ({
       ...prev,
@@ -6111,7 +6111,7 @@ export default function App() {
     }));
   }, []);
 
-  // Promote fish between age groups (e.g. newborn → semi-adult)
+  // Promote fish between age groups (e.g. newborn â†’ semi-adult)
   const promoteStock = useCallback((speciesId, fromAge, toAge, tankId, qty) => {
     deductStock(speciesId, fromAge, tankId, qty);
     addStock(speciesId, toAge, tankId, qty);
@@ -6195,7 +6195,7 @@ export default function App() {
       count,
       tank: tankId,
       time: 'Just now',
-      note: note || '—',
+      note: note || 'â€”',
     }, ...prev]);
 
     // Flash KPI
@@ -6211,7 +6211,7 @@ export default function App() {
       count: 0,
       tank: tankId,
       time: 'Just now',
-      note: note || '—',
+      note: note || 'â€”',
     }, ...prev]);
   }, []);
 
@@ -6288,7 +6288,7 @@ export default function App() {
         <TaxInvoiceOverlay sale={activeInvoice} onClose={() => setActiveInvoice(null)} />
       )}
 
-      {/* ─── SIDEBAR (Hidden in Worker View unless layout adapts) ─── */}
+      {/* â”€â”€â”€ SIDEBAR (Hidden in Worker View unless layout adapts) â”€â”€â”€ */}
       {view === 'admin' && (
         <aside className="sidebar-wrapper" style={{
           background: '#0D0D0D',
@@ -6306,7 +6306,7 @@ export default function App() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0
             }}>
-              <span style={{ fontSize: 20 }}>🐠</span>
+              <span style={{ fontSize: 20 }}>ðŸ </span>
             </div>
             <div>
               <div className="sidebar-logo-text" style={{ color: '#fff', fontWeight: 700, fontSize: 16, letterSpacing: '-0.4px', lineHeight: 1.2 }}>
@@ -6408,7 +6408,7 @@ export default function App() {
                 borderRadius: activeTab === 'finances' ? '0 8px 8px 0' : '8px'
               }}
             >
-              <span style={{ fontSize: 16, marginRight: -2 }}>💰</span>
+              <span style={{ fontSize: 16, marginRight: -2 }}>ðŸ’°</span>
               <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Finances</span>
             </button>
 
@@ -6425,7 +6425,7 @@ export default function App() {
                 borderRadius: activeTab === 'sales' ? '0 8px 8px 0' : '8px'
               }}
             >
-              <span style={{ fontSize: 16, marginRight: -2 }}>🧾</span>
+              <span style={{ fontSize: 16, marginRight: -2 }}>ðŸ§¾</span>
               <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
                 <span>Sales & Orders</span>
                 {pendingSales.length > 0 && (
@@ -6449,7 +6449,7 @@ export default function App() {
                 borderRadius: activeTab === 'customers' ? '0 8px 8px 0' : '8px'
               }}
             >
-              <span style={{ fontSize: 16, marginRight: -2 }}>👥</span>
+              <span style={{ fontSize: 16, marginRight: -2 }}>ðŸ‘¥</span>
               <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Customers</span>
             </button>
 
@@ -6466,7 +6466,7 @@ export default function App() {
                 borderRadius: activeTab === 'workers' ? '0 8px 8px 0' : '8px'
               }}
             >
-              <span style={{ fontSize: 16, marginRight: -2 }}>👷</span>
+              <span style={{ fontSize: 16, marginRight: -2 }}>ðŸ‘·</span>
               <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Workers</span>
             </button>
 
@@ -6483,7 +6483,7 @@ export default function App() {
                 borderRadius: activeTab === 'equipment' ? '0 8px 8px 0' : '8px'
               }}
             >
-              <span style={{ fontSize: 16, marginRight: -2 }}>🔧</span>
+              <span style={{ fontSize: 16, marginRight: -2 }}>ðŸ”§</span>
               <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
                 <span>Equipment</span>
                 {overdueCount > 0 && (
@@ -6507,7 +6507,7 @@ export default function App() {
                 borderRadius: activeTab === 'water' ? '0 8px 8px 0' : '8px'
               }}
             >
-              <span style={{ fontSize: 16, marginRight: -2 }}>💧</span>
+              <span style={{ fontSize: 16, marginRight: -2 }}>ðŸ’§</span>
               <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
                 <span>Water Quality</span>
                 {waterWarnings.length > 0 && (
@@ -6528,7 +6528,7 @@ export default function App() {
               borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 600, border: '1px solid var(--border)'
             }}
           >
-            <span>⬡ Switch to Worker view</span>
+            <span>â¬¡ Switch to Worker view</span>
           </button>
 
           {/* Bottom Snapshot */}
@@ -6546,7 +6546,7 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                 <span style={{ color: 'var(--secondary)', display: 'flex', alignItems:'center', gap: 4 }}>
-                  🐣 Born
+                  ðŸ£ Born
                 </span>
                 <span style={{ color: '#FFFFFF', fontWeight: 700 }} className="tabular-nums">
                   <AnimatedNumber value={totalBorn} />
@@ -6554,7 +6554,7 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                 <span style={{ color: 'var(--secondary)', display: 'flex', alignItems:'center', gap: 4 }}>
-                  📦 Exported
+                  ðŸ“¦ Exported
                 </span>
                 <span style={{ color: '#AAAAAA', fontWeight: 700 }} className="tabular-nums">
                   <AnimatedNumber value={totalExported} />
@@ -6562,7 +6562,7 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                 <span style={{ color: 'var(--secondary)', display: 'flex', alignItems:'center', gap: 4 }}>
-                  💀 Died
+                  ðŸ’€ Died
                 </span>
                 <span style={{ color: '#666666', fontWeight: 700 }} className="tabular-nums">
                   <AnimatedNumber value={totalDied} />
@@ -6570,10 +6570,10 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                 <span style={{ color: 'var(--secondary)', display: 'flex', alignItems:'center', gap: 4 }}>
-                  💰 Revenue
+                  ðŸ’° Revenue
                 </span>
                 <span style={{ color: '#FFFFFF', fontWeight: 700 }} className="tabular-nums">
-                  ₹<AnimatedNumber value={totalRevenue} />
+                  â‚¹<AnimatedNumber value={totalRevenue} />
                 </span>
               </div>
             </div>
@@ -6581,7 +6581,7 @@ export default function App() {
         </aside>
       )}
 
-      {/* ─── MAIN CONTENT AREA (Adapts to Worker view too) ─── */}
+      {/* â”€â”€â”€ MAIN CONTENT AREA (Adapts to Worker view too) â”€â”€â”€ */}
       {view === 'admin' ? (
         <div className="main-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'hidden' }}>
           {/* Top Bar */}
@@ -6802,3 +6802,4 @@ export default function App() {
     </div>
   );
 }
+
