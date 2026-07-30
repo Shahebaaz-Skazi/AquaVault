@@ -1308,6 +1308,10 @@ function DashboardTab({ isMobile,
 // ─── INVENTORY TAB ────────────────────────────────────────────────────────────
 
 function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks, onUpdateSpeciesPrice, triggerToast }) {
+  if (!species || !Array.isArray(species)) return (
+    <div style={{padding:'40px', color:'#fff'}}>Loading inventory...</div>
+  );
+
   const [editingPriceId, setEditingPriceId] = useState(null);
   const [showBulkPricePanel, setShowBulkPricePanel] = useState(false);
   const [bulkPrices, setBulkPrices] = useState({});
@@ -1318,7 +1322,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
       setEditingPriceId(null);
       return;
     }
-    const targetSp = species.find(s => s.id === speciesId);
+    const targetSp = (species || []).find(s => s.id === speciesId);
     if (!targetSp) return;
 
     const success = await onUpdateSpeciesPrice(speciesId, newPrice);
@@ -1372,13 +1376,13 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
     }
 
     // Check duplicate
-    const exists = species.some(s => s.name.toLowerCase() === cleanName.toLowerCase());
+    const exists = (species || []).some(s => s.name.toLowerCase() === cleanName.toLowerCase());
     if (exists) {
       setNewSpError(`Species "${cleanName}" already exists.`);
       return;
     }
 
-    const newId = species.length > 0 ? Math.max(...species.map(s => s.id)) + 1 : 1;
+    const newId = (species || []).length > 0 ? Math.max(...(species || []).map(s => s.id)) + 1 : 1;
     const newSp = {
       id: newId,
       name: cleanName,
