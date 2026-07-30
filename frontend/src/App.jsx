@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -5256,6 +5256,7 @@ function WorkerApp({ isMobile,
   onTransferStock,
   onConfirmLog,
   setView,
+  view,
   tanks
 }) {
   const [feedSuccessMsg, setFeedSuccessMsg] = useState('');
@@ -8097,6 +8098,7 @@ export default function App() {
           )}
           <ErrorBoundary>
             <WorkerApp isMobile={isMobile} onLogout={handleLogout}
+              view={view}
               workers={workers || []}
               activeWorker={activeWorker}
               setActiveWorker={setActiveWorker}
