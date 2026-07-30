@@ -1572,7 +1572,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
         }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 12 }}>Bulk Update Fish Prices</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 300, overflowY: 'auto', paddingRight: 6, marginBottom: 16 }}>
-            {species.map(sp => (
+            {(species || []).map(sp => (
               <div key={sp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '0.5px solid rgba(255,255,255,0.04)', paddingBottom: 6 }}>
                 <span style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>{sp.name}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1580,7 +1580,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                   <input
                     type="number"
                     min={0}
-                    value={bulkPrices[sp.id] ?? sp.price}
+                    value={bulkPrices[sp.id] ?? sp.price ?? 0}
                     onChange={e => setBulkPrices(prev => ({ ...prev, [sp.id]: e.target.value }))}
                     style={{ width: 90, height: 28, fontSize: 12, textAlign: 'right', padding: '2px 8px', background: '#050505', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px' }}
                   />
@@ -1635,7 +1635,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
             </tr>
           </thead>
           <tbody>
-            {filtered.map(sp => {
+            {(filtered || []).map(sp => {
               const status = getStatus(sp);
               const isLow = status === 'low';
               const isCritical = status === 'critical';
@@ -1657,7 +1657,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                     {editingPriceId === sp.id ? (
                       <input
                         type="number"
-                        defaultValue={sp.price}
+                        defaultValue={sp.price ?? 0}
                         autoFocus
                         onBlur={e => savePriceUpdate(sp.id, e.target.value)}
                         onKeyDown={e => {
@@ -1673,11 +1673,19 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                         style={{ cursor: 'pointer', borderBottom: '1px dashed rgba(255,255,255,0.3)', fontWeight: 600 }}
                         title="Click to edit price"
                       >
-                        ₹{sp.price}
+                        ₹{sp.price ?? 0}
                       </span>
                     )}
                   </td>
-                  <td style={{ display: isMobile ? 'none' : 'table-cell' }}><Sparkline born={sp.born} exported={sp.exported} /></td>
+                  <td style={{ display: isMobile ? 'none' : 'table-cell' }}>
+                    {(() => {
+                      try {
+                        return <Sparkline born={sp.born} exported={sp.exported} />;
+                      } catch (err) {
+                        return <span>—</span>;
+                      }
+                    })()}
+                  </td>
                   <td style={{ color:'#FFFFFF', fontWeight:600 }}>+{sp.born}</td>
                   <td style={{ color:'#AAAAAA', fontWeight:600 }}>{sp.exported}</td>
                   <td><StatusPill status={status} /></td>
@@ -6746,7 +6754,7 @@ export default function App() {
       api.getActivity()
     ])
       .then(([spData, tsData, tData, sData, eData, cData, wData, eqData, wlData, actData]) => {
-        setSpeciesStateAll(spData.map(s => ({
+        setSpeciesStateAll((Array.isArray(spData) ? spData : []).map(s => ({
           id: s.id, name: s.name, price: s.price, min: s.min_threshold,
           stock: 0, born: 0, exported: 0, died: 0
         })));
@@ -7320,6 +7328,7 @@ export default function App() {
 
   // Total stock for a species across all age groups and tanks
   const getSpeciesTotal = useCallback((speciesId) => {
+    if (!tankStock || !tankStock[speciesId]) return 0;
     return Object.values(tankStock[speciesId] || {})
       .flatMap(Object.values)
       .reduce((a, b) => a + b, 0);
@@ -7327,11 +7336,13 @@ export default function App() {
 
   // Total for a species in a specific age group
   const getAgeGroupTotal = useCallback((speciesId, ageGroup) => {
+    if (!tankStock || !tankStock[speciesId] || !tankStock[speciesId][ageGroup]) return 0;
     return Object.values(tankStock[speciesId]?.[ageGroup] || {}).reduce((a, b) => a + b, 0);
   }, [tankStock]);
 
   // Count in a specific species + age group + tank
   const getCount = useCallback((speciesId, ageGroup, tankId) => {
+    if (!tankStock || !tankStock[speciesId] || !tankStock[speciesId][ageGroup]) return 0;
     return tankStock[speciesId]?.[ageGroup]?.[tankId] ?? 0;
   }, [tankStock]);
 
