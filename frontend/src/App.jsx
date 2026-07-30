@@ -6758,7 +6758,13 @@ export default function App() {
           id: s.id, name: s.name, price: s.price, min: s.min_threshold,
           stock: 0, born: 0, exported: 0, died: 0
         })));
-        setTankStock(transformTankStock(tsData));
+        const nested = {}
+        ;(tsData || []).forEach(row => {
+          if (!nested[row.species_id]) nested[row.species_id] = {}
+          if (!nested[row.species_id][row.age_group]) nested[row.species_id][row.age_group] = {}
+          nested[row.species_id][row.age_group][row.tank_id] = row.count
+        })
+        setTankStock(nested);
         setTanks(tData.map(t => ({
           id: t.id, displayName: t.display_name, capacity: t.capacity,
           temp: t.temp, ph: t.ph, type: t.type, addedDate: t.added_date,

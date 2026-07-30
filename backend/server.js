@@ -11,6 +11,10 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 app.use(cors());
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store')
+  next()
+});
 app.use(express.json());
 
 const supabase = createClient(
