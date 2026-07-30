@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -6365,17 +6365,13 @@ function WorkerApp({ isMobile,
 
 
 const transformTankStock = (dbStock) => {
-  const stockObj = {};
-  dbStock.forEach(entry => {
-    const spId = entry.species_id;
-    const ag = entry.age_group;
-    const tId = entry.tank_id;
-    const count = entry.count;
-    if (!stockObj[spId]) stockObj[spId] = {};
-    if (!stockObj[spId][ag]) stockObj[spId][ag] = {};
-    stockObj[spId][ag][tId] = count;
+  const nested = {};
+  (dbStock || []).forEach(row => {
+    if (!nested[row.species_id]) nested[row.species_id] = {};
+    if (!nested[row.species_id][row.age_group]) nested[row.species_id][row.age_group] = {};
+    nested[row.species_id][row.age_group][row.tank_id] = row.count;
   });
-  return stockObj;
+  return nested;
 };
 
 const formatActivityTime = (isoString) => {
