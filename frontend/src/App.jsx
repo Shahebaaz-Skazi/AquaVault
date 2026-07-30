@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -3143,6 +3143,24 @@ function TanksTab({ isMobile,
           >
             + Add Tank
           </button>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: isMobile ? '80px' : '24px',
+          right: '24px',
+          background: '#FFFFFF',
+          color: '#000000',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 9999,
+          fontWeight: 'bold',
+          fontSize: '13px'
+        }}>
+          {toast}
         </div>
       )}
 
@@ -6633,6 +6651,11 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
 
 export default function App() {
   // states
+  const [toast, setToast] = useState(null);
+  const triggerToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
   const [speciesStateAll, setSpeciesStateAll] = useState([]);
   const [tankStock,    setTankStock]    = useState({});
   
@@ -8266,6 +8289,24 @@ export default function App() {
               tanks={tanks || []}
             />
           </ErrorBoundary>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: isMobile ? '80px' : '24px',
+          right: '24px',
+          background: '#FFFFFF',
+          color: '#000000',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 9999,
+          fontWeight: 'bold',
+          fontSize: '13px'
+        }}>
+          {toast}
         </div>
       )}
 
