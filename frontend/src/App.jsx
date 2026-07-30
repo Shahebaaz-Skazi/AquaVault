@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -1307,7 +1307,26 @@ function DashboardTab({ isMobile,
 
 // ─── INVENTORY TAB ────────────────────────────────────────────────────────────
 
-function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks }) {
+function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks, onUpdateSpeciesPrice, triggerToast }) {
+  const [editingPriceId, setEditingPriceId] = useState(null);
+  const [showBulkPricePanel, setShowBulkPricePanel] = useState(false);
+  const [bulkPrices, setBulkPrices] = useState({});
+
+  const savePriceUpdate = async (speciesId, newPriceVal) => {
+    const newPrice = parseInt(newPriceVal, 10);
+    if (isNaN(newPrice) || newPrice < 0) {
+      setEditingPriceId(null);
+      return;
+    }
+    const targetSp = species.find(s => s.id === speciesId);
+    if (!targetSp) return;
+
+    const success = await onUpdateSpeciesPrice(speciesId, newPrice);
+    if (success) {
+      triggerToast(`Price updated — ${targetSp.name} now ₹${newPrice}`);
+    }
+    setEditingPriceId(null);
+  };
   const filtered = useMemo(() => {
     let result = species;
     if (search.trim()) {
@@ -1441,6 +1460,23 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
         >
           <Plus size={14} /> {showAddSpeciesPanel ? 'Close Panel' : 'Add Species'}
         </button>
+        <button
+          onClick={() => {
+            setShowBulkPricePanel(!showBulkPricePanel);
+            const initialPrices = {};
+            species.forEach(sp => {
+              initialPrices[sp.id] = sp.price;
+            });
+            setBulkPrices(initialPrices);
+          }}
+          style={{
+            display:'flex', alignItems:'center', gap:6, padding:'9px 14px',
+            background:'rgba(255,255,255,0.06)', color:'#FFFFFF', borderRadius:8, fontWeight:700, fontSize:13,
+            border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', whiteSpace: 'nowrap'
+          }}
+        >
+          {showBulkPricePanel ? 'Close Bulk Edit' : 'Update Prices'}
+        </button>
       </div>
 
       {/* Add Species slide-down panel */}
@@ -1525,6 +1561,63 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
         </div>
       )}
 
+      {/* Bulk Price Panel */}
+      {showBulkPricePanel && (
+        <div className="card" style={{
+          padding: 20,
+          background: '#0D0D0D',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+          marginBottom: 16
+        }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 12 }}>Bulk Update Fish Prices</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 300, overflowY: 'auto', paddingRight: 6, marginBottom: 16 }}>
+            {species.map(sp => (
+              <div key={sp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '0.5px solid rgba(255,255,255,0.04)', paddingBottom: 6 }}>
+                <span style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>{sp.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: 'var(--muted)', fontSize: 12 }}>₹</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={bulkPrices[sp.id] ?? sp.price}
+                    onChange={e => setBulkPrices(prev => ({ ...prev, [sp.id]: e.target.value }))}
+                    style={{ width: 90, height: 28, fontSize: 12, textAlign: 'right', padding: '2px 8px', background: '#050505', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px' }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => setShowBulkPricePanel(false)}
+              style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.06)', color: '#FFFFFF', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                let updatedCount = 0;
+                for (const sp of species) {
+                  const newPrice = parseInt(bulkPrices[sp.id], 10);
+                  if (!isNaN(newPrice) && newPrice !== sp.price && newPrice >= 0) {
+                    await onUpdateSpeciesPrice(sp.id, newPrice);
+                    updatedCount++;
+                  }
+                }
+                setShowBulkPricePanel(false);
+                if (updatedCount > 0) {
+                  triggerToast(`Bulk updated ${updatedCount} prices successfully`);
+                }
+              }}
+              style={{ padding: '8px 16px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}
+            >
+              Save All Prices
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="card" style={{ overflowX:'auto', WebkitOverflowScrolling: 'touch' }}>
         <table style={{ minWidth: isMobile ? '600px' : '100%' }}>
@@ -1533,6 +1626,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
               <th>Species</th>
               <th>Tanks Mapped</th>
               <th>Stock</th>
+              <th>Price</th>
               <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Trend</th>
               <th>Born</th>
               <th>Exported</th>
@@ -1558,6 +1652,30 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                     <span style={{ fontWeight:700, fontSize:14, color: isCritical ? '#666666' : '#FFFFFF' }}>
                       <AnimatedNumber value={sp.stock} />
                     </span>
+                  </td>
+                  <td>
+                    {editingPriceId === sp.id ? (
+                      <input
+                        type="number"
+                        defaultValue={sp.price}
+                        autoFocus
+                        onBlur={e => savePriceUpdate(sp.id, e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            savePriceUpdate(sp.id, e.target.value);
+                          }
+                        }}
+                        style={{ width: '80px', height: '26px', background: '#050505', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', textAlign: 'center' }}
+                      />
+                    ) : (
+                      <span
+                        onClick={() => setEditingPriceId(sp.id)}
+                        style={{ cursor: 'pointer', borderBottom: '1px dashed rgba(255,255,255,0.3)', fontWeight: 600 }}
+                        title="Click to edit price"
+                      >
+                        ₹{sp.price}
+                      </span>
+                    )}
                   </td>
                   <td style={{ display: isMobile ? 'none' : 'table-cell' }}><Sparkline born={sp.born} exported={sp.exported} /></td>
                   <td style={{ color:'#FFFFFF', fontWeight:600 }}>+{sp.born}</td>
@@ -6724,6 +6842,19 @@ export default function App() {
     }
   };
 
+  const handleUpdateSpeciesPrice = useCallback(async (id, newPrice) => {
+    try {
+      const res = await api.updateSpeciesPrice(id, newPrice);
+      if (res) {
+        setSpeciesStateAll(prev => prev.map(s => s.id === id ? { ...s, price: res.price } : s));
+        return true;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return false;
+  }, []);
+
   const handleSetTanks = async (updater) => {
     const current = tanks;
     const next = typeof updater === 'function' ? updater(current) : updater;
@@ -7988,6 +8119,8 @@ export default function App() {
                   setSpeciesState={handleSetSpeciesState}
                   setTankStock={setTankStock}
                   tanks={tanks}
+                  onUpdateSpeciesPrice={handleUpdateSpeciesPrice}
+                  triggerToast={triggerToast}
                 />
               )}
               {activeTab === 'tanks' && (

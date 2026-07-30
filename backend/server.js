@@ -61,6 +61,17 @@ app.post('/api/species', async (req, res) => {
   }
 });
 
+app.patch('/api/species/:id/price', async (req, res) => {
+  try {
+    const { price } = req.body;
+    const { data, error } = await supabase.from('species').update({ price }).eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Tank Stock
 app.get('/api/tank-stock', async (req, res) => {
   try {
