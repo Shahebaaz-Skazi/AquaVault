@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -6652,9 +6652,9 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
 export default function App() {
   // states
   const [toast, setToast] = useState(null);
-  const triggerToast = (message) => {
+  const triggerToast = (message, duration = 3000) => {
     setToast(message);
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), duration);
   };
   const [speciesStateAll, setSpeciesStateAll] = useState([]);
   const [tankStock,    setTankStock]    = useState({});
@@ -8203,7 +8203,7 @@ export default function App() {
                   customers={customers}
                   setCustomers={handleSetCustomers}
                   onDeductStock={deductStock}
-                  onLogLocalToast={() => {}}
+                  onLogLocalToast={triggerToast}
                   onOpenInvoice={setActiveInvoice}
                 />
               )}
