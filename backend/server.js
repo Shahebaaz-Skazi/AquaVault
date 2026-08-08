@@ -28,16 +28,22 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // Auth
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { username, password, workerId, pin } = req.body;
+    const { username, password, workerName, pin } = req.body;
     if (username === 'admin' && password === 'aquavault2026') {
       return res.json({ role: 'admin' });
     }
-    if (workerId && pin) {
-      const { data: worker, error } = await supabase.from('workers').select('*').eq('id', workerId).eq('pin', pin).maybeSingle();
+    if (workerName && pin) {
+      const { data: worker, error } = await supabase
+        .from('workers')
+        .select('*')
+        .eq('name', workerName)
+        .eq('pin', pin)
+        .maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
       if (worker) {
         return res.json({ role: 'worker', workerId: worker.id, workerName: worker.name });
       }
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
     res.status(401).json({ error: 'Invalid credentials' });
   } catch (e) {
@@ -285,13 +291,15 @@ app.get('/api/workers', async (req, res) => {
 });
 app.post('/api/workers', async (req, res) => {
   try {
-    const payload = { ...req.body };
-    if (!payload.pin) {
-      payload.pin = Math.floor(1000 + Math.random() * 9000).toString();
-    }
-    const { data, error } = await supabase.from('workers').insert([payload]).select();
+    const { name, role, pin } = req.body;
+    if (!name || !pin) return res.status(400).json({ error: 'Name and PIN are required' });
+    const { data, error } = await supabase
+      .from('workers')
+      .insert([{ name, role: role || 'Tank Operator', pin }])
+      .select()
+      .single();
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data ? data[0] : null);
+    res.json(data);
   } catch (e) {
     res.status(500).json({ error: 'Server error' });
   }

@@ -3145,25 +3145,6 @@ function TanksTab({ isMobile,
           </button>
         </div>
       )}
-
-      {toast && (
-        <div style={{
-          position: 'fixed',
-          bottom: isMobile ? '80px' : '24px',
-          right: '24px',
-          background: '#FFFFFF',
-          color: '#000000',
-          padding: '12px 24px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 9999,
-          fontWeight: 'bold',
-          fontSize: '13px'
-        }}>
-          {toast}
-        </div>
-      )}
-
     </div>
   );
 }
