@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -571,11 +571,11 @@ function DashboardTab({ isMobile,
   getTankTotal,
   getContentsOfTank
 }) {
-  const totalFish     = useMemo(() => species.reduce((s,sp)=>s+sp.stock, 0), [species]);
-  const totalBorn     = useMemo(() => species.reduce((s,sp)=>s+sp.born, 0), [species]);
-  const totalExported = useMemo(() => species.reduce((s,sp)=>s+sp.exported, 0), [species]);
-  const totalDied     = useMemo(() => species.reduce((s,sp)=>s+sp.died, 0), [species]);
-  const lowStock      = useMemo(() => species.filter(sp=>sp.stock<=sp.min*1.5), [species]);
+  const totalFish     = useMemo(() => (species || []).reduce((s,sp)=>s+sp.stock, 0), [species]);
+  const totalBorn     = useMemo(() => (species || []).reduce((s,sp)=>s+sp.born, 0), [species]);
+  const totalExported = useMemo(() => (species || []).reduce((s,sp)=>s+sp.exported, 0), [species]);
+  const totalDied     = useMemo(() => (species || []).reduce((s,sp)=>s+sp.died, 0), [species]);
+  const lowStock      = useMemo(() => (species || []).filter(sp=>sp.stock<=sp.min*1.5), [species]);
 
   // Quick Log State
   const [quickType, setQuickType] = useState('birth');
@@ -617,7 +617,7 @@ function DashboardTab({ isMobile,
   // Available tanks (Fix 5: dynamic filtering based on getCount)
   const quickTanksAvailable = useMemo(() => {
     if (!quickAgeGroup) return [];
-    return tanks.filter(t => getCount(quickSpeciesId, quickAgeGroup, t.id) > 0);
+    return (tanks || []).filter(t => getCount(quickSpeciesId, quickAgeGroup, t.id) > 0);
   }, [quickSpeciesId, quickAgeGroup, tanks, tankStock]);
 
   useEffect(() => {
@@ -978,7 +978,7 @@ function DashboardTab({ isMobile,
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--muted)' }}>Species</span>
               <select value={quickSpeciesId} onChange={e => setQuickSpeciesId(Number(e.target.value))}>
-                {species.map(sp => (
+                {(species || []).map(sp => (
                   <option key={sp.id} value={sp.id}>{sp.name} (Total: {sp.stock})</option>
                 ))}
               </select>
@@ -1207,7 +1207,7 @@ function DashboardTab({ isMobile,
         </div>
 
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(6,1fr)', gap:10 }}>
-          {tanks.map(tank => {
+          {(tanks || []).map(tank => {
             const tankContents = getContentsOfTank(tank.id);
             const uniqueSpeciesCount = new Set(tankContents.map(item => item.species.id)).size;
             
@@ -1791,9 +1791,9 @@ function TanksTab({ isMobile,
   const [localToast, setLocalToast] = useState(null);
 
   // Show a toast helper
-  const triggerToast = (msg) => {
+  const triggerToast = (msg, duration = 3000) => {
     setLocalToast(msg);
-    setTimeout(() => setLocalToast(null), 3000);
+    setTimeout(() => setLocalToast(null), duration);
   };
 
   // Add Tank Form State
@@ -1900,7 +1900,7 @@ function TanksTab({ isMobile,
     const todayMs = new Date('2026-07-28').getTime();
     const thirtyDaysAgo = todayMs - 30 * 24 * 60 * 60 * 1000;
     
-    const relevantSales = sales.filter(s => {
+    const relevantSales = (sales || []).filter(s => {
       if (s.speciesId !== speciesId || !s.approved) return false;
       const saleTime = new Date(s.date).getTime();
       return saleTime >= thirtyDaysAgo;
@@ -2485,7 +2485,7 @@ function TanksTab({ isMobile,
                                       <div style={{ flex: 2, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <span style={{ fontSize: 9, color: 'var(--muted)' }}>SELECT TANK</span>
                                         <select value={assignTankId} onChange={e => setAssignTankId(e.target.value)} style={{ height: 32 }}>
-                                          {tanks.filter(t => !quarantinedTanks[t.id]).map(t => (
+                                          {(tanks || []).filter(t => !quarantinedTanks[t.id]).map(t => (
                                             <option key={t.id} value={t.id}>
                                               {t.displayName} — ({getTankTotal(t.id)}/{t.capacity} fish)
                                             </option>
@@ -2719,7 +2719,7 @@ function TanksTab({ isMobile,
                                             }}>
                                               <div style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Transfer Fish</div>
                                               <select value={transferToTankId} onChange={e => setTransferToTankId(e.target.value)} style={{ height: 26, fontSize: 10 }}>
-                                                {tanks.filter(t => t.id !== tankId && !quarantinedTanks[t.id]).map(t => (
+                                                {(tanks || []).filter(t => t.id !== tankId && !quarantinedTanks[t.id]).map(t => (
                                                   <option key={t.id} value={t.id}>{t.displayName}</option>
                                                 ))}
                                               </select>
@@ -3099,7 +3099,7 @@ function TanksTab({ isMobile,
                 </tr>
               </thead>
               <tbody>
-                {tanks.map(tank => {
+                {(tanks || []).map(tank => {
                   const occupants = getTankTotal(tank.id);
                   const usagePct = Math.min(100, Math.round((occupants / tank.capacity) * 100));
                   const usageCol = usagePct > 85 ? '#FF6666' : usagePct > 65 ? '#FFB800' : '#FFFFFF';
@@ -3155,7 +3155,7 @@ function TanksTab({ isMobile,
 function ReportsTab({ isMobile, species, tankStock }) {
   // Stacked chart of age group distribution per species
   const stackedData = useMemo(() => {
-    return species.map(sp => {
+    return (species || []).map(sp => {
       const getSumForAg = (ag) => Object.values(tankStock[sp.id]?.[ag] || {}).reduce((a, b) => a + b, 0);
       const newborn = getSumForAg('newborn');
       const semiAdult = getSumForAg('semi-adult');
@@ -3172,7 +3172,7 @@ function ReportsTab({ isMobile, species, tankStock }) {
 
   // Bar chart of transaction stats per species
   const statsData = useMemo(() => {
-    return species.map(sp => ({
+    return (species || []).map(sp => ({
       name: sp.name,
       Born: sp.born,
       Exported: sp.exported,
@@ -3259,6 +3259,11 @@ function ReportsTab({ isMobile, species, tankStock }) {
 
 
 function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, onAddStock }) {
+  const [localToast, setLocalToast] = useState(null)
+  const triggerToast = (msg, duration = 3000) => {
+    setLocalToast(msg)
+    setTimeout(() => setLocalToast(null), duration)
+  }
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -3268,18 +3273,18 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
   const [localPanelToast, setLocalPanelToast] = useState(null);
 
   // Derived revenue & expenses
-  const paidSales = useMemo(() => sales.filter(s => s.payStatus === 'paid'), [sales]);
+  const paidSales = useMemo(() => (sales || []).filter(s => s.payStatus === 'paid'), [sales]);
   const revenueTotal = useMemo(() => paidSales.reduce((sum, s) => sum + s.total, 0), [paidSales]);
   
-  const expenseTotal = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses]);
+  const expenseTotal = useMemo(() => (expenses || []).reduce((sum, e) => sum + e.amount, 0), [expenses]);
   const netTotal = revenueTotal - expenseTotal;
   
   const marginPct = revenueTotal > 0 ? Math.round((netTotal / revenueTotal) * 100) : 0;
 
   // Breakdown metrics
-  const foodTotal = useMemo(() => expenses.filter(e => e.category === 'Fish Food').reduce((s,e) => s+e.amount, 0), [expenses]);
-  const repairTotal = useMemo(() => expenses.filter(e => e.category === 'Tank Repair' || e.category === 'Equipment Repair').reduce((s,e) => s+e.amount, 0), [expenses]);
-  const utilTotal = useMemo(() => expenses.filter(e => e.category === 'Utilities').reduce((s,e) => s+e.amount, 0), [expenses]);
+  const foodTotal = useMemo(() => (expenses || []).filter(e => e.category === 'Fish Food').reduce((s,e) => s+e.amount, 0), [expenses]);
+  const repairTotal = useMemo(() => (expenses || []).filter(e => e.category === 'Tank Repair' || e.category === 'Equipment Repair').reduce((s,e) => s+e.amount, 0), [expenses]);
+  const utilTotal = useMemo(() => (expenses || []).filter(e => e.category === 'Utilities').reduce((s,e) => s+e.amount, 0), [expenses]);
 
   // Expenses grouped by Category
   const catChartData = useMemo(() => {
@@ -3455,7 +3460,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>SELECT SPECIES</span>
                 <select value={stockSpId} onChange={e => { setStockSpId(e.target.value); if (tanks.length > 0 && !stockTankId) setStockTankId(tanks[0].id); }} required>
                   <option value="">Select Species</option>
-                  {species.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
 
@@ -3472,7 +3477,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>TARGET TANK</span>
                 <select value={stockTankId} onChange={e => setStockTankId(e.target.value)} required>
                   <option value="">Select Tank</option>
-                  {tanks.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
                 </select>
               </div>
             </div>
@@ -3621,7 +3626,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
             <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TANK</span>
             <select value={tankId} onChange={e => setTankId(e.target.value)} style={{ height: 34 }}>
               <option value="All">All Tanks</option>
-              {tanks.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+              {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
             </select>
           </div>
 
@@ -3656,7 +3661,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
             </tr>
           </thead>
           <tbody>
-            {expenses.map(e => {
+            {(expenses || []).map(e => {
               const isEditing = editingExpenseId === e.id;
 
               return (
@@ -3701,7 +3706,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
                     {isEditing ? (
                       <select value={editTankId} onChange={ev => setEditTankId(ev.target.value)} style={{ height: 28, fontSize: 12 }}>
                         <option value="All">All System</option>
-                        {tanks.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+                        {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
                       </select>
                     ) : (
                       <span>{e.tank ? `Tank ${e.tank}` : 'All System'}</span>
@@ -3769,12 +3774,17 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
 
 
 function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers, onDeductStock, onLogLocalToast, onOpenInvoice }) {
+  const [localToast, setLocalToast] = useState(null)
+  const triggerToast = (msg, duration = 3000) => {
+    setLocalToast(msg)
+    setTimeout(() => setLocalToast(null), duration)
+  }
   // Confirmed Sales
-  const confirmed = useMemo(() => sales.filter(s => s.approved), [sales]);
+  const confirmed = useMemo(() => (sales || []).filter(s => s.approved), [sales]);
   const confirmedValue = confirmed.reduce((sum,s) => sum + s.total, 0);
 
   // Pending approval list
-  const pending = useMemo(() => sales.filter(s => !s.approved), [sales]);
+  const pending = useMemo(() => (sales || []).filter(s => !s.approved), [sales]);
   
   // Top buyer
   const topBuyer = useMemo(() => {
@@ -4009,7 +4019,7 @@ function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers,
             </tr>
           </thead>
           <tbody>
-            {sales.map(s => {
+            {(sales || []).map(s => {
               const isEditing = editingSaleId === s.id;
               
               return (
@@ -4246,7 +4256,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
 
       {/* Section 1 — Grid list */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-        {customers.map(c => {
+        {(customers || []).map(c => {
           const initials = c.name.split(' ').map(w => w[0]).join('').slice(0,2);
           const isEditing = editingCustomerId === c.id;
 
@@ -4361,7 +4371,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
             </tr>
           </thead>
           <tbody>
-            {customers.map(c => (
+            {(customers || []).map(c => (
               <tr key={c.id}>
                 <td style={{ fontWeight: 600 }}>{c.name}</td>
                 <td style={{ color: 'var(--secondary)', display: isMobile ? 'none' : 'table-cell' }}>{c.contact}</td>
@@ -4383,6 +4393,11 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
 // ─── WORKERS TAB ─────────────────────────────────────────────────────────────
 
 function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
+  const [localToast, setLocalToast] = useState(null)
+  const triggerToast = (msg, duration = 3000) => {
+    setLocalToast(msg)
+    setTimeout(() => setLocalToast(null), duration)
+  }
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
@@ -4530,7 +4545,7 @@ function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
 
       {/* Section 1 — Worker Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
-        {workers.map(w => {
+        {(workers || []).map(w => {
           // get worker submissions today count
           const todayStr = today();
           const wSubsToday = workerSubmissions.filter(s => s.worker === w.name && s.date === todayStr);
@@ -4654,6 +4669,11 @@ function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
 // ─── EQUIPMENT TAB ───────────────────────────────────────────────────────────
 
 function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks }) {
+  const [localToast, setLocalToast] = useState(null)
+  const triggerToast = (msg, duration = 3000) => {
+    setLocalToast(msg)
+    setTimeout(() => setLocalToast(null), duration)
+  }
   const [eqId, setEqId] = useState(equipment[0]?.id || '');
   const [cost, setCost] = useState('');
   const [repairDesc, setRepairDesc] = useState('');
@@ -4662,9 +4682,9 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
   const [localPanelToast, setLocalPanelToast] = useState(null);
 
   // Status summaries
-  const overdueCount = useMemo(() => equipment.filter(e => e.status === 'overdue').length, [equipment]);
-  const soonCount = useMemo(() => equipment.filter(e => e.status === 'due-soon').length, [equipment]);
-  const okCount = useMemo(() => equipment.filter(e => e.status === 'ok').length, [equipment]);
+  const overdueCount = useMemo(() => (equipment || []).filter(e => e.status === 'overdue').length, [equipment]);
+  const soonCount = useMemo(() => (equipment || []).filter(e => e.status === 'due-soon').length, [equipment]);
+  const okCount = useMemo(() => (equipment || []).filter(e => e.status === 'ok').length, [equipment]);
 
   // Service trigger
   const handleMarkServiced = (id) => {
@@ -4874,7 +4894,7 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)' }}>MOUNTED TANK</span>
                 <select value={newEqTank} onChange={e => setNewEqTank(e.target.value)}>
-                  {tanks.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
                 </select>
               </div>
             </div>
@@ -4969,7 +4989,7 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
             </tr>
           </thead>
           <tbody>
-            {equipment.map(e => {
+            {(equipment || []).map(e => {
               const overdue = e.status === 'overdue';
               const soon = e.status === 'due-soon';
               const statusBg = overdue ? 'rgba(255,102,102,0.15)' : soon ? 'rgba(255,184,0,0.15)' : 'transparent';
@@ -5009,7 +5029,7 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
                   <td>
                     {isEditing ? (
                       <select value={editEqTank} onChange={ev => setEditEqTank(ev.target.value)} style={{ height: 28, fontSize: 12 }}>
-                        {tanks.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+                        {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
                       </select>
                     ) : (
                       <span>Tank {e.tank}</span>
@@ -5095,7 +5115,7 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
           <div style={{ flex: 1, minWidth: 150 }}>
             <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SELECT EQUIPMENT</span>
             <select value={eqId} onChange={e => setEqId(e.target.value)} style={{ height: 34 }}>
-              {equipment.map(e => <option key={e.id} value={e.id}>{e.name} (Tank {e.tank})</option>)}
+              {(equipment || []).map(e => <option key={e.id} value={e.id}>{e.name} (Tank {e.tank})</option>)}
             </select>
           </div>
 
@@ -5151,6 +5171,11 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
 // ─── WATER QUALITY TAB ───────────────────────────────────────────────────────
 
 function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
+  const [localToast, setLocalToast] = useState(null)
+  const triggerToast = (msg, duration = 3000) => {
+    setLocalToast(msg)
+    setTimeout(() => setLocalToast(null), duration)
+  }
   const [showLogPanel, setShowLogPanel] = useState(false);
   const [wqTank, setWqTank] = useState(tanks[0]?.id || 'A');
   const [wqPh, setWqPh] = useState('');
@@ -5238,7 +5263,7 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
               <div style={{ flex: 1, minWidth: 100 }}>
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SELECT TANK</span>
                 <select value={wqTank} onChange={e => setWqTank(e.target.value)} style={{ height: 34 }}>
-                  {tanks.map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
                 </select>
               </div>
 
@@ -5421,7 +5446,7 @@ function WorkerApp({ isMobile,
   const buyerSuggestions = useMemo(() => {
     if (!saleBuyer.trim()) return [];
     if (!customers || !Array.isArray(customers)) return [];
-    return customers.filter(c => c.name.toLowerCase().includes(saleBuyer.toLowerCase()));
+    return (customers || []).filter(c => c.name.toLowerCase().includes(saleBuyer.toLowerCase()));
   }, [saleBuyer, customers]);
 
   // LOG FEEDING STATE
@@ -5741,7 +5766,7 @@ function WorkerApp({ isMobile,
           display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
           gap: 12, width: '100%'
         }}>
-          {workers.map(w => (
+          {(workers || []).map(w => (
             <div
               key={w.id}
               onClick={() => setActiveWorker(w)}
@@ -5848,7 +5873,7 @@ function WorkerApp({ isMobile,
                     }}
                   >
                     <option value="">Select Species</option>
-                    {species.map(s => {
+                    {(species || []).map(s => {
                       const isAvailable = s.stock > 0;
                       return (
                         <option key={s.id} value={s.id} disabled={!isAvailable}>
@@ -6071,7 +6096,7 @@ function WorkerApp({ isMobile,
               <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Feeding Done</span>
               <form onSubmit={handleFeedingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <select value={feedTank} onChange={e => setFeedTank(e.target.value)}>
-                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
                 </select>
 
                 <button
@@ -6098,7 +6123,7 @@ function WorkerApp({ isMobile,
               <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Tank Maintenance</span>
               <form onSubmit={handleMaintSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <select value={maintTank} onChange={e => setMaintTank(e.target.value)}>
-                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
                 </select>
                 
                 <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
@@ -6154,7 +6179,7 @@ function WorkerApp({ isMobile,
               <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Water Quality</span>
               <form onSubmit={handleWqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <select value={wqTank} onChange={e => setWqTank(e.target.value)}>
-                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
                 </select>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
@@ -6205,7 +6230,7 @@ function WorkerApp({ isMobile,
               <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Report an Issue</span>
               <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <select value={issueTank} onChange={e => setIssueTank(e.target.value)}>
-                  {tanks.map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
                 </select>
 
                 <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
@@ -6259,7 +6284,7 @@ function WorkerApp({ isMobile,
               setTrToTank('');
             }}>
               <option value="">Select Species</option>
-              {species.map(s => (
+              {(species || []).map(s => (
                 <option key={s.id} value={s.id}>{s.name} ({s.stock} total)</option>
               ))}
             </select>
@@ -6304,7 +6329,7 @@ function WorkerApp({ isMobile,
                 <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>TO TANK</span>
                 <select value={trToTank} onChange={e => setTrToTank(e.target.value)}>
                   <option value="">Select Target</option>
-                  {tanks.filter(t => t.id !== trFromTank).map(t => (
+                  {(tanks || []).filter(t => t.id !== trFromTank).map(t => (
                     <option key={t.id} value={t.id}>Tank {t.id}</option>
                   ))}
                 </select>
@@ -6614,7 +6639,7 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Select Worker Name</span>
                 <select value={workerId} onChange={e => setWorkerId(e.target.value)} style={{ height: '40px', background: '#050505', width: '100%' }}>
-                  {workers.map(w => <option key={w.id} value={w.id}>{w.name} ({w.role})</option>)}
+                  {(workers || []).map(w => <option key={w.id} value={w.id}>{w.name} ({w.role})</option>)}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -7336,24 +7361,27 @@ export default function App() {
 
   // customSpecies and duplicate quarantinedTanks removed
 
-  // Total stock for a species across all age groups and tanks
   const getSpeciesTotal = useCallback((speciesId) => {
-    if (!tankStock || !tankStock[speciesId]) return 0;
-    return Object.values(tankStock[speciesId] || {})
-      .flatMap(Object.values)
-      .reduce((a, b) => a + b, 0);
+    try {
+      if (!tankStock || !tankStock[speciesId]) return 0
+      return Object.values(tankStock[speciesId] || {})
+        .flatMap(ag => Object.values(ag || {}))
+        .reduce((a, b) => a + b, 0)
+    } catch { return 0 }
   }, [tankStock]);
 
-  // Total for a species in a specific age group
   const getAgeGroupTotal = useCallback((speciesId, ageGroup) => {
-    if (!tankStock || !tankStock[speciesId] || !tankStock[speciesId][ageGroup]) return 0;
-    return Object.values(tankStock[speciesId]?.[ageGroup] || {}).reduce((a, b) => a + b, 0);
+    try {
+      if (!tankStock?.[speciesId]?.[ageGroup]) return 0
+      return Object.values(tankStock[speciesId][ageGroup] || {})
+        .reduce((a, b) => a + b, 0)
+    } catch { return 0 }
   }, [tankStock]);
 
-  // Count in a specific species + age group + tank
   const getCount = useCallback((speciesId, ageGroup, tankId) => {
-    if (!tankStock || !tankStock[speciesId] || !tankStock[speciesId][ageGroup]) return 0;
-    return tankStock[speciesId]?.[ageGroup]?.[tankId] ?? 0;
+    try {
+      return tankStock?.[speciesId]?.[ageGroup]?.[tankId] ?? 0
+    } catch { return 0 }
   }, [tankStock]);
 
   // All age groups a species has (that have stock > 0)
@@ -7480,9 +7508,9 @@ export default function App() {
 
   const computedSpeciesStateAll = useMemo(() => {
     return speciesStateAll.map(s => {
-      const born = activity.filter(a => a.type === 'birth' && a.species === s.name).reduce((sum, a) => sum + (a.count || 0), 0);
-      const died = activity.filter(a => a.type === 'death' && a.species === s.name).reduce((sum, a) => sum + (a.count || 0), 0);
-      const exported = sales.filter(sale => sale.speciesId === s.id && sale.approved).reduce((sum, sale) => sum + (sale.qty || 0), 0);
+      const born = (activity || []).filter(a => a.type === 'birth' && a.species === s.name).reduce((sum, a) => sum + (a.count || 0), 0);
+      const died = (activity || []).filter(a => a.type === 'death' && a.species === s.name).reduce((sum, a) => sum + (a.count || 0), 0);
+      const exported = (sales || []).filter(sale => sale.speciesId === s.id && sale.approved).reduce((sum, sale) => sum + (sale.qty || 0), 0);
       return { ...s, born, died, exported };
     });
   }, [speciesStateAll, activity, sales]);
@@ -7496,22 +7524,22 @@ export default function App() {
 
   // Derived financial values
   const totalRevenue = useMemo(() => {
-    return sales.filter(s => s.approved && s.payStatus === 'paid').reduce((a,s) => a + s.total, 0);
+    return (sales || []).filter(s => s.approved && s.payStatus === 'paid').reduce((a,s) => a + s.total, 0);
   }, [sales]);
 
   const pendingRevenue = useMemo(() => {
-    return sales.filter(s => s.payStatus === 'pending' || !s.approved).reduce((a,s) => a + s.total, 0);
+    return (sales || []).filter(s => s.payStatus === 'pending' || !s.approved).reduce((a,s) => a + s.total, 0);
   }, [sales]);
 
   const totalExpenses = useMemo(() => {
-    return expenses.reduce((a,e) => a + e.amount, 0);
+    return (expenses || []).reduce((a,e) => a + e.amount, 0);
   }, [expenses]);
 
   const netProfit = totalRevenue - totalExpenses;
-  const pendingSales = useMemo(() => sales.filter(s => !s.approved), [sales]);
+  const pendingSales = useMemo(() => (sales || []).filter(s => !s.approved), [sales]);
 
   // Overdue count
-  const overdueCount = useMemo(() => equipment.filter(e => e.status === 'overdue').length, [equipment]);
+  const overdueCount = useMemo(() => (equipment || []).filter(e => e.status === 'overdue').length, [equipment]);
 
   // Water warning tanks
   const waterWarnings = useMemo(() => {
@@ -7525,9 +7553,9 @@ export default function App() {
     return workerSubmissions.filter(s => s.urgency === 'High');
   }, [workerSubmissions]);
 
-  const totalBorn = useMemo(() => species.reduce((s, sp) => s + sp.born, 0), [species]);
-  const totalExported = useMemo(() => species.reduce((s, sp) => s + sp.exported, 0), [species]);
-  const totalDied = useMemo(() => species.reduce((s, sp) => s + sp.died, 0), [species]);
+  const totalBorn = useMemo(() => (species || []).reduce((s, sp) => s + sp.born, 0), [species]);
+  const totalExported = useMemo(() => (species || []).reduce((s, sp) => s + sp.exported, 0), [species]);
+  const totalDied = useMemo(() => (species || []).reduce((s, sp) => s + sp.died, 0), [species]);
 
   // Date formatted: "27 Jul 2026"
   const formattedDate = useMemo(() => {
@@ -7642,7 +7670,7 @@ export default function App() {
 
   // derived warning badge counters in sidebar
   const lowStockPairsCount = useMemo(() => {
-    return species.filter(sp => sp.stock <= sp.min).length;
+    return (species || []).filter(sp => sp.stock <= sp.min).length;
   }, [species]);
 
   const tanksBadge = Object.keys(quarantinedTanks).length + lowStockPairsCount;
@@ -8103,124 +8131,142 @@ export default function App() {
 
           {/* Scrollable Content Body */}
           <main style={{ flex: 1, padding: isMobile ? '12px' : '24px', overflowY: 'auto', overflowX: 'hidden' }}>
-            <ErrorBoundary key={activeTab}>
               {activeTab === 'dashboard' && (
-                <DashboardTab isMobile={isMobile}
-                  key="dashboard"
-                  species={species}
-                  activity={activity}
-                  alertRef={alertRef}
-                  tanks={tanks}
-                  getTankTotal={getTankTotal}
-                  getContentsOfTank={getContentsOfTank}
-                  onViewAllLowStock={handleViewAllLowStock}
-                  onConfirmLog={handleConfirmLog}
-                  kpiFlash={kpiFlash}
-                  tankStock={tankStock}
-                  totalRevenue={totalRevenue}
-                  pendingRevenue={pendingRevenue}
-                  totalExpenses={totalExpenses}
-                  netProfit={netProfit}
-                  pendingSales={pendingSales}
-                  overdueCount={overdueCount}
-                  waterWarnings={waterWarnings}
-                  onNavigateTab={setActiveTab}
-                  highUrgentIssues={highUrgentIssues}
-                />
+                <ErrorBoundary key="dashboard">
+                  <DashboardTab isMobile={isMobile}
+                    key="dashboard"
+                    species={species}
+                    activity={activity}
+                    alertRef={alertRef}
+                    tanks={tanks}
+                    getTankTotal={getTankTotal}
+                    getContentsOfTank={getContentsOfTank}
+                    onViewAllLowStock={handleViewAllLowStock}
+                    onConfirmLog={handleConfirmLog}
+                    kpiFlash={kpiFlash}
+                    tankStock={tankStock}
+                    totalRevenue={totalRevenue}
+                    pendingRevenue={pendingRevenue}
+                    totalExpenses={totalExpenses}
+                    netProfit={netProfit}
+                    pendingSales={pendingSales}
+                    overdueCount={overdueCount}
+                    waterWarnings={waterWarnings}
+                    onNavigateTab={setActiveTab}
+                    highUrgentIssues={highUrgentIssues}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'inventory' && (
-                <InventoryTab isMobile={isMobile}
-                  key="inventory"
-                  species={species}
-                  search={search}
-                  onConfirmLog={handleConfirmLog}
-                  filterLowStock={filterLowStock}
-                  onClearFilter={() => setFilterLowStock(false)}
-                  tankStock={tankStock}
-                  setSpeciesState={handleSetSpeciesState}
-                  setTankStock={setTankStock}
-                  tanks={tanks}
-                  onUpdateSpeciesPrice={handleUpdateSpeciesPrice}
-                  triggerToast={triggerToast}
-                />
+                <ErrorBoundary key="inventory">
+                  <InventoryTab isMobile={isMobile}
+                    key="inventory"
+                    species={species}
+                    search={search}
+                    onConfirmLog={handleConfirmLog}
+                    filterLowStock={filterLowStock}
+                    onClearFilter={() => setFilterLowStock(false)}
+                    tankStock={tankStock}
+                    setSpeciesState={handleSetSpeciesState}
+                    setTankStock={setTankStock}
+                    tanks={tanks}
+                    onUpdateSpeciesPrice={handleUpdateSpeciesPrice}
+                    triggerToast={triggerToast}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'tanks' && (
-                <TanksTab isMobile={isMobile}
-                  key="tanks"
-                  species={species}
-                  tankStock={tankStock}
-                  setTankStock={setTankStock}
-                  tanks={tanks}
-                  setTanks={handleSetTanks}
-                  quarantinedTanks={quarantinedTanks}
-                  setQuarantinedTanks={handleSetQuarantinedTanks}
-                  onConfirmLog={handleAdminStatusLog}
-                  onTransferStock={handleTransferStockAction}
-                  onAddSpeciesToTank={handleAddSpeciesToTank}
-                  sales={sales}
-                  setActivity={handleSetActivity}
-                />
+                <ErrorBoundary key="tanks">
+                  <TanksTab isMobile={isMobile}
+                    key="tanks"
+                    species={species}
+                    tankStock={tankStock}
+                    setTankStock={setTankStock}
+                    tanks={tanks}
+                    setTanks={handleSetTanks}
+                    quarantinedTanks={quarantinedTanks}
+                    setQuarantinedTanks={handleSetQuarantinedTanks}
+                    onConfirmLog={handleAdminStatusLog}
+                    onTransferStock={handleTransferStockAction}
+                    onAddSpeciesToTank={handleAddSpeciesToTank}
+                    sales={sales}
+                    setActivity={handleSetActivity}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'reports' && (
-                <ReportsTab isMobile={isMobile} key="reports" species={species} tankStock={tankStock} />
+                <ErrorBoundary key="reports">
+                  <ReportsTab isMobile={isMobile} key="reports" species={species} tankStock={tankStock} />
+                </ErrorBoundary>
               )}
               {activeTab === 'finances' && (
-                <FinancesTab isMobile={isMobile}
-                  key="finances"
-                  expenses={expenses}
-                  setExpenses={handleSetExpenses}
-                  sales={sales}
-                  species={species}
-                  tanks={tanks}
-                  onAddStock={addStock}
-                />
+                <ErrorBoundary key="finances">
+                  <FinancesTab isMobile={isMobile}
+                    key="finances"
+                    expenses={expenses}
+                    setExpenses={handleSetExpenses}
+                    sales={sales}
+                    species={species}
+                    tanks={tanks}
+                    onAddStock={addStock}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'sales' && (
-                <SalesTab isMobile={isMobile}
-                  key="sales"
-                  sales={sales}
-                  setSales={handleSetSales}
-                  species={species}
-                  customers={customers}
-                  setCustomers={handleSetCustomers}
-                  onDeductStock={deductStock}
-                  onLogLocalToast={triggerToast}
-                  onOpenInvoice={setActiveInvoice}
-                />
+                <ErrorBoundary key="sales">
+                  <SalesTab isMobile={isMobile}
+                    key="sales"
+                    sales={sales}
+                    setSales={handleSetSales}
+                    species={species}
+                    customers={customers}
+                    setCustomers={handleSetCustomers}
+                    onDeductStock={deductStock}
+                    onLogLocalToast={triggerToast}
+                    onOpenInvoice={setActiveInvoice}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'customers' && (
-                <CustomersTab isMobile={isMobile}
-                  key="customers"
-                  customers={customers}
-                  setCustomers={handleSetCustomers}
-                />
+                <ErrorBoundary key="customers">
+                  <CustomersTab isMobile={isMobile}
+                    key="customers"
+                    customers={customers}
+                    setCustomers={handleSetCustomers}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'workers' && (
-                <WorkersTab isMobile={isMobile}
-                  key="workers"
-                  workers={workers}
-                  setWorkers={handleSetWorkers}
-                  workerSubmissions={workerSubmissions}
-                />
+                <ErrorBoundary key="workers">
+                  <WorkersTab isMobile={isMobile}
+                    key="workers"
+                    workers={workers}
+                    setWorkers={handleSetWorkers}
+                    workerSubmissions={workerSubmissions}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'equipment' && (
-                <EquipmentTab isMobile={isMobile}
-                  key="equipment"
-                  equipment={equipment}
-                  setEquipment={handleSetEquipment}
-                  setExpenses={handleSetExpenses}
-                  tanks={tanks}
-                />
+                <ErrorBoundary key="equipment">
+                  <EquipmentTab isMobile={isMobile}
+                    key="equipment"
+                    equipment={equipment}
+                    setEquipment={handleSetEquipment}
+                    setExpenses={handleSetExpenses}
+                    tanks={tanks}
+                  />
+                </ErrorBoundary>
               )}
               {activeTab === 'water' && (
-                <WaterQualityTab isMobile={isMobile}
-                  key="water"
-                  waterLog={waterLog}
-                  setWaterLog={handleSetWaterLog}
-                  tanks={tanks}
-                />
+                <ErrorBoundary key="waterquality">
+                  <WaterQualityTab isMobile={isMobile}
+                    key="water"
+                    waterLog={waterLog}
+                    setWaterLog={handleSetWaterLog}
+                    tanks={tanks}
+                  />
+                </ErrorBoundary>
               )}
-            </ErrorBoundary>
           </main>
           </div>
           {isMobile && (
