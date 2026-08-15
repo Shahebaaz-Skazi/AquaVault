@@ -6589,15 +6589,9 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
   const [loginType, setLoginType] = useState('admin');
   const [adminUser, setAdminUser] = useState('');
   const [adminPass, setAdminPass] = useState('');
-  const [workerId, setWorkerId] = useState(workers[0]?.id || '');
+  const [workerName, setWorkerName] = useState('');
   const [workerPin, setWorkerPin] = useState('');
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (workers.length > 0 && !workerId) {
-      setWorkerId(workers[0].id);
-    }
-  }, [workers, workerId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -6606,8 +6600,8 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
       const ok = await onAdminLogin(adminUser, adminPass);
       if (!ok) setError('Invalid admin username or password');
     } else {
-      const ok = await onWorkerLogin(Number(workerId), workerPin);
-      if (!ok) setError('Invalid worker PIN');
+      const ok = await onWorkerLogin(workerName, workerPin);
+      if (!ok) setError('Invalid worker name or PIN');
     }
   };
 
@@ -6639,10 +6633,15 @@ function LoginScreen({ onAdminLogin, onWorkerLogin, workers }) {
           ) : (
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Select Worker Name</span>
-                <select value={workerId} onChange={e => setWorkerId(e.target.value)} style={{ height: '40px', background: '#050505', width: '100%' }}>
-                  {(workers || []).map(w => <option key={w.id} value={w.id}>{w.name} ({w.role})</option>)}
-                </select>
+                <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Worker Name</span>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter worker name (e.g. Worker 1)"
+                  value={workerName}
+                  onChange={e => setWorkerName(e.target.value)}
+                  style={{ height: '40px', background: '#050505', width: '100%' }}
+                />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Enter PIN</span>
@@ -6745,11 +6744,11 @@ export default function App() {
     return false;
   };
 
-  const handleWorkerLogin = async (workerId, pin) => {
+  const handleWorkerLogin = async (workerName, pin) => {
     try {
-      const res = await api.login({ workerId, pin });
+      const res = await api.login({ workerName, pin });
       if (res && res.role === 'worker') {
-        const worker = workers.find(w => w.id === workerId);
+        const worker = (workers || []).find(w => w.name.toLowerCase() === workerName.toLowerCase());
         const s = { role: 'worker', workerId: res.workerId, workerName: res.workerName };
         localStorage.setItem('aquavault_session', JSON.stringify(s));
         setSession(s);
