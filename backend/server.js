@@ -25,6 +25,10 @@ const supabase = createClient(
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// App version check
+const LATEST_VERSION = '1.1.0';
+app.get('/api/app-version', (req, res) => res.json({ version: LATEST_VERSION }));
+
 // Auth
 app.post('/api/auth/login', async (req, res) => {
   try {

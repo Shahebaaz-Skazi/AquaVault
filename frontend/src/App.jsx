@@ -15,6 +15,8 @@ import {
 import './index.css';
 import ErrorBoundary from './ErrorBoundary';
 
+const CURRENT_VERSION = '1.1.0';
+
 // ─── DATA CONSTANTS (Do not change structures) ──────────────────────────────
 
 const SPECIES_INIT = [
@@ -6662,6 +6664,20 @@ export default function App() {
     setToast(message);
     setTimeout(() => setToast(null), duration);
   };
+  const [showUpdatePopup, setShowUpdatePopup] = useState(false);
+  const [latestVersion, setLatestVersion] = useState('');
+
+  useEffect(() => {
+    api.getAppVersion()
+      .then(res => {
+        if (res && res.version && res.version !== CURRENT_VERSION) {
+          setLatestVersion(res.version);
+          setShowUpdatePopup(true);
+        }
+      })
+      .catch(err => console.error("Failed to check app version:", err));
+  }, []);
+
   const [speciesStateAll, setSpeciesStateAll] = useState([]);
   const [tankStock,    setTankStock]    = useState({});
   
@@ -8334,6 +8350,92 @@ export default function App() {
           fontSize: '13px'
         }}>
           {toast}
+        </div>
+      )}
+
+      {showUpdatePopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100000,
+          padding: '20px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '400px',
+            background: '#0D0D0D',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
+            padding: '30px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '20px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <RotateCw size={24} color="#FFFFFF" />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', margin: '0 0 8px 0' }}>Update Available</h3>
+              <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0, lineHeight: '20px' }}>
+                A new version of AquaVault (v{latestVersion}) is available. Please update to load the latest features and security patches.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button
+                onClick={() => {
+                  window.location.reload();
+                }}
+                style={{
+                  flex: 1,
+                  height: '44px',
+                  background: '#FFFFFF',
+                  color: '#000000',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                Update Now
+              </button>
+              <button
+                onClick={() => setShowUpdatePopup(false)}
+                style={{
+                  padding: '0 16px',
+                  height: '44px',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  cursor: 'pointer'
+                }}
+              >
+                Later
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

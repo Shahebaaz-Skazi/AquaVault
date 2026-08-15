@@ -113,6 +113,9 @@ export const addWaterLog = (data) => postJSON(`${BASE_URL}/api/water-log`, data)
 export const getActivity = () => getJSON(`${BASE_URL}/api/activity`);
 export const addActivity = (data) => postJSON(`${BASE_URL}/api/activity`, data);
 
+// Version
+export const getAppVersion = () => getJSON(`${BASE_URL}/api/app-version`);
+
 export const updateSpeciesPrice = (id, price) => fetch(BASE_URL + '/api/species/' + id + '/price', {
   method: 'PATCH',
   headers: { 'Content-Type': 'application/json' },
