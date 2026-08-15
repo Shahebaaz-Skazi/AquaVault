@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import * as api from './api';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -10,7 +10,7 @@ import {
   BarChart3, LayoutDashboard, Database, Waves, ArrowRightLeft,
   Users, Wrench, FileText, Check, RotateCw, Printer, Trash2,
   ChevronRight, ChevronDown, User, ShieldAlert,
-  Shell, Wallet, ShoppingCart, HardHat, Egg, PackageCheck, IndianRupee, Pencil, MoreHorizontal
+  Shell, Wallet, ShoppingCart, HardHat, Egg, PackageCheck, IndianRupee, Pencil, MoreHorizontal, LogOut
 } from 'lucide-react';
 import './index.css';
 import ErrorBoundary from './ErrorBoundary';
@@ -8129,6 +8129,24 @@ export default function App() {
                   }} />
                 )}
               </button>
+
+              {/* Log Out — Mobile Only */}
+              {isMobile && (
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    width: 32, height: 32,
+                    borderRadius: 8,
+                    background: 'rgba(255,102,102,0.1)',
+                    border: '1px solid rgba(255,102,102,0.2)',
+                    color: '#FF6666',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <LogOut size={16} />
+                </button>
+              )}
 
               {/* Date Chip — Desktop Only */}
               {!isMobile && (
