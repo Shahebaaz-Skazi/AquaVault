@@ -1174,7 +1174,7 @@ function DashboardTab({ isMobile,
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)' }}>
                         {act.message ? (
-                          <span>{act.message}</span>
+                          <span>{act.message.replace(/<[^>]*>/g, '').trim()}</span>
                         ) : sign ? (
                           <span>
                             <span style={{ color: dotColor, fontWeight: 700, marginRight: 4 }}>{sign}{act.count}</span>
@@ -1185,12 +1185,12 @@ function DashboardTab({ isMobile,
                         ) : act.type === 'quarantine' ? (
                           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ShieldAlert size={12} /> Tank {act.tank} quarantined — {act.note}</span>
                         ) : act.type === 'quarantine_lift' ? (
-                          <span><Check size={12} style={{ display: "inline", marginRight: 4 }} /> Tank {act.tank} quarantine lifted</span>
+                          <span>Tank {act.tank} quarantine lifted</span>
                         ) : (
                           <span>{act.species}</span>
                         )}
                       </span>
-                      <span style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>{act.time}</span>
+                      <span style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>{formatActivityTime(act.time)}</span>
                     </div>
                     {act.note && act.type !== 'quarantine' && !act.message && (
                       <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{act.note}</div>
@@ -2169,7 +2169,7 @@ function TanksTab({ isMobile,
       setActivity(prev => [{
         id: Date.now(),
         type: 'tank_del',
-        message: `<Trash2 size={12} /> Tank '${displayName}' removed`,
+        message: `Tank '${displayName}' removed`,
         time: 'Just now'
       }, ...prev]);
     }
@@ -2685,7 +2685,7 @@ function TanksTab({ isMobile,
                                                   setActivity(prev => [{
                                                     id: Date.now(),
                                                     type: 'stock_fix',
-                                                    message: `<Pencil size={12} /> ${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) count corrected in ${tankName} by admin`,
+                                                    message: `${sp.name} (${AGE_GROUP_LABELS[ageGroup].label}) count corrected in ${tankName} by admin`,
                                                     time: 'Just now'
                                                   }, ...prev]);
                                                 }
@@ -7840,14 +7840,33 @@ const transformTankStock = (dbStock) => {
 
 const formatActivityTime = (isoString) => {
   if (!isoString) return 'Just now';
-  const date = new Date(isoString.endsWith('Z') ? isoString : isoString + 'Z');
-  const diff = Date.now() - date.getTime();
+  if (typeof isoString === 'string' && (isoString === 'Just now' || isoString.includes('ago'))) return isoString;
+  let date;
+  if (isoString instanceof Date) {
+    date = isoString;
+  } else if (typeof isoString === 'number') {
+    date = new Date(isoString);
+  } else if (typeof isoString === 'string') {
+    const str = isoString.trim();
+    if (str.endsWith('Z') || str.includes('+') || (str.includes('T') && str.includes('-'))) {
+      date = new Date(str);
+    } else {
+      date = new Date(str.replace(' ', 'T') + 'Z');
+    }
+  } else {
+    return 'Just now';
+  }
+  const time = date.getTime();
+  if (isNaN(time)) return 'Just now';
+  const diff = Date.now() - time;
+  if (diff < 0 || isNaN(diff)) return 'Just now';
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
+  if (isNaN(mins) || mins < 1) return 'Just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
+  if (isNaN(days)) return 'Just now';
   return `${days}d ago`;
 };
 
