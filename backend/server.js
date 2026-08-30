@@ -36,6 +36,12 @@ app.post('/api/auth/login', async (req, res) => {
     if (username === 'admin' && password === 'aquavault2026') {
       return res.json({ role: 'admin' });
     }
+    if (username === 'piyush' && password === 'piyush2026') {
+      return res.json({ role: 'manager', managerName: 'Piyush' });
+    }
+    if (username === 'rohit' && password === 'rohit2026') {
+      return res.json({ role: 'manager', managerName: 'Rohit' });
+    }
     if (workerName && pin) {
       const { data: worker, error } = await supabase
         .from('workers')

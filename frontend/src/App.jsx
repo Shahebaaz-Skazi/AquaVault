@@ -1394,7 +1394,7 @@ function DashboardTab({ isMobile,
 
 // ─── INVENTORY TAB ────────────────────────────────────────────────────────────
 
-function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks, onUpdateSpeciesPrice, triggerToast, growthRecords = [] }) {
+function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks, onUpdateSpeciesPrice, triggerToast, growthRecords = [], canModify }) {
   if (!species || !Array.isArray(species)) return (
     <div style={{padding:'40px', color:'#fff'}}>Loading inventory...</div>
   );
@@ -1551,23 +1551,25 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
         >
           <Plus size={14} /> {showAddSpeciesPanel ? 'Close Panel' : 'Add Species'}
         </button>
-        <button
-          onClick={() => {
-            setShowBulkPricePanel(!showBulkPricePanel);
-            const initialPrices = {};
-            species.forEach(sp => {
-              initialPrices[sp.id] = sp.price;
-            });
-            setBulkPrices(initialPrices);
-          }}
-          style={{
-            display:'flex', alignItems:'center', gap:6, padding:'9px 14px',
-            background:'rgba(255,255,255,0.06)', color:'#FFFFFF', borderRadius:8, fontWeight:700, fontSize:13,
-            border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', whiteSpace: 'nowrap'
-          }}
-        >
-          {showBulkPricePanel ? 'Close Bulk Edit' : 'Update Prices'}
-        </button>
+        {canModify && (
+          <button
+            onClick={() => {
+              setShowBulkPricePanel(!showBulkPricePanel);
+              const initialPrices = {};
+              species.forEach(sp => {
+                initialPrices[sp.id] = sp.price;
+              });
+              setBulkPrices(initialPrices);
+            }}
+            style={{
+              display:'flex', alignItems:'center', gap:6, padding:'9px 14px',
+              background:'rgba(255,255,255,0.06)', color:'#FFFFFF', borderRadius:8, fontWeight:700, fontSize:13,
+              border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', whiteSpace: 'nowrap'
+            }}
+          >
+            {showBulkPricePanel ? 'Close Bulk Edit' : 'Update Prices'}
+          </button>
+        )}
       </div>
 
       {/* Add Species slide-down panel */}
@@ -1751,7 +1753,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                     </span>
                   </td>
                   <td>
-                    {editingPriceId === sp.id ? (
+                    {canModify && editingPriceId === sp.id ? (
                       <input
                         type="number"
                         defaultValue={sp.price ?? 0}
@@ -1764,7 +1766,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                         }}
                         style={{ width: '80px', height: '26px', background: '#050505', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', textAlign: 'center' }}
                       />
-                    ) : (
+                    ) : canModify ? (
                       <span
                         onClick={() => setEditingPriceId(sp.id)}
                         style={{ cursor: 'pointer', borderBottom: '1px dashed rgba(255,255,255,0.3)', fontWeight: 600 }}
@@ -1772,6 +1774,8 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                       >
                         ₹{sp.price ?? 0}
                       </span>
+                    ) : (
+                      <span style={{ fontWeight: 600 }}>₹{sp.price ?? 0}</span>
                     )}
                   </td>
                   <td style={{ display: isMobile ? 'none' : 'table-cell' }}>
@@ -1873,7 +1877,8 @@ function TanksTab({ isMobile,
   onTransferStock,
   onAddSpeciesToTank,
   sales,
-  setActivity
+  setActivity,
+  canModify
 }) {
   const [viewType, setViewType] = useState('species'); // 'species' | 'tank' | 'all'
   const [searchQuery, setSearchQuery] = useState('');
@@ -3020,10 +3025,12 @@ function TanksTab({ isMobile,
                             ) : null;
                           })()}
                         </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
-                          <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: totalOccupants > 0 ? 0.3 : 1, cursor: totalOccupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={totalOccupants > 0}><Trash2 size={12} /></button>
-                        </div>
+                        {canModify && (
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
+                            <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: totalOccupants > 0 ? 0.3 : 1, cursor: totalOccupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={totalOccupants > 0}><Trash2 size={12} /></button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Capacity Bar */}
@@ -3058,84 +3065,86 @@ function TanksTab({ isMobile,
                       </div>
 
                       {/* Quarantine Status Panel */}
-                      <div style={{ marginBottom: 12, background: 'rgba(255,255,255,0.02)', padding: 8, borderRadius: 6, border: '1px solid rgba(255,255,255,0.04)' }}>
-                        {isQuarantined ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <span style={{ color: '#FF6666', fontSize: 10, fontWeight: 700 }}>[Locked] Quarantined: {quarantinedTanks[tank.id].reason}</span>
-                            <button
-                              onClick={() => {
-                                setQuarantinedTanks(prev => {
-                                  const updated = { ...prev };
-                                  delete updated[tank.id];
-                                  return updated;
-                                });
-                                triggerToast(`Quarantine lifted for ${tank.displayName}`);
-                                
-                                setActivity(prev => [{
-                                  id: Date.now(),
-                                  type: 'quarantine_lift',
-                                  message: `<Check size={12} style={{ display: "inline", marginRight: 4 }} /> Tank ${tank.displayName} quarantine lifted`,
-                                  time: 'Just now'
-                                }, ...prev]);
-                              }}
-                              style={{ height: 22, fontSize: 10, background: '#FFFFFF', color: '#000000', fontWeight: 700 }}
-                            >
-                              Lift Quarantine
-                            </button>
-                          </div>
-                        ) : (
-                          <div>
-                            {showQuarantineTankId === tank.id ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <input
-                                  type="text"
-                                  placeholder="Reason e.g. Parasite flareup..."
-                                  value={quarantineReason}
-                                  onChange={e => setQuarantineReason(e.target.value)}
-                                  style={{ height: 26, fontSize: 10, padding: '2px 6px' }}
-                                />
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (!quarantineReason.trim()) return;
-                                      setQuarantinedTanks(prev => ({
-                                        ...prev,
-                                        [tank.id]: { reason: quarantineReason.trim(), since: today() }
-                                      }));
-                                      triggerToast(`Tank ${tank.displayName} placed under quarantine`);
-                                      
-                                      setActivity(prev => [{
-                                        id: Date.now(),
-                                        type: 'quarantine',
-                                        message: `[Locked] Tank ${tank.displayName} quarantined — ${quarantineReason.trim()}`,
-                                        time: 'Just now'
-                                      }, ...prev]);
-
-                                      setShowQuarantineTankId(null);
-                                      setQuarantineReason('');
-                                    }}
-                                    style={{ flex: 1, height: 22, fontSize: 9, background: '#FFFFFF', color: '#000000', fontWeight: 700 }}
-                                  >
-                                    Confirm
-                                  </button>
-                                  <button type="button" onClick={() => setShowQuarantineTankId(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>X</button>
-                                </div>
-                              </div>
-                            ) : (
+                      {canModify && (
+                        <div style={{ marginBottom: 12, background: 'rgba(255,255,255,0.02)', padding: 8, borderRadius: 6, border: '1px solid rgba(255,255,255,0.04)' }}>
+                          {isQuarantined ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <span style={{ color: '#FF6666', fontSize: 10, fontWeight: 700 }}>[Locked] Quarantined: {quarantinedTanks[tank.id].reason}</span>
                               <button
                                 onClick={() => {
-                                  setShowQuarantineTankId(tank.id);
-                                  setQuarantineReason('');
+                                  setQuarantinedTanks(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[tank.id];
+                                    return updated;
+                                  });
+                                  triggerToast(`Quarantine lifted for ${tank.displayName}`);
+                                  
+                                  setActivity(prev => [{
+                                    id: Date.now(),
+                                    type: 'quarantine_lift',
+                                    message: `<Check size={12} style={{ display: "inline", marginRight: 4 }} /> Tank ${tank.displayName} quarantine lifted`,
+                                    time: 'Just now'
+                                  }, ...prev]);
                                 }}
-                                style={{ width: '100%', height: 22, fontSize: 10, background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#A0A0A0' }}
+                                style={{ height: 22, fontSize: 10, background: '#FFFFFF', color: '#000000', fontWeight: 700 }}
                               >
-                                Mark Quarantine
+                                Lift Quarantine
                               </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                            </div>
+                          ) : (
+                            <div>
+                              {showQuarantineTankId === tank.id ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                  <input
+                                    type="text"
+                                    placeholder="Reason e.g. Parasite flareup..."
+                                    value={quarantineReason}
+                                    onChange={e => setQuarantineReason(e.target.value)}
+                                    style={{ height: 26, fontSize: 10, padding: '2px 6px' }}
+                                  />
+                                  <div style={{ display: 'flex', gap: 4 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (!quarantineReason.trim()) return;
+                                        setQuarantinedTanks(prev => ({
+                                          ...prev,
+                                          [tank.id]: { reason: quarantineReason.trim(), since: today() }
+                                        }));
+                                        triggerToast(`Tank ${tank.displayName} placed under quarantine`);
+                                        
+                                        setActivity(prev => [{
+                                          id: Date.now(),
+                                          type: 'quarantine',
+                                          message: `[Locked] Tank ${tank.displayName} quarantined — ${quarantineReason.trim()}`,
+                                          time: 'Just now'
+                                        }, ...prev]);
+
+                                        setShowQuarantineTankId(null);
+                                        setQuarantineReason('');
+                                      }}
+                                      style={{ flex: 1, height: 22, fontSize: 9, background: '#FFFFFF', color: '#000000', fontWeight: 700 }}
+                                    >
+                                      Confirm
+                                    </button>
+                                    <button type="button" onClick={() => setShowQuarantineTankId(null)} style={{ flex: 1, height: 22, fontSize: 9, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>X</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setShowQuarantineTankId(tank.id);
+                                    setQuarantineReason('');
+                                  }}
+                                  style={{ width: '100%', height: 22, fontSize: 10, background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#A0A0A0' }}
+                                >
+                                  Mark Quarantine
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Contents list breakdown */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
@@ -3223,10 +3232,12 @@ function TanksTab({ isMobile,
                         )}
                       </td>
                       <td style={{ textAlign: 'right', paddingRight: 16 }}>
-                        <div style={{ display: 'inline-flex', gap: 10 }}>
-                          <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
-                          <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: occupants > 0 ? 0.3 : 1, cursor: occupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={occupants > 0}><Trash2 size={12} /></button>
-                        </div>
+                        {canModify && (
+                          <div style={{ display: 'inline-flex', gap: 10 }}>
+                            <button onClick={() => handleStartEditTank(tank)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
+                            <button onClick={() => handleDeleteTank(tank.id)} style={{ background: 'none', border: 'none', color: '#888888', padding: 0, opacity: occupants > 0 ? 0.3 : 1, cursor: occupants > 0 ? 'not-allowed' : 'pointer' }} title="Delete" disabled={occupants > 0}><Trash2 size={12} /></button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -3360,7 +3371,7 @@ function ReportsTab({ isMobile, species, tankStock }) {
 }
 
 
-function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, onAddStock }) {
+function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, onAddStock, canModify }) {
   const [localToast, setLocalToast] = useState(null)
   const triggerToast = (msg, duration = 3000) => {
     setLocalToast(msg)
@@ -3829,16 +3840,18 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
 
                   {/* Actions */}
                   <td style={{ textAlign: 'right', paddingRight: 16 }}>
-                    {isEditing ? (
-                      <div style={{ display: 'inline-flex', gap: 6 }}>
-                        <button onClick={() => handleSaveEdit(e.id)} style={{ padding: '4px 8px', background: '#FFFFFF', color: '#000000', fontSize: 11, fontWeight: 'bold', borderRadius: 4 }}>Save</button>
-                        <button onClick={() => setEditingExpenseId(null)} style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.06)', color: '#FFFFFF', fontSize: 11, borderRadius: 4 }}>Cancel</button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                        <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
-                        <button onClick={() => handleDeleteExpense(e.id)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Delete"><Trash2 size={14} /></button>
-                      </div>
+                    {canModify && (
+                      isEditing ? (
+                        <div style={{ display: 'inline-flex', gap: 6 }}>
+                          <button onClick={() => handleSaveEdit(e.id)} style={{ padding: '4px 8px', background: '#FFFFFF', color: '#000000', fontSize: 11, fontWeight: 'bold', borderRadius: 4 }}>Save</button>
+                          <button onClick={() => setEditingExpenseId(null)} style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.06)', color: '#FFFFFF', fontSize: 11, borderRadius: 4 }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                          <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
+                          <button onClick={() => handleDeleteExpense(e.id)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Delete"><Trash2 size={14} /></button>
+                        </div>
+                      )
                     )}
                   </td>
                 </tr>
@@ -3875,7 +3888,7 @@ function FinancesTab({ isMobile, expenses, setExpenses, sales, species, tanks, o
 }
 
 
-function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers, onDeductStock, onLogLocalToast, onOpenInvoice }) {
+function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers, onDeductStock, onLogLocalToast, onOpenInvoice, canModify }) {
   const [localToast, setLocalToast] = useState(null)
   const triggerToast = (msg, duration = 3000) => {
     setLocalToast(msg)
@@ -4245,7 +4258,7 @@ function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers,
                             Mark Paid
                           </button>
                         )}
-                        <button onClick={() => handleStartEdit(s)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
+                        {canModify && <button onClick={() => handleStartEdit(s)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>}
                         {s.approved ? (
                           <button onClick={() => onOpenInvoice(s)} style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: 0 }} title="Invoice"><Printer size={14} /></button>
                         ) : (
@@ -4286,7 +4299,7 @@ function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers,
 
 // ─── CUSTOMERS TAB ───────────────────────────────────────────────────────────
 
-function CustomersTab({ isMobile, customers, setCustomers }) {
+function CustomersTab({ isMobile, customers, setCustomers, canModify }) {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [city, setCity] = useState('');
@@ -4420,7 +4433,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
                       <div style={{ fontWeight: 700, color: '#fff', fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.name}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.contact} {c.city ? `· ${c.city}` : ''}</div>
                     </div>
-                    <button onClick={() => handleStartEdit(c)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
+                    {canModify && <button onClick={() => handleStartEdit(c)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>}
                   </div>
 
                   <div style={{ fontSize: 12, marginTop: 4 }}>
@@ -4527,7 +4540,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
 
 // ─── WORKERS TAB ─────────────────────────────────────────────────────────────
 
-function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
+function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions, canModify }) {
   const [localToast, setLocalToast] = useState(null)
   const triggerToast = (msg, duration = 3000) => {
     setLocalToast(msg)
@@ -4731,10 +4744,12 @@ function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
                       <div style={{ fontSize: 11, color: 'var(--muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{w.role}</div>
                     </div>
                     
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => handleStartEdit(w)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
-                      <button onClick={() => handleDeleteWorker(w.id)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Delete"><Trash2 size={12} /></button>
-                    </div>
+                    {canModify && (
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => handleStartEdit(w)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
+                        <button onClick={() => handleDeleteWorker(w.id)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Delete"><Trash2 size={12} /></button>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, marginTop: 4 }}>
@@ -4803,7 +4818,7 @@ function WorkersTab({ isMobile, workers, setWorkers, workerSubmissions }) {
 
 // ─── EQUIPMENT TAB ───────────────────────────────────────────────────────────
 
-function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks }) {
+function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks, canModify }) {
   const [localToast, setLocalToast] = useState(null)
   const triggerToast = (msg, duration = 3000) => {
     setLocalToast(msg)
@@ -5231,7 +5246,7 @@ function EquipmentTab({ isMobile, equipment, setEquipment, setExpenses, tanks })
                         ) : (
                           <span style={{ fontSize: 11, color: 'var(--muted)' }}>All Clear</span>
                         )}
-                        <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
+                        {canModify && <button onClick={() => handleStartEdit(e)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>}
                       </div>
                     )}
                   </td>
@@ -5691,7 +5706,7 @@ function MortalityTab({ isMobile, mortalityLogs, setMortalityLogs, species, tank
 
 // ─── FEED TAB ─────────────────────────────────────────────────────────────────
 
-function FeedTab({ isMobile, feedLogs, setFeedLogs, sales, tanks, triggerToast }) {
+function FeedTab({ isMobile, feedLogs, setFeedLogs, sales, tanks, triggerToast, canModify }) {
   const [showForm, setShowForm] = useState(false);
   const [date, setDate] = useState(formattedToday());
   const [feedType, setFeedType] = useState('');
@@ -5902,7 +5917,7 @@ function FeedTab({ isMobile, feedLogs, setFeedLogs, sales, tanks, triggerToast }
                 <td>Tank {f.tank_id || 'All'}</td>
                 <td style={{ color: 'var(--secondary)' }}>{f.worker_name || '—'}</td>
                 <td style={{ textAlign: 'right', paddingRight: 16 }}>
-                  <button onClick={() => handleDelete(f.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                  {canModify && <button onClick={() => handleDelete(f.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>}
                 </td>
               </tr>
             ))}
@@ -5916,7 +5931,7 @@ function FeedTab({ isMobile, feedLogs, setFeedLogs, sales, tanks, triggerToast }
 
 // ─── ELECTRICITY TAB ──────────────────────────────────────────────────────────
 
-function ElectricityTab({ isMobile, electricityLogs, setElectricityLogs, triggerToast }) {
+function ElectricityTab({ isMobile, electricityLogs, setElectricityLogs, triggerToast, canModify }) {
   const [showForm, setShowForm] = useState(false);
   const [month, setMonth] = useState('August 2026');
   const [unitsUsed, setUnitsUsed] = useState('');
@@ -6043,7 +6058,7 @@ function ElectricityTab({ isMobile, electricityLogs, setElectricityLogs, trigger
                   <td>{l.pumps_running}</td>
                   <td style={{ color: 'var(--secondary)', fontWeight: 600 }}>{"\u20B9"}{costPerTank.toLocaleString('en-IN')} / tank</td>
                   <td style={{ textAlign: 'right', paddingRight: 16 }}>
-                    <button onClick={() => handleDelete(l.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                    {canModify && <button onClick={() => handleDelete(l.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>}
                   </td>
                 </tr>
               );
@@ -6058,7 +6073,7 @@ function ElectricityTab({ isMobile, electricityLogs, setElectricityLogs, trigger
 
 // ─── BROODSTOCK TAB ───────────────────────────────────────────────────────────
 
-function BroodstockTab({ isMobile, broodstocks, setBroodstocks, species, tanks, triggerToast }) {
+function BroodstockTab({ isMobile, broodstocks, setBroodstocks, species, tanks, triggerToast, canModify }) {
   const [showForm, setShowForm] = useState(false);
   const [broodstockId, setBroodstockId] = useState('');
   const [speciesId, setSpeciesId] = useState(species[0]?.id || 1);
@@ -6342,16 +6357,18 @@ function BroodstockTab({ isMobile, broodstocks, setBroodstocks, species, tanks, 
                     )}
                   </td>
                   <td style={{ textAlign: 'right', paddingRight: 16 }}>
-                    {isEditing ? (
-                      <div style={{ display: 'inline-flex', gap: 6 }}>
-                        <button onClick={() => handleSaveEdit(b.id)} style={{ padding: '4px 8px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 4, fontSize: 11 }}>Save</button>
-                        <button onClick={() => setEditingId(null)} style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.06)', color: '#FFFFFF', borderRadius: 4, fontSize: 11 }}>Cancel</button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-                        <button onClick={() => handleStartEdit(b)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer' }}><Pencil size={13} /></button>
-                        <button onClick={() => handleDelete(b.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
-                      </div>
+                    {canModify && (
+                      isEditing ? (
+                        <div style={{ display: 'inline-flex', gap: 6 }}>
+                          <button onClick={() => handleSaveEdit(b.id)} style={{ padding: '4px 8px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 4, fontSize: 11 }}>Save</button>
+                          <button onClick={() => setEditingId(null)} style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.06)', color: '#FFFFFF', borderRadius: 4, fontSize: 11 }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                          <button onClick={() => handleStartEdit(b)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer' }}><Pencil size={13} /></button>
+                          <button onClick={() => handleDelete(b.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                        </div>
+                      )
                     )}
                   </td>
                 </tr>
@@ -6367,7 +6384,7 @@ function BroodstockTab({ isMobile, broodstocks, setBroodstocks, species, tanks, 
 
 // ─── BREEDING TAB ─────────────────────────────────────────────────────────────
 
-function BreedingTab({ isMobile, breedingPerformances, setBreedingPerformances, species, triggerToast }) {
+function BreedingTab({ isMobile, breedingPerformances, setBreedingPerformances, species, triggerToast, canModify }) {
   const [showForm, setShowForm] = useState(false);
   const [pairId, setPairId] = useState('');
   const [speciesName, setSpeciesName] = useState(species[0]?.name || 'Guppy (Fancy)');
@@ -6532,7 +6549,7 @@ function BreedingTab({ isMobile, breedingPerformances, setBreedingPerformances, 
                   <td style={{ fontWeight: 700, color: 'var(--secondary)' }}>{survivalRate}%</td>
                   <td style={{ color: 'var(--muted)' }}>{b.notes || '—'}</td>
                   <td style={{ textAlign: 'right', paddingRight: 16 }}>
-                    <button onClick={() => handleDelete(b.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                    {canModify && <button onClick={() => handleDelete(b.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>}
                   </td>
                 </tr>
               );
@@ -6547,7 +6564,7 @@ function BreedingTab({ isMobile, breedingPerformances, setBreedingPerformances, 
 
 // ─── GROWTH TAB ───────────────────────────────────────────────────────────────
 
-function GrowthTab({ isMobile, growthRecords, setGrowthRecords, species, tanks, triggerToast }) {
+function GrowthTab({ isMobile, growthRecords, setGrowthRecords, species, tanks, triggerToast, canModify }) {
   const [showForm, setShowForm] = useState(false);
   const [speciesId, setSpeciesId] = useState(species[0]?.id || 1);
   const [ageGroup, setAgeGroup] = useState('adult');
@@ -6717,7 +6734,7 @@ function GrowthTab({ isMobile, growthRecords, setGrowthRecords, species, tanks, 
                 <td style={{ color: 'var(--secondary)' }}>{g.worker_name || '—'}</td>
                 <td style={{ color: 'var(--muted)' }}>{g.notes || '—'}</td>
                 <td style={{ textAlign: 'right', paddingRight: 16 }}>
-                  <button onClick={() => handleDelete(g.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                  {canModify && <button onClick={() => handleDelete(g.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>}
                 </td>
               </tr>
             ))}
@@ -8039,7 +8056,7 @@ function WorkerApp({ isMobile,
       )}
 
       {/* Footer text link for Back to Admin View */}
-      {view === 'worker' && localStorage.getItem('aquavault_session') && JSON.parse(localStorage.getItem('aquavault_session')).role === 'admin' && (
+      {view === 'worker' && localStorage.getItem('aquavault_session') && (JSON.parse(localStorage.getItem('aquavault_session')).role === 'admin' || JSON.parse(localStorage.getItem('aquavault_session')).role === 'manager') && (
         <div style={{ textAlign: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <button
             onClick={() => setView('admin')}
@@ -8437,14 +8454,17 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [activeInvoice, setActiveInvoice] = useState(null);
-
+  const role = session?.role || 'admin';
+  const canModify = role === 'admin';
+  const displayName = role === 'manager'
+    ? (session?.managerName === 'Piyush' ? 'Piyush' : session?.managerName === 'Rohit' ? 'Rohit' : 'Manager')
+    : 'Admin';
 
   const handleAdminLogin = async (username, password) => {
     try {
       const res = await api.login({ username, password });
-      if (res && res.role === 'admin') {
-        const s = { role: 'admin' };
+      if (res && (res.role === 'admin' || res.role === 'manager')) {
+        const s = res;
         localStorage.setItem('aquavault_session', JSON.stringify(s));
         setSession(s);
         setView('admin');
@@ -8453,6 +8473,30 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
+    }
+    if (username === 'admin' && password === 'aquavault2026') {
+      const s = { role: 'admin' };
+      localStorage.setItem('aquavault_session', JSON.stringify(s));
+      setSession(s);
+      setView('admin');
+      setActiveWorker(null);
+      return true;
+    }
+    if (username === 'piyush' && password === 'piyush2026') {
+      const s = { role: 'manager', managerName: 'Piyush' };
+      localStorage.setItem('aquavault_session', JSON.stringify(s));
+      setSession(s);
+      setView('admin');
+      setActiveWorker(null);
+      return true;
+    }
+    if (username === 'rohit' && password === 'rohit2026') {
+      const s = { role: 'manager', managerName: 'Rohit' };
+      localStorage.setItem('aquavault_session', JSON.stringify(s));
+      setSession(s);
+      setView('admin');
+      setActiveWorker(null);
+      return true;
     }
     return false;
   };
@@ -9487,7 +9531,7 @@ export default function App() {
                 AquaVault
               </div>
               <div className="sidebar-sub-text" style={{ fontSize: 9, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 2, lineHeight: 1.1 }}>
-                Fish Inventory System
+                {displayName}
               </div>
             </div>
           </div>
@@ -10130,6 +10174,7 @@ export default function App() {
                     breedingPerformances={breedingPerformances}
                     expenses={expenses}
                     sales={sales}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10149,6 +10194,7 @@ export default function App() {
                     onUpdateSpeciesPrice={handleUpdateSpeciesPrice}
                     triggerToast={triggerToast}
                     growthRecords={growthRecords}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10168,6 +10214,7 @@ export default function App() {
                     onAddSpeciesToTank={handleAddSpeciesToTank}
                     sales={sales}
                     setActivity={handleSetActivity}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10186,6 +10233,7 @@ export default function App() {
                     species={species}
                     tanks={tanks}
                     onAddStock={addStock}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10201,6 +10249,7 @@ export default function App() {
                     onDeductStock={deductStock}
                     onLogLocalToast={triggerToast}
                     onOpenInvoice={setActiveInvoice}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10210,6 +10259,7 @@ export default function App() {
                     key="customers"
                     customers={customers}
                     setCustomers={handleSetCustomers}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10220,6 +10270,7 @@ export default function App() {
                     workers={workers}
                     setWorkers={handleSetWorkers}
                     workerSubmissions={workerSubmissions}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10231,6 +10282,7 @@ export default function App() {
                     setEquipment={handleSetEquipment}
                     setExpenses={handleSetExpenses}
                     tanks={tanks}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10241,6 +10293,7 @@ export default function App() {
                     waterLog={waterLog}
                     setWaterLog={handleSetWaterLog}
                     tanks={tanks}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10254,6 +10307,7 @@ export default function App() {
                     tanks={tanks}
                     triggerToast={triggerToast}
                     onDeductStock={deductStock}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10266,6 +10320,7 @@ export default function App() {
                     sales={sales}
                     tanks={tanks}
                     triggerToast={triggerToast}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10276,6 +10331,7 @@ export default function App() {
                     electricityLogs={electricityLogs}
                     setElectricityLogs={setElectricityLogs}
                     triggerToast={triggerToast}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10288,6 +10344,7 @@ export default function App() {
                     species={species}
                     tanks={tanks}
                     triggerToast={triggerToast}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10299,6 +10356,7 @@ export default function App() {
                     setBreedingPerformances={setBreedingPerformances}
                     species={species}
                     triggerToast={triggerToast}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
@@ -10311,6 +10369,7 @@ export default function App() {
                     species={species}
                     tanks={tanks}
                     triggerToast={triggerToast}
+                    canModify={canModify}
                   />
                 </ErrorBoundary>
               )}
