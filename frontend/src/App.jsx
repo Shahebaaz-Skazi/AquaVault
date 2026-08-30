@@ -6584,6 +6584,7 @@ function WorkerApp({ isMobile,
   view,
   tanks
 }) {
+  const [workerTab, setWorkerTab] = useState('stock'); // 'stock' | 'tankcare' | 'reports'
   const [feedSuccessMsg, setFeedSuccessMsg] = useState('');
   const [maintSuccessMsg, setMaintSuccessMsg] = useState('');
   const [wqSuccessMsg, setWqSuccessMsg] = useState('');
@@ -7101,8 +7102,6 @@ function WorkerApp({ isMobile,
       </div>
     );
   }
-
-  const [workerTab, setWorkerTab] = useState('stock'); // 'stock' | 'tankcare' | 'reports'
 
   // ─── 2. WORKER DASHBOARD VIEW ───
   return (
