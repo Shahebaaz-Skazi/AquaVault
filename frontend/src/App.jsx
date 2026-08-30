@@ -6602,9 +6602,26 @@ function WorkerApp({ isMobile,
   }, []);
 
   // LOG A SALE STEPS STATE
+  const getCount = useCallback((spId, ag, tId) => {
+    return tankStock?.[spId]?.[ag]?.[tId] ?? 0;
+  }, [tankStock]);
+
   const getAgeGroupTotal = useCallback((spId, ag) => {
     const agMap = tankStock?.[spId]?.[ag] || {};
     return Object.values(agMap).reduce((sum, val) => sum + (Number(val) || 0), 0);
+  }, [tankStock]);
+
+  const getSpeciesTotal = useCallback((spId) => {
+    const spMap = tankStock?.[spId] || {};
+    let total = 0;
+    Object.values(spMap).forEach(agMap => {
+      if (agMap && typeof agMap === 'object') {
+        Object.values(agMap).forEach(cnt => {
+          total += Number(cnt) || 0;
+        });
+      }
+    });
+    return total;
   }, [tankStock]);
 
   const [saleStep, setSaleStep] = useState(1); // 1, 2, 3, 4
