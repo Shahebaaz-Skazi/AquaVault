@@ -7102,538 +7102,368 @@ function WorkerApp({ isMobile,
     );
   }
 
+  const [workerTab, setWorkerTab] = useState('stock'); // 'stock' | 'tankcare' | 'reports'
+
   // ─── 2. WORKER DASHBOARD VIEW ───
   return (
-    <div className="worker-app-wrapper" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 8px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Top Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Hi {activeWorker.name}</h2>
-          <span style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{formatDate(today())}</span>
+    <div className="worker-app-wrapper" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 8px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Top Bar Banner — Compact Single Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>Hi, {activeWorker.name}</span>
+          <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: 12 }}>— {formatDate(today())}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setActiveWorker(null)}
-            style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 6, fontSize: 11, color: 'var(--secondary)' }}
+            style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, fontSize: 11, color: '#FFFFFF', cursor: 'pointer' }}
           >
-            Switch Worker
+            Switch
           </button>
           <button
             onClick={onLogout}
-            style={{ padding: '6px 12px', background: 'rgba(255,102,102,0.15)', border: '1px solid rgba(255,102,102,0.3)', borderRadius: 6, fontSize: 11, color: '#FF6666' }}
+            style={{ padding: '5px 10px', background: 'rgba(255,102,102,0.15)', border: '1px solid rgba(255,102,102,0.3)', borderRadius: 6, fontSize: 11, color: '#FF6666', cursor: 'pointer' }}
           >
             Log Out
           </button>
         </div>
       </div>
 
-      {view === 'worker' && localStorage.getItem('aquavault_session') && JSON.parse(localStorage.getItem('aquavault_session')).role === 'admin' && (
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 10 }}>
-          <button
-            onClick={() => setView('admin')}
-            style={{ padding: '6px 12px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, fontSize: 11 }}
-          >
-            {"\u2190"} Back to Admin view
-          </button>
-        </div>
-      )}
+      {/* Worker Pill Tab Bar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 12,
+        padding: 4,
+        gap: 4,
+        overflowX: 'auto'
+      }}>
+        <button
+          type="button"
+          onClick={() => setWorkerTab('stock')}
+          style={{
+            flex: 1,
+            padding: '8px 16px',
+            fontSize: 13,
+            fontWeight: 500,
+            color: '#FFFFFF',
+            background: workerTab === 'stock' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
+            border: workerTab === 'stock' ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+            borderRadius: 8,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Stock & Fish
+        </button>
+        <button
+          type="button"
+          onClick={() => setWorkerTab('tankcare')}
+          style={{
+            flex: 1,
+            padding: '8px 16px',
+            fontSize: 13,
+            fontWeight: 500,
+            color: '#FFFFFF',
+            background: workerTab === 'tankcare' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
+            border: workerTab === 'tankcare' ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+            borderRadius: 8,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Tank Care
+        </button>
+        <button
+          type="button"
+          onClick={() => setWorkerTab('reports')}
+          style={{
+            flex: 1,
+            padding: '8px 16px',
+            fontSize: 13,
+            fontWeight: 500,
+            color: '#FFFFFF',
+            background: workerTab === 'reports' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
+            border: workerTab === 'reports' ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+            borderRadius: 8,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Reports
+        </button>
+      </div>
 
-      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', textAlign: 'center' }}>
-        What do you want to log?
-      </h3>
+      {/* TAB 1: Stock & Fish */}
+      {workerTab === 'stock' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Card 1 — Log a Sale */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log a Sale</span>
+              <ShoppingCart size={18} />
+            </div>
 
-      {/* Grid of log entries */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
-        
-        {/* Card 1 — Log a Sale */}
-        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)', border: '1px solid #FFFFFF', gridColumn: isMobile ? 'span 1' : 'span 2' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log a Sale</span>
-            <ShoppingCart size={18} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {saleSuccessMsg ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12, padding: 10 }}>
-                <Check size={48} color="var(--secondary)" />
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
-                <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{saleSuccessMsg}</span>
-              </div>
-            ) : (
-              <>
-                {/* Step 1: Pick Species */}
-                <div>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>STEP 1: SELECT SPECIES</span>
-                  <select
-                    value={saleSpId}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setSaleSpId(val);
-                      setSaleAgeGroup('');
-                      setSaleTankId('');
-                      setSaleQty('');
-                      setSalePrice('');
-                      if (val) {
-                        setSaleStep(2);
-                      } else {
-                        setSaleStep(1);
-                      }
-                    }}
-                  >
-                    <option value="">Select Species</option>
-                    {(species || []).map(s => {
-                      const isAvailable = s.stock > 0;
-                      return (
-                        <option key={s.id} value={s.id} disabled={!isAvailable}>
-                          {s.name} ({s.stock} available)
-                        </option>
-                      );
-                    })}
-                  </select>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {saleSuccessMsg ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12, padding: 10 }}>
+                  <Check size={48} color="var(--secondary)" />
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{saleSuccessMsg}</span>
                 </div>
-
-            {/* Step 2: Pick Age Group */}
-            {saleStep >= 2 && selectedSp && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: isMobile ? 16 : 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>STEP 2: SELECT AGE GROUP</span>
-                  <button type="button" onClick={() => { setSaleStep(1); setSaleSpId(''); }} style={{ background: 'none', border: 'none', color: '#888888', fontSize: 9, cursor: 'pointer' }}>Change Species</button>
-                </div>
-
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {['adult', 'semi-adult', 'newborn'].map(ag => {
-                    const stock = Object.values(tankStock[selectedSp.id]?.[ag] || {}).reduce((a, b) => a + b, 0);
-                    const isAvailable = stock > 0;
-                    const isSelected = saleAgeGroup === ag;
-                    const multiplier = AGE_GROUP_LABELS[ag].priceMultiplier;
-                    const targetPrice = Math.round(selectedSp.price * multiplier);
-
-                    return (
-                      <button
-                        key={ag}
-                        type="button"
-                        disabled={!isAvailable}
-                        onClick={() => {
-                          setSaleAgeGroup(ag);
-                          setSalePrice(targetPrice.toString());
-                          setSaleTankId('');
-                          setSaleStep(3);
-                        }}
-                        style={{
-                          flex: 1, padding: '8px 4px', borderRadius: 8, textAlign: 'center',
-                          background: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.04)',
-                          color: isSelected ? '#000000' : isAvailable ? '#FFFFFF' : 'var(--muted)',
-                          border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                          opacity: isAvailable ? 1 : 0.4,
-                          cursor: isAvailable ? 'pointer' : 'not-allowed'
-                        }}
-                      >
-                        <div style={{ fontWeight: 'bold', fontSize: 11 }}>{AGE_GROUP_LABELS[ag].label}</div>
-                        <div style={{ fontSize: 9, marginTop: 2 }}>{stock} fish</div>
-                        <div style={{ fontSize: 8, color: isSelected ? '#333' : 'var(--secondary)', marginTop: 2 }}>{"\u20B9"}{targetPrice}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Pick Tank */}
-            {saleStep >= 3 && selectedSp && saleAgeGroup && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: isMobile ? 16 : 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>STEP 3: SELECT TANK</span>
-                  <button type="button" onClick={() => { setSaleStep(2); setSaleTankId(''); }} style={{ background: 'none', border: 'none', color: '#888888', fontSize: 9, cursor: 'pointer' }}>Change Age Group</button>
-                </div>
-
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {saleTanks.map(t => {
-                    const isSelected = saleTankId === t.tankId;
-                    const maxStockSpecies = Math.max(...saleTanks.map(tk => tk.count));
-                    const isRecommended = t.count === maxStockSpecies;
-
-                    return (
-                      <button
-                        key={t.tankId}
-                        type="button"
-                        disabled={t.isQuarantined}
-                        onClick={() => {
-                          setSaleTankId(t.tankId);
-                          setSaleStep(4);
-                        }}
-                        style={{
-                          flex: 1, minWidth: 100, padding: '8px', borderRadius: 8, textAlign: 'center',
-                          background: isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.04)',
-                          color: isSelected ? '#000000' : t.isQuarantined ? 'var(--muted)' : '#FFFFFF',
-                          border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.08)'
-                        }}
-                      >
-                        <div style={{ fontWeight: 'bold', fontSize: 12 }}>
-                          Tank {t.tankId} {t.isQuarantined && '[Locked]'}
-                        </div>
-                        <div style={{ fontSize: 10, marginTop: 2 }}>{t.count} fish</div>
-                        {isRecommended && !isSelected && (
-                          <div style={{ fontSize: 8, color: 'var(--secondary)', marginTop: 4 }}>Recommended</div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {saleTankId && (
-                  <div style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 8 }}>
-                    Tank {saleTankId} selected. You can sell up to {(tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0)} fish.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 4: Sale details */}
-            {saleStep === 4 && selectedSp && saleAgeGroup && saleTankId && (
-              <form onSubmit={handleSaleSubmit} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>STEP 4: SALE DETAILS</span>
-                  <button type="button" onClick={() => { setSaleStep(3); setSaleQty(''); }} style={{ background: 'none', border: 'none', color: '#888888', fontSize: 9, cursor: 'pointer' }}>Change Tank</button>
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              ) : (
+                <>
+                  {/* Step 1: Pick Species */}
                   <div>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      max={tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0}
-                      placeholder={`Qty (max ${tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0})`}
-                      value={saleQty}
-                      onChange={e => setSaleQty(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      placeholder={`Price ({"\u20B9"}${Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier)})`}
-                      value={salePrice}
-                      onChange={e => setSalePrice(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Autocomplete buyer */}
-                <div ref={buyerRef} style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Buyer Name"
-                    value={saleBuyer}
-                    onChange={e => {
-                      setSaleBuyer(e.target.value);
-                      setShowBuyerSuggests(true);
-                    }}
-                    onFocus={() => setShowBuyerSuggests(true)}
-                    style={{ paddingRight: '28px' }}
-                  />
-                  <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted)' }} />
-                  {showBuyerSuggests && buyerSuggestions.length > 0 && (
-                    <div style={{
-                      position: 'absolute', top: '100%', left: 0, right: 0,
-                      background: '#141414', border: '1px solid #FFFFFF',
-                      borderRadius: 8, zIndex: 50, maxHeight: 120, overflowY: 'auto'
-                    }}>
-                      {buyerSuggestions.map(s => (
-                        <div
-                          key={s.id}
-                          onClick={() => {
-                            setSaleBuyer(s.name);
-                            setShowBuyerSuggests(false);
-                          }}
-                          style={{ padding: '8px 12px', color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)' }}
-                        >
-                          {s.name}
-                        </div>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>STEP 1: SELECT SPECIES</span>
+                    <select
+                      value={saleSpId}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setSaleSpId(val);
+                        if (val) {
+                          setSaleStep(2);
+                        }
+                      }}
+                    >
+                      <option value="">Select Species to Sell</option>
+                      {(species || []).map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.stock} total stock)</option>
                       ))}
+                    </select>
+                  </div>
+
+                  {/* Step 2: Pick Age Group */}
+                  {saleStep >= 2 && selectedSp && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>STEP 2: AGE GROUP</span>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {['adult', 'semi-adult', 'newborn'].map(ag => {
+                          const agTotal = getAgeGroupTotal(selectedSp.id, ag);
+                          const isSel = saleAgeGroup === ag;
+                          return (
+                            <button
+                              key={ag}
+                              type="button"
+                              onClick={() => {
+                                setSaleAgeGroup(ag);
+                                setSaleStep(3);
+                                setSaleTankId('');
+                              }}
+                              style={{
+                                flex: 1, padding: '8px 4px', borderRadius: 6, fontSize: 11,
+                                background: isSel ? '#FFFFFF' : 'rgba(255,255,255,0.04)',
+                                color: isSel ? '#000000' : agTotal > 0 ? '#fff' : 'var(--muted)',
+                                fontWeight: isSel ? 'bold' : 'normal',
+                                border: isSel ? 'none' : '1px solid var(--border)'
+                              }}
+                            >
+                              {AGE_GROUP_LABELS[ag]?.label || ag}<br />
+                              <span style={{ fontSize: 9, opacity: 0.8 }}>({agTotal})</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
-                </div>
 
-                {/* UPI / Cash toggles */}
-                <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-                  {['UPI', 'Cash', 'Bank Transfer'].map(m => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setSalePayMode(m)}
-                      style={{
-                        flex: 1, padding: '6px', fontSize: 11,
-                        background: salePayMode === m ? '#FFFFFF' : 'transparent',
-                        color: salePayMode === m ? '#000000' : 'var(--secondary)'
-                      }}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
+                  {/* Step 3: Pick Tank */}
+                  {saleStep >= 3 && selectedSp && saleAgeGroup && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>STEP 3: SELECT SOURCE TANK</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                        {(tanks || []).map(t => {
+                          const count = getCount(selectedSp.id, saleAgeGroup, t.id);
+                          const isSel = saleTankId === t.id;
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              disabled={count === 0}
+                              onClick={() => {
+                                setSaleTankId(t.id);
+                                setSaleStep(4);
+                              }}
+                              style={{
+                                padding: '8px 4px', borderRadius: 6, fontSize: 11,
+                                background: isSel ? '#FFFFFF' : count > 0 ? 'rgba(255,255,255,0.04)' : 'transparent',
+                                color: isSel ? '#000000' : count > 0 ? '#fff' : '#444',
+                                fontWeight: isSel ? 'bold' : 'normal',
+                                border: isSel ? 'none' : '1px solid var(--border)',
+                                cursor: count > 0 ? 'pointer' : 'not-allowed',
+                                opacity: count === 0 ? 0.4 : 1
+                              }}
+                            >
+                              Tank {t.id}<br />
+                              <span style={{ fontSize: 9, opacity: 0.8 }}>({count})</span>
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#fff', margin: '4px 0' }}>
-                  Total: {"\u20B9"}{((parseInt(saleQty, 10) || 0) * (parseInt(salePrice, 10) || Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier))).toLocaleString('en-IN')}
-                </div>
+                      {saleTankId && (
+                        <div style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 8 }}>
+                          Tank {saleTankId} selected. You can sell up to {(tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0)} fish.
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                <button
-                  type="submit"
-                  style={{ width: '100%', padding: 12, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8 }}
-                >
-                  Submit Sale
-                </button>
-              </form>
-            )}
+                  {/* Step 4: Sale details */}
+                  {saleStep === 4 && selectedSp && saleAgeGroup && saleTankId && (
+                    <form onSubmit={handleSaleSubmit} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>STEP 4: SALE DETAILS</span>
+                        <button type="button" onClick={() => { setSaleStep(3); setSaleQty(''); }} style={{ background: 'none', border: 'none', color: '#888888', fontSize: 9, cursor: 'pointer' }}>Change Tank</button>
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        <div>
+                          <input
+                            type="number"
+                            required
+                            min={1}
+                            max={tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0}
+                            placeholder={`Qty (max ${tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0})`}
+                            value={saleQty}
+                            onChange={e => setSaleQty(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="number"
+                            placeholder={`Price ({"\u20B9"}${Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier)})`}
+                            value={salePrice}
+                            onChange={e => setSalePrice(e.target.value)}
+                          />
+                        </div>
+                      </div>
 
-              </>
-            )}
-          </div>
-        </div>
+                      {/* Autocomplete buyer */}
+                      <div ref={buyerRef} style={{ position: 'relative' }}>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Buyer Name"
+                          value={saleBuyer}
+                          onChange={e => {
+                            setSaleBuyer(e.target.value);
+                            setShowBuyerSuggests(true);
+                          }}
+                          onFocus={() => setShowBuyerSuggests(true)}
+                          style={{ paddingRight: '28px' }}
+                        />
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--muted)' }} />
+                        {showBuyerSuggests && buyerSuggestions.length > 0 && (
+                          <div style={{
+                            position: 'absolute', top: '100%', left: 0, right: 0,
+                            background: '#141414', border: '1px solid #FFFFFF',
+                            borderRadius: 8, zIndex: 50, maxHeight: 120, overflowY: 'auto'
+                          }}>
+                            {buyerSuggestions.map(s => (
+                              <div
+                                key={s.id}
+                                onClick={() => {
+                                  setSaleBuyer(s.name);
+                                  setShowBuyerSuggests(false);
+                                }}
+                                style={{ padding: '8px 12px', color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)' }}
+                              >
+                                {s.name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
-        {/* Card 2 — Log Feeding Done */}
-        <div className="card" style={{ padding: 18 }}>
-          {feedSuccess ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 120, gap: 12 }}>
-              <Check size={48} color="var(--secondary)" />
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
-              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{feedSuccessMsg}</span>
-            </div>
-          ) : (
-            <>
-              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Feeding Done</span>
-              <form onSubmit={handleFeedingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <select value={feedTank} onChange={e => setFeedTank(e.target.value)}>
-                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
-                </select>
+                      {/* UPI / Cash toggles */}
+                      <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                        {['UPI', 'Cash', 'Bank Transfer'].map(m => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setSalePayMode(m)}
+                            style={{
+                              flex: 1, padding: '6px', fontSize: 11,
+                              background: salePayMode === m ? '#FFFFFF' : 'transparent',
+                              color: salePayMode === m ? '#000000' : 'var(--secondary)'
+                            }}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
 
-                <button
-                  type="submit"
-                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-                >
-                  Log Feeding
-                </button>
-              </form>
-            </>
-          )}
-        </div>
+                      <div style={{ fontSize: 13, fontWeight: 'bold', color: '#fff', margin: '4px 0' }}>
+                        Total: {"\u20B9"}{((parseInt(saleQty, 10) || 0) * (parseInt(salePrice, 10) || Math.round(selectedSp.price * AGE_GROUP_LABELS[saleAgeGroup].priceMultiplier))).toLocaleString('en-IN')}
+                      </div>
 
-        {/* Card 3 — Log Tank Maintenance */}
-        <div className="card" style={{ padding: 18 }}>
-          {maintSuccess ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
-              <Check size={48} color="var(--secondary)" />
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
-              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{maintSuccessMsg}</span>
-            </div>
-          ) : (
-            <>
-              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Tank Maintenance</span>
-              <form onSubmit={handleMaintSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <select value={maintTank} onChange={e => setMaintTank(e.target.value)}>
-                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-                </select>
-                
-                <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-                  {['Water Change', 'Filter Clean', 'Glass Wipe'].map(type => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setMaintType(type)}
-                      style={{
-                        flex: 1, padding: '6px', fontSize: 10,
-                        background: maintType === type ? '#FFFFFF' : 'transparent',
-                        color: maintType === type ? '#000000' : 'var(--secondary)'
-                      }}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-
-                <input
-                  type="text"
-                  placeholder="Maintenance Notes (optional)"
-                  value={maintNotes}
-                  onChange={e => setMaintNotes(e.target.value)}
-                />
-
-                <button
-                  type="submit"
-                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-                >
-                  Log Maintenance
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-
-        {/* Card 4 — Log Water Quality */}
-        <div className="card" style={{ padding: 18 }}>
-          {wqSuccess ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
-              <Check size={48} color="var(--secondary)" />
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
-              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{wqSuccessMsg}</span>
-              {wqWarning && (
-                <div style={{ color: '#FF4757', fontSize: 11, textAlign: 'center', fontWeight: 'bold', marginTop: 4 }}>
-                  [Alert] Reading outside safe range — admin will be alerted.
-                </div>
+                      <button
+                        type="submit"
+                        style={{ width: '100%', padding: 12, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8 }}
+                      >
+                        Submit Sale
+                      </button>
+                    </form>
+                  )}
+                </>
               )}
             </div>
-          ) : (
-            <>
-              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Water Quality</span>
-              <form onSubmit={handleWqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <select value={wqTank} onChange={e => setWqTank(e.target.value)}>
-                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-                </select>
+          </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                  <input
-                    type="text"
-                    required
-                    placeholder="pH"
-                    value={wqPh}
-                    onChange={e => setWqPh(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Temp (°C)"
-                    value={wqTemp}
-                    onChange={e => setWqTemp(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ammonia"
-                    value={wqAmmonia}
-                    onChange={e => setWqAmmonia(e.target.value)}
-                  />
-                </div>
+          {/* Card 6 — Move Fish (Transfer) */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Move Fish ({"\u21C4"})</span>
+            <form onSubmit={handleTransferSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>SELECT SPECIES</span>
+              <select value={trSpId} onChange={e => {
+                setTrSpId(e.target.value);
+                setTrFromTank('');
+                setTrToTank('');
+              }}>
+                <option value="">Select Species</option>
+                {(species || []).map(s => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.stock} total)</option>
+                ))}
+              </select>
 
-                <button
-                  type="submit"
-                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-                >
-                  Submit Reading
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-
-        {/* Card 5 — Report an Issue */}
-        <div className="card" style={{ padding: 18 }}>
-          {issueSuccess ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
-              <Check size={48} color="var(--secondary)" />
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
-              <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{issueSuccessMsg}</span>
-            </div>
-          ) : (
-            <>
-              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Report an Issue</span>
-              <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <select value={issueTank} onChange={e => setIssueTank(e.target.value)}>
-                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-                </select>
-
-                <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-                  {['Low', 'Medium', 'High'].map(urg => (
-                    <button
-                      key={urg}
-                      type="button"
-                      onClick={() => setIssueUrgency(urg)}
-                      style={{
-                        flex: 1, padding: '6px', fontSize: 11,
-                        background: issueUrgency === urg ? '#FFFFFF' : 'transparent',
-                        color: issueUrgency === urg ? '#000000' : 'var(--secondary)'
-                      }}
-                    >
-                      {urg} Urgency
-                    </button>
-                  ))}
-                </div>
-
-                <textarea
-                  required
-                  placeholder="Describe observation/issue details..."
-                  value={issueDesc}
-                  onChange={e => setIssueDesc(e.target.value)}
-                  style={{
-                    fontFamily: 'inherit', background: '#0A0A0A', border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: 8, padding: 8, color: '#fff', height: 60, outline: 'none'
-                  }}
-                />
-
-                <button
-                  type="submit"
-                  style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
-                >
-                  Report Issue
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-
-        {/* Card 6 — Move Fish (Transfer) */}
-        <div className="card" style={{ padding: 18 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Move Fish ({"\u21C4"})</span>
-          <form onSubmit={handleTransferSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>SELECT SPECIES</span>
-            <select value={trSpId} onChange={e => {
-              setTrSpId(e.target.value);
-              setTrFromTank('');
-              setTrToTank('');
-            }}>
-              <option value="">Select Species</option>
-              {(species || []).map(s => (
-                <option key={s.id} value={s.id}>{s.name} ({s.stock} total)</option>
-              ))}
-            </select>
-
-            {trSpId && (
-              <>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>FROM TANK</span>
-                <select value={trFromTank ? `${trFromTank}:${trAgeGroup}` : ''} onChange={e => {
-                  const val = e.target.value;
-                  if (val) {
-                    const [tId, ag] = val.split(':');
-                    setTrFromTank(tId);
-                    setTrAgeGroup(ag);
-                  } else {
-                    setTrFromTank('');
-                    setTrAgeGroup('');
-                  }
-                }}>
-                  <option value="">Select Source</option>
-                  {(() => {
-                    const list = [];
-                    const ageGroupsObj = tankStock[trSpId] || {};
-                    Object.entries(ageGroupsObj).forEach(([ag, tanksObj]) => {
-                      Object.entries(tanksObj || {}).forEach(([tkId, count]) => {
-                        if (count > 0) {
-                          list.push({ tkId, ag, count });
-                        }
+              {trSpId && (
+                <>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>FROM TANK</span>
+                  <select value={trFromTank ? `${trFromTank}:${trAgeGroup}` : ''} onChange={e => {
+                    const val = e.target.value;
+                    if (val) {
+                      const [tId, ag] = val.split(':');
+                      setTrFromTank(tId);
+                      setTrAgeGroup(ag);
+                    } else {
+                      setTrFromTank('');
+                      setTrAgeGroup('');
+                    }
+                  }}>
+                    <option value="">Select Source</option>
+                    {(() => {
+                      const list = [];
+                      const ageGroupsObj = tankStock[trSpId] || {};
+                      Object.entries(ageGroupsObj).forEach(([ag, tanksObj]) => {
+                        Object.entries(tanksObj || {}).forEach(([tkId, count]) => {
+                          if (count > 0) {
+                            list.push({ tkId, ag, count });
+                          }
+                        });
                       });
-                    });
-                    return list.map(item => (
-                      <option key={`${item.tkId}-${item.ag}`} value={`${item.tkId}:${item.ag}`}>
-                        Tank {item.tkId} ({AGE_GROUP_LABELS[item.ag]?.label || item.ag}: {item.count} fish)
-                      </option>
-                    ));
-                  })()}
-                </select>
-              </>
-            )}
-
-            {trFromTank && (
-              <>
+                      return list.map(item => (
+                        <option key={`${item.tkId}-${item.ag}`} value={`${item.tkId}:${item.ag}`}>
+                          Tank {item.tkId} ({AGE_GROUP_LABELS[item.ag]?.label || item.ag}: {item.count} fish)
+                        </option>
+                      ));
+                    })()}
+                  </select>
                 <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block' }}>TO TANK</span>
                 <select value={trToTank} onChange={e => setTrToTank(e.target.value)}>
                   <option value="">Select Target</option>
@@ -7664,149 +7494,303 @@ function WorkerApp({ isMobile,
             {trSuccess && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>Transfer complete {"\u2713"}</div>}
           </form>
         </div>
-
-        {/* Card — Log Mortality (Worker) */}
-        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log Mortality</span>
-            <Skull size={18} color="#666666" />
-          </div>
-          <form onSubmit={handleWorkerMortalitySubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>SPECIES</span>
-            <select value={wmSpeciesId} onChange={e => setWmSpeciesId(e.target.value)}>
-              {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AGE GROUP</span>
-                <select value={wmAgeGroup} onChange={e => setWmAgeGroup(e.target.value)}>
-                  <option value="adult">Adult</option>
-                  <option value="semi-adult">Semi-Adult</option>
-                  <option value="newborn">Newborn</option>
-                </select>
-              </div>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
-                <select value={wmTankId} onChange={e => setWmTankId(e.target.value)}>
-                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>QTY DEAD</span>
-            <input type="number" required min="1" placeholder="Quantity dead" value={wmQtyDead} onChange={e => setWmQtyDead(e.target.value)} />
-
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>POSSIBLE REASON</span>
-            <input type="text" placeholder="e.g. Disease, pH issue" value={wmReason} onChange={e => setWmReason(e.target.value)} />
-
-            <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
-              Submit Mortality Log
-            </button>
-            {wmSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wmSuccessMsg} {"\u2713"}</div>}
-          </form>
-        </div>
-
-        {/* Card — Log Feed (Worker) */}
-        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log Feed Usage</span>
-            <Package size={18} />
-          </div>
-          <form onSubmit={handleWorkerFeedSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>FEED TYPE</span>
-            <input type="text" required placeholder="e.g. Hikari Pellets" value={wfType} onChange={e => setWfType(e.target.value)} />
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>PURCHASED (KG)</span>
-                <input type="number" step="0.1" placeholder="Purchased" value={wfPurchased} onChange={e => setWfPurchased(e.target.value)} />
-              </div>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>USED (KG)</span>
-                <input type="number" step="0.1" placeholder="Used" value={wfUsed} onChange={e => setWfUsed(e.target.value)} />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>COST ({"\u20B9"})</span>
-                <input type="number" required placeholder="Cost" value={wfCost} onChange={e => setWfCost(e.target.value)} />
-              </div>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
-                <select value={wfTankId} onChange={e => setWfTankId(e.target.value)}>
-                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
-              Submit Feed Log
-            </button>
-            {wfSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wfSuccessMsg} {"\u2713"}</div>}
-          </form>
-        </div>
-
-        {/* Card — Record Growth (Worker) */}
-        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Record Growth</span>
-            <TrendingUp size={18} />
-          </div>
-          {wgErrorMsg && <div style={{ fontSize: 11, color: '#FF6666', fontWeight: 600, marginBottom: 8 }}>{wgErrorMsg}</div>}
-          <form onSubmit={handleWorkerGrowthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>SPECIES</span>
-            <select value={wgSpeciesId} onChange={e => setWgSpeciesId(e.target.value)}>
-              {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AGE GROUP</span>
-                <select value={wgAgeGroup} onChange={e => setWgAgeGroup(e.target.value)}>
-                  <option value="adult">Adult</option>
-                  <option value="semi-adult">Semi-Adult</option>
-                  <option value="newborn">Newborn</option>
-                </select>
-              </div>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
-                <select value={wgTankId} onChange={e => setWgTankId(e.target.value)}>
-                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AVG SIZE</span>
-                <input type="text" required placeholder="e.g. 2.5 inch" value={wgAvgSize} onChange={e => setWgAvgSize(e.target.value)} />
-              </div>
-              <div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>SAMPLES (20-30)</span>
-                <input type="number" required min="20" max="30" placeholder="25" value={wgSampleCount} onChange={e => setWgSampleCount(e.target.value)} />
-              </div>
-            </div>
-
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>NOTES</span>
-            <input type="text" placeholder="Growth notes..." value={wgNotes} onChange={e => setWgNotes(e.target.value)} />
-
-            <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
-              Submit Growth Sample
-            </button>
-            {wgSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wgSuccessMsg} {"\u2713"}</div>}
-          </form>
-        </div>
-
       </div>
+      )}
 
+      {/* TAB 2: Tank Care */}
+      {workerTab === 'tankcare' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Card 2 — Log Feeding Done */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            {feedSuccess ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 120, gap: 12 }}>
+                <Check size={48} color="var(--secondary)" />
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{feedSuccessMsg}</span>
+              </div>
+            ) : (
+              <>
+                <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Feeding Done</span>
+                <form onSubmit={handleFeedingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <select value={feedTank} onChange={e => setFeedTank(e.target.value)}>
+                    {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id} ({t.type})</option>)}
+                  </select>
 
-      {/* Activity Logs summary feed */}
-      <div className="card" style={{ padding: 18, marginTop: 10 }}>
-        <span style={{ fontWeight: 700, fontSize: 13, color: '#fff', display: 'block', marginBottom: 12 }}>
-          Your activity today
-        </span>
+                  <button
+                    type="submit"
+                    style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                  >
+                    Log Feeding
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+
+          {/* Card 3 — Log Tank Maintenance */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            {maintSuccess ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
+                <Check size={48} color="var(--secondary)" />
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{maintSuccessMsg}</span>
+              </div>
+            ) : (
+              <>
+                <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Tank Maintenance</span>
+                <form onSubmit={handleMaintSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <select value={maintTank} onChange={e => setMaintTank(e.target.value)}>
+                    {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  </select>
+                  
+                  <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                    {['Water Change', 'Filter Clean', 'Glass Wipe'].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setMaintType(type)}
+                        style={{
+                          flex: 1, padding: '6px', fontSize: 10,
+                          background: maintType === type ? '#FFFFFF' : 'transparent',
+                          color: maintType === type ? '#000000' : 'var(--secondary)'
+                        }}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="Maintenance Notes (optional)"
+                    value={maintNotes}
+                    onChange={e => setMaintNotes(e.target.value)}
+                  />
+
+                  <button
+                    type="submit"
+                    style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                  >
+                    Log Maintenance
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+
+          {/* Card 4 — Log Water Quality */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            {wqSuccess ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
+                <Check size={48} color="var(--secondary)" />
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{wqSuccessMsg}</span>
+                {wqWarning && (
+                  <div style={{ color: '#FF4757', fontSize: 11, textAlign: 'center', fontWeight: 'bold', marginTop: 4 }}>
+                    [Alert] Reading outside safe range — admin will be alerted.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Log Water Quality</span>
+                <form onSubmit={handleWqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <select value={wqTank} onChange={e => setWqTank(e.target.value)}>
+                    {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  </select>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                    <input
+                      type="text"
+                      required
+                      placeholder="pH"
+                      value={wqPh}
+                      onChange={e => setWqPh(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Temp (°C)"
+                      value={wqTemp}
+                      onChange={e => setWqTemp(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ammonia"
+                      value={wqAmmonia}
+                      onChange={e => setWqAmmonia(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                  >
+                    Submit Reading
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+
+          {/* Card — Log Feed Usage (Worker) */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log Feed Usage</span>
+              <Package size={18} />
+            </div>
+            <form onSubmit={handleWorkerFeedSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>FEED TYPE</span>
+              <input type="text" required placeholder="e.g. Hikari Pellets" value={wfType} onChange={e => setWfType(e.target.value)} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>PURCHASED (KG)</span>
+                  <input type="number" step="0.1" placeholder="Purchased" value={wfPurchased} onChange={e => setWfPurchased(e.target.value)} />
+                </div>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>USED (KG)</span>
+                  <input type="number" step="0.1" placeholder="Used" value={wfUsed} onChange={e => setWfUsed(e.target.value)} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>COST ({"\u20B9"})</span>
+                  <input type="number" required placeholder="Cost" value={wfCost} onChange={e => setWfCost(e.target.value)} />
+                </div>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
+                  <select value={wfTankId} onChange={e => setWfTankId(e.target.value)}>
+                    {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
+                Submit Feed Log
+              </button>
+              {wfSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wfSuccessMsg} {"\u2713"}</div>}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: Reports */}
+      {workerTab === 'reports' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Card 5 — Report an Issue */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            {issueSuccess ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12 }}>
+                <Check size={48} color="var(--secondary)" />
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Submitted successfully</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>{issueSuccessMsg}</span>
+              </div>
+            ) : (
+              <>
+                <span style={{ fontWeight: 700, fontSize: 14, color: '#fff', display: 'block', marginBottom: 12 }}>Report an Issue</span>
+                <form onSubmit={handleIssueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <select value={issueTank} onChange={e => setIssueTank(e.target.value)}>
+                    {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  </select>
+
+                  <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                    {['Low', 'Medium', 'High'].map(urg => (
+                      <button
+                        key={urg}
+                        type="button"
+                        onClick={() => setIssueUrgency(urg)}
+                        style={{
+                          flex: 1, padding: '6px', fontSize: 11,
+                          background: issueUrgency === urg ? '#FFFFFF' : 'transparent',
+                          color: issueUrgency === urg ? '#000000' : 'var(--secondary)'
+                        }}
+                      >
+                        {urg} Urgency
+                      </button>
+                    ))}
+                  </div>
+
+                  <textarea
+                    required
+                    placeholder="Describe observation/issue details..."
+                    value={issueDesc}
+                    onChange={e => setIssueDesc(e.target.value)}
+                    style={{
+                      fontFamily: 'inherit', background: '#0A0A0A', border: '1px solid rgba(255,255,255,0.10)',
+                      borderRadius: 8, padding: 8, color: '#fff', height: 60, outline: 'none'
+                    }}
+                  />
+
+                  <button
+                    type="submit"
+                    style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6 }}
+                  >
+                    Report Issue
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+
+          {/* Card — Record Growth (Worker) */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Record Growth</span>
+              <TrendingUp size={18} />
+            </div>
+            {wgErrorMsg && <div style={{ fontSize: 11, color: '#FF6666', fontWeight: 600, marginBottom: 8 }}>{wgErrorMsg}</div>}
+            <form onSubmit={handleWorkerGrowthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>SPECIES</span>
+              <select value={wgSpeciesId} onChange={e => setWgSpeciesId(e.target.value)}>
+                {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AGE GROUP</span>
+                  <select value={wgAgeGroup} onChange={e => setWgAgeGroup(e.target.value)}>
+                    <option value="adult">Adult</option>
+                    <option value="semi-adult">Semi-Adult</option>
+                    <option value="newborn">Newborn</option>
+                  </select>
+                </div>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
+                  <select value={wgTankId} onChange={e => setWgTankId(e.target.value)}>
+                    {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AVG SIZE</span>
+                  <input type="text" required placeholder="e.g. 2.5 inch" value={wgAvgSize} onChange={e => setWgAvgSize(e.target.value)} />
+                </div>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>SAMPLES (20-30)</span>
+                  <input type="number" required min="20" max="30" placeholder="25" value={wgSampleCount} onChange={e => setWgSampleCount(e.target.value)} />
+                </div>
+              </div>
+
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>NOTES</span>
+              <input type="text" placeholder="Growth notes..." value={wgNotes} onChange={e => setWgNotes(e.target.value)} />
+
+              <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
+                Submit Growth Sample
+              </button>
+              {wgSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wgSuccessMsg} {"\u2713"}</div>}
+            </form>
+          </div>
+
+          {/* Activity Logs summary feed */}
+          <div className="card" style={{ padding: 18, background: '#0D0D0D' }}>
+            <span style={{ fontWeight: 700, fontSize: 13, color: '#fff', display: 'block', marginBottom: 12 }}>
+              Your activity today
+            </span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {activeWorkerLogs.map(log => (
             <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: 10, borderRadius: 6 }}>
@@ -7824,6 +7808,20 @@ function WorkerApp({ isMobile,
           )}
         </div>
       </div>
+        </div>
+      )}
+
+      {/* Footer text link for Back to Admin View */}
+      {view === 'worker' && localStorage.getItem('aquavault_session') && JSON.parse(localStorage.getItem('aquavault_session')).role === 'admin' && (
+        <div style={{ textAlign: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <button
+            onClick={() => setView('admin')}
+            style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            ← Back to Admin View
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -7873,31 +7871,57 @@ const TAB_TITLES = {
   growth: 'Growth Tracking'
 };
 
-const BOTTOM_NAV = [
-  { id: 'dashboard',    label: 'Home',     Icon: LayoutDashboard },
-  { id: 'inventory',    label: 'Stock',    Icon: Fish            },
-  { id: 'tanks',        label: 'Tanks',    Icon: Waves           },
-  { id: 'finances',     label: 'Finance',  Icon: Wallet          },
-  { id: 'sales',        label: 'Sales',    Icon: ShoppingCart    },
+const MOBILE_PRIMARY_NAV = [
+  { id: 'dashboard',  label: 'Dashboard', Icon: LayoutDashboard },
+  { id: 'operations', label: 'Operations',Icon: Database },
+  { id: 'finance',    label: 'Finance',   Icon: TrendingUp },
+  { id: 'breeding',   label: 'Breeding',  Icon: Activity },
+  { id: 'people',     label: 'People',    Icon: Users },
 ];
 
-const MORE_NAV = [
-  { id: 'reports',      label: 'Reports',  Icon: BarChart3       },
-  { id: 'customers',    label: 'Clients',  Icon: Users           },
-  { id: 'workers',      label: 'Workers',  Icon: HardHat         },
-  { id: 'equipment',    label: 'Equipment',Icon: Wrench          },
-  { id: 'water',        label: 'Water',    Icon: Droplets        },
-];
+const MOBILE_GROUP_ITEMS = {
+  operations: [
+    { id: 'inventory', label: 'Inventory', Icon: Database },
+    { id: 'tanks',     label: 'Tanks',     Icon: Waves },
+    { id: 'water',     label: 'Water',     Icon: Droplets },
+    { id: 'growth',    label: 'Growth',    Icon: TrendingUp },
+  ],
+  finance: [
+    { id: 'sales',       label: 'Sales & Orders', Icon: ShoppingCart },
+    { id: 'finances',    label: 'Expenses',       Icon: Wallet },
+    { id: 'electricity', label: 'Electricity',    Icon: Zap },
+  ],
+  breeding: [
+    { id: 'mortality',  label: 'Mortality',  Icon: Skull },
+    { id: 'feed',       label: 'Feed',       Icon: Package },
+    { id: 'broodstock', label: 'Broodstock', Icon: Dna },
+    { id: 'breeding',   label: 'Breeding',   Icon: HeartPulse },
+  ],
+  people: [
+    { id: 'customers', label: 'Customers', Icon: Users },
+    { id: 'workers',   label: 'Workers',   Icon: HardHat },
+    { id: 'equipment', label: 'Equipment', Icon: Wrench },
+    { id: 'reports',   label: 'Reports',   Icon: BarChart3 },
+  ]
+};
 
 function BottomNav({ activeTab, setActiveTab, badges }) {
-  const [showMore, setShowMore] = useState(false);
+  const [activeGroup, setActiveGroup] = useState(null);
+
+  const isGroupActive = (groupId) => {
+    if (groupId === 'dashboard') return activeTab === 'dashboard';
+    const items = MOBILE_GROUP_ITEMS[groupId] || [];
+    return items.some(item => item.id === activeTab);
+  };
+
+  const drawerItems = activeGroup ? (MOBILE_GROUP_ITEMS[activeGroup] || []) : [];
 
   return (
     <>
-      {/* More drawer overlay */}
-      {showMore && (
+      {/* Drawer overlay */}
+      {activeGroup && (
         <div
-          onClick={() => setShowMore(false)}
+          onClick={() => setActiveGroup(null)}
           style={{
             position: 'fixed', inset: 0,
             background: 'rgba(0,0,0,0.7)',
@@ -7906,31 +7930,30 @@ function BottomNav({ activeTab, setActiveTab, badges }) {
         />
       )}
 
-      {/* More drawer panel */}
-      {showMore && (
+      {/* Drawer panel */}
+      {activeGroup && (
         <div style={{
           position: 'fixed',
           bottom: '64px',
           left: 0, right: 0,
           background: '#0D0D0D',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderTop: '1px solid rgba(255,255,255,0.12)',
           borderRadius: '16px 16px 0 0',
           padding: '16px',
           zIndex: 99,
           display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: '8px',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '10px',
         }}>
-          {MORE_NAV.map(({ id, label, Icon }) => {
+          {drawerItems.map(({ id, label, Icon }) => {
             const badge = badges?.[id];
             return (
               <button
                 key={id}
-                onClick={() => { setActiveTab(id); setShowMore(false); }}
+                onClick={() => { setActiveTab(id); setActiveGroup(null); }}
                 style={{
-                  background: activeTab === id
-                    ? 'rgba(255,255,255,0.10)' : 'transparent',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: activeTab === id ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.03)',
+                  border: activeTab === id ? '1px solid #4ade80' : '1px solid rgba(255,255,255,0.08)',
                   borderRadius: '10px',
                   padding: '12px 6px',
                   display: 'flex',
@@ -7938,12 +7961,12 @@ function BottomNav({ activeTab, setActiveTab, badges }) {
                   alignItems: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  color: activeTab === id ? '#FFFFFF' : '#555555',
+                  color: activeTab === id ? '#FFFFFF' : 'var(--secondary)',
                   position: 'relative'
                 }}
               >
                 <Icon size={20} />
-                <span style={{ fontSize: '10px', fontWeight: 500 }}>{label}</span>
+                <span style={{ fontSize: '10px', fontWeight: 500, textAlign: 'center' }}>{label}</span>
                 {badge > 0 && (
                   <span style={{
                     position: 'absolute', top: 4, right: 4,
@@ -7970,12 +7993,20 @@ function BottomNav({ activeTab, setActiveTab, badges }) {
         alignItems: 'center',
         zIndex: 100,
       }}>
-        {BOTTOM_NAV.map(({ id, label, Icon }) => {
-          const badge = badges?.[id];
+        {MOBILE_PRIMARY_NAV.map(({ id, label, Icon }) => {
+          const active = isGroupActive(id);
+          const isDrawerOpen = activeGroup === id;
           return (
             <button
               key={id}
-              onClick={() => { setActiveTab(id); setShowMore(false); }}
+              onClick={() => {
+                if (id === 'dashboard') {
+                  setActiveTab('dashboard');
+                  setActiveGroup(null);
+                } else {
+                  setActiveGroup(prev => prev === id ? null : id);
+                }
+              }}
               style={{
                 flex: 1,
                 height: '100%',
@@ -7987,45 +8018,16 @@ function BottomNav({ activeTab, setActiveTab, badges }) {
                 justifyContent: 'center',
                 gap: '4px',
                 cursor: 'pointer',
-                color: activeTab === id ? '#FFFFFF' : '#555555',
-                borderTop: activeTab === id
-                  ? '2px solid #FFFFFF' : '2px solid transparent',
+                color: active || isDrawerOpen ? '#FFFFFF' : '#555555',
+                borderTop: active || isDrawerOpen ? '2px solid #4ade80' : '2px solid transparent',
                 transition: 'all 0.15s',
               }}
             >
-              <div style={{ position: 'relative', display: 'inline-flex' }}>
-                <Icon size={18} />
-                {badge > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -5, right: -10,
-                    background: '#FFFFFF', color: '#000000',
-                    borderRadius: '50%', minWidth: '12px', height: '12px',
-                    fontSize: '8px', fontWeight: 700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>{badge}</span>
-                )}
-              </div>
+              <Icon size={18} />
               <span style={{ fontSize: '9px', fontWeight: 500 }}>{label}</span>
             </button>
           );
         })}
-
-        {/* More button */}
-        <button
-          onClick={() => setShowMore(prev => !prev)}
-          style={{
-            flex: 1, height: '100%',
-            background: 'none', border: 'none',
-            borderTop: showMore ? '2px solid #FFFFFF' : '2px solid transparent',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            gap: '4px', cursor: 'pointer',
-            color: showMore ? '#FFFFFF' : '#555555',
-          }}
-        >
-          <MoreHorizontal size={18} />
-          <span style={{ fontSize: '9px', fontWeight: 500 }}>More</span>
-        </button>
       </div>
     </>
   );
@@ -8129,6 +8131,16 @@ export default function App() {
   
   const [activity,   setActivity] = useState([]);
   const [activeTab,  setActiveTab]= useState('dashboard');
+  const [collapsedSections, setCollapsedSections] = useState({
+    operations: false,
+    finance: false,
+    farm: false,
+    people: false,
+    system: false
+  });
+  const toggleSection = (key) => {
+    setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
   const [search,     setSearch]   = useState('');
   const [filterLowStock, setFilterLowStock] = useState(false);
   const [kpiFlash,   setKpiFlash] = useState(false);
@@ -9232,8 +9244,10 @@ export default function App() {
             </div>
           </div>
 
-          {/* Navigation links */}
-          <div className="sidebar-nav-list" style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 24, maxHeight: '420px', overflowY: 'auto' }}>
+          {/* Navigation links — Grouped Sidebar */}
+          <div className="sidebar-nav-list" style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 20, maxHeight: '480px', overflowY: 'auto' }}>
+            
+            {/* SECTION 1 — Dashboard (always visible, no collapse) */}
             <button
               onClick={() => setActiveTab('dashboard')}
               data-label="Dashboard"
@@ -9241,298 +9255,404 @@ export default function App() {
               style={{
                 width: '100%', padding: '8px 12px',
                 display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'dashboard' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                background: activeTab === 'dashboard' ? 'rgba(255,255,255,0.06)' : 'transparent',
                 color: activeTab === 'dashboard' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'dashboard' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'dashboard' ? '0 8px 8px 0' : '8px'
+                borderLeft: activeTab === 'dashboard' ? '2px solid #4ade80' : '2px solid transparent',
+                borderRadius: activeTab === 'dashboard' ? '0 8px 8px 0' : '8px',
+                borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
               }}
             >
               <LayoutDashboard size={18} />
               <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Dashboard</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('inventory')}
-              data-label="Inventory"
-              className={`sidebar-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
+            {/* SECTION 2 — OPERATIONS */}
+            <div
+              onClick={() => toggleSection('operations')}
               style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'inventory' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'inventory' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'inventory' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'inventory' ? '0 8px 8px 0' : '8px'
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 16px 4px 16px', fontSize: 10, fontWeight: 600,
+                letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase',
+                cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8,
+                userSelect: 'none'
               }}
             >
-              <Database size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Inventory</span>
-            </button>
+              <span>OPERATIONS</span>
+              <ChevronDown size={12} style={{ transform: collapsedSections.operations ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </div>
+            {!collapsedSections.operations && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  onClick={() => setActiveTab('inventory')}
+                  data-label="Inventory"
+                  className={`sidebar-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'inventory' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'inventory' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'inventory' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'inventory' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Database size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Inventory</span>
+                </button>
 
-            <button
-              onClick={() => setActiveTab('tanks')}
-              data-label="Tanks"
-              className={`sidebar-nav-item ${activeTab === 'tanks' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'tanks' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'tanks' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'tanks' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'tanks' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <Waves size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
-                <span>Tanks</span>
-                {tanksBadge > 0 && (
-                  <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
-                    {tanksBadge}
+                <button
+                  onClick={() => setActiveTab('tanks')}
+                  data-label="Tanks"
+                  className={`sidebar-nav-item ${activeTab === 'tanks' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'tanks' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'tanks' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'tanks' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'tanks' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Waves size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Tanks</span>
+                    {tanksBadge > 0 && (
+                      <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
+                        {tanksBadge}
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-            </button>
+                </button>
 
-            <button
-              onClick={() => setActiveTab('reports')}
-              data-label="Reports"
-              className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'reports' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'reports' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'reports' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'reports' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <BarChart3 size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Reports</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('finances')}
-              data-label="Finances"
-              className={`sidebar-nav-item ${activeTab === 'finances' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'finances' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'finances' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'finances' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'finances' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <Wallet size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Finances</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('sales')}
-              data-label="Sales & Orders"
-              className={`sidebar-nav-item ${activeTab === 'sales' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'sales' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'sales' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'sales' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'sales' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <ShoppingCart size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
-                <span>Sales & Orders</span>
-                {pendingSales.length > 0 && (
-                  <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
-                    {pendingSales.length}
+                <button
+                  onClick={() => setActiveTab('water')}
+                  data-label="Water Quality"
+                  className={`sidebar-nav-item ${activeTab === 'water' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'water' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'water' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'water' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'water' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Droplets size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Water Quality</span>
+                    {waterWarnings.length > 0 && (
+                      <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
+                        {waterWarnings.length}
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-            </button>
+                </button>
 
-            <button
-              onClick={() => setActiveTab('customers')}
-              data-label="Customers"
-              className={`sidebar-nav-item ${activeTab === 'customers' ? 'active' : ''}`}
+                <button
+                  onClick={() => setActiveTab('growth')}
+                  data-label="Growth"
+                  className={`sidebar-nav-item ${activeTab === 'growth' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'growth' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'growth' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'growth' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'growth' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <TrendingUp size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Growth</span>
+                </button>
+              </div>
+            )}
+
+            {/* SECTION 3 — FINANCE */}
+            <div
+              onClick={() => toggleSection('finance')}
               style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'customers' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'customers' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'customers' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'customers' ? '0 8px 8px 0' : '8px'
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 16px 4px 16px', fontSize: 10, fontWeight: 600,
+                letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase',
+                cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8,
+                userSelect: 'none'
               }}
             >
-              <Users size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Customers</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('workers')}
-              data-label="Workers"
-              className={`sidebar-nav-item ${activeTab === 'workers' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'workers' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'workers' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'workers' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'workers' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <HardHat size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Workers</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('equipment')}
-              data-label="Equipment"
-              className={`sidebar-nav-item ${activeTab === 'equipment' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'equipment' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'equipment' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'equipment' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'equipment' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <Wrench size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
-                <span>Equipment</span>
-                {overdueCount > 0 && (
-                  <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
-                    {overdueCount}
+              <span>FINANCE</span>
+              <ChevronDown size={12} style={{ transform: collapsedSections.finance ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </div>
+            {!collapsedSections.finance && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  onClick={() => setActiveTab('sales')}
+                  data-label="Sales & Orders"
+                  className={`sidebar-nav-item ${activeTab === 'sales' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'sales' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'sales' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'sales' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'sales' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <ShoppingCart size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Sales & Orders</span>
+                    {pendingSales.length > 0 && (
+                      <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
+                        {pendingSales.length}
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-            </button>
+                </button>
 
-            <button
-              onClick={() => setActiveTab('water')}
-              data-label="Water Quality"
-              className={`sidebar-nav-item ${activeTab === 'water' ? 'active' : ''}`}
+                <button
+                  onClick={() => setActiveTab('finances')}
+                  data-label="Expenses"
+                  className={`sidebar-nav-item ${activeTab === 'finances' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'finances' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'finances' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'finances' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'finances' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Wallet size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Expenses</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('electricity')}
+                  data-label="Electricity"
+                  className={`sidebar-nav-item ${activeTab === 'electricity' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'electricity' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'electricity' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'electricity' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'electricity' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Zap size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Electricity</span>
+                </button>
+              </div>
+            )}
+
+            {/* SECTION 4 — FARM & BREEDING */}
+            <div
+              onClick={() => toggleSection('farm')}
               style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'water' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'water' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'water' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'water' ? '0 8px 8px 0' : '8px'
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 16px 4px 16px', fontSize: 10, fontWeight: 600,
+                letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase',
+                cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8,
+                userSelect: 'none'
               }}
             >
-              <Droplets size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
-                <span>Water Quality</span>
-                {waterWarnings.length > 0 && (
-                  <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
-                    {waterWarnings.length}
+              <span>FARM & BREEDING</span>
+              <ChevronDown size={12} style={{ transform: collapsedSections.farm ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </div>
+            {!collapsedSections.farm && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  onClick={() => setActiveTab('mortality')}
+                  data-label="Mortality"
+                  className={`sidebar-nav-item ${activeTab === 'mortality' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'mortality' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'mortality' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'mortality' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'mortality' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Skull size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Mortality</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('feed')}
+                  data-label="Feed"
+                  className={`sidebar-nav-item ${activeTab === 'feed' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'feed' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'feed' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'feed' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'feed' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Package size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Feed</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('broodstock')}
+                  data-label="Broodstock"
+                  className={`sidebar-nav-item ${activeTab === 'broodstock' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'broodstock' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'broodstock' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'broodstock' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'broodstock' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Dna size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Broodstock</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('breeding')}
+                  data-label="Breeding"
+                  className={`sidebar-nav-item ${activeTab === 'breeding' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'breeding' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'breeding' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'breeding' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'breeding' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <HeartPulse size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Breeding</span>
+                </button>
+              </div>
+            )}
+
+            {/* SECTION 5 — PEOPLE */}
+            <div
+              onClick={() => toggleSection('people')}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 16px 4px 16px', fontSize: 10, fontWeight: 600,
+                letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase',
+                cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8,
+                userSelect: 'none'
+              }}
+            >
+              <span>PEOPLE</span>
+              <ChevronDown size={12} style={{ transform: collapsedSections.people ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </div>
+            {!collapsedSections.people && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  onClick={() => setActiveTab('customers')}
+                  data-label="Customers"
+                  className={`sidebar-nav-item ${activeTab === 'customers' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'customers' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'customers' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'customers' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'customers' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Users size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Customers</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('workers')}
+                  data-label="Workers"
+                  className={`sidebar-nav-item ${activeTab === 'workers' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'workers' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'workers' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'workers' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'workers' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <HardHat size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Workers</span>
+                </button>
+              </div>
+            )}
+
+            {/* SECTION 6 — SYSTEM */}
+            <div
+              onClick={() => toggleSection('system')}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 16px 4px 16px', fontSize: 10, fontWeight: 600,
+                letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase',
+                cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8,
+                userSelect: 'none'
+              }}
+            >
+              <span>SYSTEM</span>
+              <ChevronDown size={12} style={{ transform: collapsedSections.system ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </div>
+            {!collapsedSections.system && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  onClick={() => setActiveTab('equipment')}
+                  data-label="Equipment"
+                  className={`sidebar-nav-item ${activeTab === 'equipment' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'equipment' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'equipment' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'equipment' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'equipment' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <Wrench size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500, flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Equipment</span>
+                    {overdueCount > 0 && (
+                      <span style={{ fontSize: 10, padding: '1px 6px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.20)', borderRadius: 8, color: '#FFFFFF' }}>
+                        {overdueCount}
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-            </button>
+                </button>
 
-            <button
-              onClick={() => setActiveTab('mortality')}
-              data-label="Mortality"
-              className={`sidebar-nav-item ${activeTab === 'mortality' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'mortality' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'mortality' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'mortality' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'mortality' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <Skull size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Mortality</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('feed')}
-              data-label="Feed"
-              className={`sidebar-nav-item ${activeTab === 'feed' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'feed' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'feed' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'feed' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'feed' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <Package size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Feed</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('electricity')}
-              data-label="Electricity"
-              className={`sidebar-nav-item ${activeTab === 'electricity' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'electricity' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'electricity' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'electricity' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'electricity' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <Zap size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Electricity</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('broodstock')}
-              data-label="Broodstock"
-              className={`sidebar-nav-item ${activeTab === 'broodstock' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'broodstock' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'broodstock' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'broodstock' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'broodstock' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <Dna size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Broodstock</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('breeding')}
-              data-label="Breeding"
-              className={`sidebar-nav-item ${activeTab === 'breeding' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'breeding' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'breeding' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'breeding' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'breeding' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <HeartPulse size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Breeding</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('growth')}
-              data-label="Growth"
-              className={`sidebar-nav-item ${activeTab === 'growth' ? 'active' : ''}`}
-              style={{
-                width: '100%', padding: '8px 12px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: activeTab === 'growth' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === 'growth' ? '#FFFFFF' : 'var(--secondary)',
-                borderLeft: activeTab === 'growth' ? '3px solid #FFFFFF' : '3px solid transparent',
-                borderRadius: activeTab === 'growth' ? '0 8px 8px 0' : '8px'
-              }}
-            >
-              <TrendingUp size={18} />
-              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Growth</span>
-            </button>
+                <button
+                  onClick={() => setActiveTab('reports')}
+                  data-label="Reports"
+                  className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: activeTab === 'reports' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'reports' ? '#FFFFFF' : 'var(--secondary)',
+                    borderLeft: activeTab === 'reports' ? '2px solid #4ade80' : '2px solid transparent',
+                    borderRadius: activeTab === 'reports' ? '0 8px 8px 0' : '8px',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <BarChart3 size={18} />
+                  <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Reports</span>
+                </button>
+              </div>
+            )}
 
           </div>
 
