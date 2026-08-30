@@ -6861,13 +6861,6 @@ function WorkerApp({ isMobile,
       setSalePhoneError(false);
     }
 
-    // verify quantity limit
-    const tankMax = tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0;
-    if (qtyVal > tankMax) {
-      alert(`Cannot sell more than available tank stock (${tankMax} fish)`);
-      return;
-    }
-
     const totalVal = qtyVal * priceVal;
 
     const newSale = {
@@ -7344,7 +7337,7 @@ function WorkerApp({ isMobile,
 
                       {saleTankId && (
                         <div style={{ fontSize: 11, color: 'var(--secondary)', marginTop: 8 }}>
-                          Tank {saleTankId} selected. You can sell up to {(tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0)} fish.
+                          Tank {saleTankId} selected.
                         </div>
                       )}
                     </div>
@@ -7364,8 +7357,7 @@ function WorkerApp({ isMobile,
                             type="number"
                             required
                             min={1}
-                            max={tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0}
-                            placeholder={`Qty (max ${tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0})`}
+                            placeholder="Qty"
                             value={saleQty}
                             onChange={e => setSaleQty(e.target.value)}
                           />
