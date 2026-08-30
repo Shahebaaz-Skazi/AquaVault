@@ -6602,6 +6602,11 @@ function WorkerApp({ isMobile,
   }, []);
 
   // LOG A SALE STEPS STATE
+  const getAgeGroupTotal = useCallback((spId, ag) => {
+    const agMap = tankStock?.[spId]?.[ag] || {};
+    return Object.values(agMap).reduce((sum, val) => sum + (Number(val) || 0), 0);
+  }, [tankStock]);
+
   const [saleStep, setSaleStep] = useState(1); // 1, 2, 3, 4
   const [saleSpId, setSaleSpId] = useState('');
   const [saleAgeGroup, setSaleAgeGroup] = useState('adult');
