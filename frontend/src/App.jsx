@@ -6610,6 +6610,8 @@ function WorkerApp({ isMobile,
   const [salePrice, setSalePrice] = useState('');
   const [saleBuyer, setSaleBuyer] = useState('');
   const [salePhone, setSalePhone] = useState('');
+  const [salePhoneError, setSalePhoneError] = useState(false);
+  const [saleEmail, setSaleEmail] = useState('');
   const [salePayMode, setSalePayMode] = useState('UPI');
   const [saleNote, setSaleNote] = useState('');
   const [saleSuccessMsg, setSaleSuccessMsg] = useState(null);
@@ -6830,6 +6832,13 @@ function WorkerApp({ isMobile,
     
     if (!qtyVal || qtyVal <= 0 || !saleBuyer.trim() || !selectedSp || !saleTankId) return;
 
+    if (!salePhone || salePhone.trim().length !== 10) {
+      setSalePhoneError(true);
+      return;
+    } else {
+      setSalePhoneError(false);
+    }
+
     // verify quantity limit
     const tankMax = tankStock[selectedSp.id]?.[saleAgeGroup]?.[saleTankId] ?? 0;
     if (qtyVal > tankMax) {
@@ -6849,6 +6858,7 @@ function WorkerApp({ isMobile,
       total: totalVal,
       buyer: saleBuyer.trim(),
       buyerPhone: salePhone.trim(),
+      buyerEmail: saleEmail.trim(),
       payMode: salePayMode,
       payStatus: 'pending',
       date: today(),
@@ -6884,6 +6894,8 @@ function WorkerApp({ isMobile,
     setSalePrice('');
     setSaleBuyer('');
     setSalePhone('');
+    setSalePhoneError(false);
+    setSaleEmail('');
     setSaleNote('');
 
     setTimeout(() => setSaleSuccessMsg(null), 3000);
@@ -7387,12 +7399,32 @@ function WorkerApp({ isMobile,
                       <div>
                         <input
                           type="tel"
+                          required
                           maxLength={10}
                           pattern="[0-9]*"
                           inputMode="numeric"
-                          placeholder="Buyer Mobile No. (optional)"
+                          placeholder="Buyer Mobile No."
                           value={salePhone}
-                          onChange={e => setSalePhone(e.target.value.replace(/\D/g, ''))}
+                          onChange={e => {
+                            setSalePhone(e.target.value.replace(/\D/g, ''));
+                            setSalePhoneError(false);
+                          }}
+                          style={{ width: '100%', border: salePhoneError ? '1px solid #ff6666' : undefined }}
+                        />
+                        {salePhoneError && (
+                          <div style={{ fontSize: 10, color: '#ff6666', marginTop: 4 }}>
+                            Mobile number is required (10 digits)
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Buyer Email */}
+                      <div>
+                        <input
+                          type="email"
+                          placeholder="Buyer Email (optional)"
+                          value={saleEmail}
+                          onChange={e => setSaleEmail(e.target.value)}
                           style={{ width: '100%' }}
                         />
                       </div>
@@ -8559,6 +8591,7 @@ export default function App() {
             total: s.total,
             buyer: s.buyer,
             buyer_phone: s.buyerPhone || s.buyer_phone || '',
+            buyer_email: s.buyerEmail || s.buyer_email || '',
             pay_mode: s.payMode,
             pay_status: s.payStatus,
             worker_name: s.worker || 'Admin',
