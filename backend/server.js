@@ -195,7 +195,11 @@ app.get('/api/sales', async (req, res) => {
 });
 app.post('/api/sales', async (req, res) => {
   try {
-    const payload = { ...req.body };
+    const { buyer_phone, ...rest } = req.body;
+    const payload = {
+      ...rest,
+      buyer_phone: buyer_phone || '',
+    };
     if (!payload.date) {
       payload.date = new Date().toISOString().split('T')[0];
     }

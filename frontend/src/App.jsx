@@ -6609,6 +6609,7 @@ function WorkerApp({ isMobile,
   const [saleQty, setSaleQty] = useState('');
   const [salePrice, setSalePrice] = useState('');
   const [saleBuyer, setSaleBuyer] = useState('');
+  const [salePhone, setSalePhone] = useState('');
   const [salePayMode, setSalePayMode] = useState('UPI');
   const [saleNote, setSaleNote] = useState('');
   const [saleSuccessMsg, setSaleSuccessMsg] = useState(null);
@@ -6847,6 +6848,7 @@ function WorkerApp({ isMobile,
       unitPrice: priceVal,
       total: totalVal,
       buyer: saleBuyer.trim(),
+      buyerPhone: salePhone.trim(),
       payMode: salePayMode,
       payStatus: 'pending',
       date: today(),
@@ -6881,6 +6883,7 @@ function WorkerApp({ isMobile,
     setSaleQty('');
     setSalePrice('');
     setSaleBuyer('');
+    setSalePhone('');
     setSaleNote('');
 
     setTimeout(() => setSaleSuccessMsg(null), 3000);
@@ -7378,6 +7381,20 @@ function WorkerApp({ isMobile,
                             ))}
                           </div>
                         )}
+                      </div>
+
+                      {/* Buyer Mobile Number */}
+                      <div>
+                        <input
+                          type="tel"
+                          maxLength={10}
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          placeholder="Buyer Mobile No. (optional)"
+                          value={salePhone}
+                          onChange={e => setSalePhone(e.target.value.replace(/\D/g, ''))}
+                          style={{ width: '100%' }}
+                        />
                       </div>
 
                       {/* UPI / Cash toggles */}
@@ -8541,6 +8558,7 @@ export default function App() {
             unit_price: s.unitPrice,
             total: s.total,
             buyer: s.buyer,
+            buyer_phone: s.buyerPhone || s.buyer_phone || '',
             pay_mode: s.payMode,
             pay_status: s.payStatus,
             worker_name: s.worker || 'Admin',
