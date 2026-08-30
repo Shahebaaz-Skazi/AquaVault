@@ -121,3 +121,34 @@ export const updateSpeciesPrice = (id, price) => fetch(BASE_URL + '/api/species/
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ price: Number(price) })
 }).then(r => r.json());
+
+// Feed Log
+export const getFeedLog = () => getJSON(`${BASE_URL}/api/feed-log`);
+export const addFeedLog = (data) => postJSON(`${BASE_URL}/api/feed-log`, data);
+export const deleteFeedLog = (id) => deleteJSON(`${BASE_URL}/api/feed-log/${id}`);
+
+// Mortality Log
+export const getMortalityLog = () => getJSON(`${BASE_URL}/api/mortality-log`);
+export const addMortalityLog = (data) => postJSON(`${BASE_URL}/api/mortality-log`, data);
+
+// Electricity Log
+export const getElectricityLog = () => getJSON(`${BASE_URL}/api/electricity-log`);
+export const addElectricityLog = (data) => postJSON(`${BASE_URL}/api/electricity-log`, data);
+export const deleteElectricityLog = (id) => deleteJSON(`${BASE_URL}/api/electricity-log/${id}`);
+
+// Broodstock
+export const getBroodstock = () => getJSON(`${BASE_URL}/api/broodstock`);
+export const addBroodstock = (data) => postJSON(`${BASE_URL}/api/broodstock`, data);
+export const updateBroodstock = (id, data) => putJSON(`${BASE_URL}/api/broodstock/${id}`, data);
+export const deleteBroodstock = (id) => deleteJSON(`${BASE_URL}/api/broodstock/${id}`);
+
+// Breeding Performance
+export const getBreedingPerformance = () => getJSON(`${BASE_URL}/api/breeding-performance`);
+export const addBreedingPerformance = (data) => postJSON(`${BASE_URL}/api/breeding-performance`, data);
+export const deleteBreedingPerformance = (id) => deleteJSON(`${BASE_URL}/api/breeding-performance/${id}`);
+
+// Growth Record
+export const getGrowthRecord = () => getJSON(`${BASE_URL}/api/growth-record`);
+export const addGrowthRecord = (data) => postJSON(`${BASE_URL}/api/growth-record`, data);
+export const deleteGrowthRecord = (id) => deleteJSON(`${BASE_URL}/api/growth-record/${id}`);
+

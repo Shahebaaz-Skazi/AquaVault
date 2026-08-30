@@ -387,5 +387,205 @@ app.post('/api/activity', async (req, res) => {
   }
 });
 
+// Feed Log
+app.get('/api/feed-log', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('feed_log').select('*').order('id', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.post('/api/feed-log', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('feed_log').insert([req.body]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.delete('/api/feed-log/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('feed_log').delete().eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Mortality Log
+app.get('/api/mortality-log', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('mortality_log').select('*').order('id', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.post('/api/mortality-log', async (req, res) => {
+  try {
+    const { date, species_id, species_name, age_group, tank_id, qty_dead, possible_reason, worker_name } = req.body;
+    const { data, error } = await supabase.from('mortality_log').insert([{
+      date, species_id, species_name, age_group, tank_id, qty_dead, possible_reason, worker_name
+    }]).select();
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Deduct qty_dead from tank_stock for species_id + age_group + tank_id
+    if (species_id && age_group && tank_id && qty_dead) {
+      const { data: stockEntry } = await supabase.from('tank_stock')
+        .select('*')
+        .eq('species_id', species_id)
+        .eq('age_group', age_group)
+        .eq('tank_id', tank_id)
+        .maybeSingle();
+      if (stockEntry) {
+        const newCount = Math.max(0, stockEntry.count - Number(qty_dead));
+        await supabase.from('tank_stock').update({ count: newCount }).eq('id', stockEntry.id);
+      }
+    }
+
+    // Log to activity
+    await supabase.from('activity').insert([{
+      type: 'death',
+      description: JSON.stringify(req.body),
+      worker_name: worker_name || null
+    }]);
+
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Electricity Log
+app.get('/api/electricity-log', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('electricity_log').select('*').order('id', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.post('/api/electricity-log', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('electricity_log').insert([req.body]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.delete('/api/electricity-log/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('electricity_log').delete().eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Broodstock
+app.get('/api/broodstock', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('broodstock').select('*').order('id', { ascending: true });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.post('/api/broodstock', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('broodstock').insert([req.body]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.put('/api/broodstock/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('broodstock').update(req.body).eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.delete('/api/broodstock/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('broodstock').delete().eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Breeding Performance
+app.get('/api/breeding-performance', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('breeding_performance').select('*').order('id', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.post('/api/breeding-performance', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('breeding_performance').insert([req.body]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.delete('/api/breeding-performance/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('breeding_performance').delete().eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Growth Record
+app.get('/api/growth-record', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('growth_record').select('*').order('id', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.post('/api/growth-record', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('growth_record').insert([req.body]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ? data[0] : null);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.delete('/api/growth-record/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('growth_record').delete().eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+

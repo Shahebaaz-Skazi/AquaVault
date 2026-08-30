@@ -10,7 +10,8 @@ import {
   BarChart3, LayoutDashboard, Database, Waves, ArrowRightLeft,
   Users, Wrench, FileText, Check, RotateCw, Printer, Trash2,
   ChevronRight, ChevronDown, User, ShieldAlert,
-  Shell, Wallet, ShoppingCart, HardHat, Egg, PackageCheck, IndianRupee, Pencil, MoreHorizontal, LogOut
+  Shell, Wallet, ShoppingCart, HardHat, Egg, PackageCheck, IndianRupee, Pencil, MoreHorizontal, LogOut,
+  Zap, Dna, Activity, HeartPulse, Scale
 } from 'lucide-react';
 import './index.css';
 import ErrorBoundary from './ErrorBoundary';
@@ -172,13 +173,15 @@ const formatDate = (dStr) => {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
+const formattedToday = () => formatDate(new Date());
 
 // Get status based on bounds
-function getWaterStatus(ph, temp, ammonia) {
+function getWaterStatus(ph, temp, ammonia, tds) {
   if (ph < 6.0 || ph > 9.0 || ammonia > 0.5) return 'critical';
-  if (ph < 6.5 || ph > 8.0 || temp < 22 || temp > 28 || ammonia > 0.2) return 'warning';
+  if (ph < 6.5 || ph > 8.0 || temp < 22 || temp > 28 || ammonia > 0.2 || (tds !== undefined && tds !== null && Number(tds) > 500)) return 'warning';
   return 'normal';
 }
+
 
 function getStatus(sp) {
   if (sp.stock <= sp.min * 0.5) return 'critical';
@@ -571,7 +574,11 @@ function DashboardTab({ isMobile,
   highUrgentIssues,
   tanks,
   getTankTotal,
-  getContentsOfTank
+  getContentsOfTank,
+  broodstocks = [],
+  breedingPerformances = [],
+  expenses = [],
+  sales = []
 }) {
   const totalFish     = useMemo(() => (species || []).reduce((s,sp)=>s+sp.stock, 0), [species]);
   const totalBorn     = useMemo(() => (species || []).reduce((s,sp)=>s+sp.born, 0), [species]);
@@ -1303,13 +1310,91 @@ function DashboardTab({ isMobile,
         </ResponsiveContainer>
       </div>
 
+      {/* Section 6 — Profit Report */}
+      <div className="card" style={{ padding: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 14 }}>
+          Financial Profit Report
+        </div>
+        {(() => {
+          const rev = (sales || []).filter(s => s.approved).reduce((sum, s) => sum + (Number(s.total) || 0), 0);
+          const exp = (expenses || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          const profit = rev - exp;
+          const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : '0';
+          const isProfitable = profit >= 0;
+          const profitColor = isProfitable ? '#FFFFFF' : '#666666';
+
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
+              <div style={{ padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>REVENUE</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginTop: 4 }}>{"\u20B9"}{rev.toLocaleString('en-IN')}</div>
+              </div>
+              <div style={{ padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>EXPENSES</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginTop: 4 }}>{"\u20B9"}{exp.toLocaleString('en-IN')}</div>
+              </div>
+              <div style={{ padding: 14, background: 'rgba(255,255,255,0.02)', border: `1px solid ${isProfitable ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.10)'}`, borderRadius: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>NET PROFIT</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: profitColor, marginTop: 4 }}>{"\u20B9"}{profit.toLocaleString('en-IN')}</div>
+              </div>
+              <div style={{ padding: 14, background: 'rgba(255,255,255,0.02)', border: `1px solid ${isProfitable ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.10)'}`, borderRadius: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>PROFIT MARGIN</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: profitColor, marginTop: 4 }}>{margin}%</div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Section 7 — Production Dashboard */}
+      <div className="card" style={{ padding: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 14 }}>
+          Breeding & Production Dashboard
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Species</th>
+                <th>Breeding Pairs</th>
+                <th>Latest Spawn Date</th>
+                <th>Eggs Laid</th>
+                <th>Eggs Hatched</th>
+                <th>Fry Survived</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(species || []).map(sp => {
+                const pairsCount = (broodstocks || []).filter(b => b.species_name === sp.name || b.species_id === sp.id).length;
+                const spBreeding = (breedingPerformances || []).filter(bp => bp.species_name === sp.name);
+                const latestSpawn = spBreeding[0]?.spawn_date || '—';
+                const totalEggs = spBreeding.reduce((sum, b) => sum + (Number(b.eggs_laid) || 0), 0);
+                const totalHatched = spBreeding.reduce((sum, b) => sum + (Number(b.eggs_hatched) || 0), 0);
+                const totalSurvived = spBreeding.reduce((sum, b) => sum + (Number(b.fry_survived) || 0), 0);
+
+                return (
+                  <tr key={sp.id}>
+                    <td style={{ fontWeight: 600 }}>{sp.name}</td>
+                    <td style={{ fontWeight: 700 }}>{pairsCount} pairs</td>
+                    <td style={{ color: 'var(--muted)' }}>{latestSpawn}</td>
+                    <td>{totalEggs}</td>
+                    <td>{totalHatched}</td>
+                    <td style={{ color: 'var(--secondary)', fontWeight: 700 }}>{totalSurvived}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 }
 
 // ─── INVENTORY TAB ────────────────────────────────────────────────────────────
 
-function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks, onUpdateSpeciesPrice, triggerToast }) {
+function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock, onClearFilter, tankStock, setSpeciesState, setTankStock, tanks, onUpdateSpeciesPrice, triggerToast, growthRecords = [] }) {
   if (!species || !Array.isArray(species)) return (
     <div style={{padding:'40px', color:'#fff'}}>Loading inventory...</div>
   );
@@ -1632,6 +1717,7 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
               <th>Species</th>
               <th>Tanks Mapped</th>
               <th>Stock</th>
+              <th>Size</th>
               <th>Price</th>
               <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Trend</th>
               <th>Born</th>
@@ -1657,6 +1743,11 @@ function InventoryTab({ isMobile, species, search, onConfirmLog, filterLowStock,
                   <td>
                     <span style={{ fontWeight:700, fontSize:14, color: isCritical ? '#666666' : '#FFFFFF' }}>
                       <AnimatedNumber value={sp.stock} />
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: 11, color: 'var(--secondary)' }}>
+                      {(growthRecords || []).find(g => g.species_id === sp.id || g.species_name === sp.name)?.avg_size || '—'}
                     </span>
                   </td>
                   <td>
@@ -4010,6 +4101,7 @@ function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers,
               <th>Date</th>
               <th>Species</th>
               <th>Age Group</th>
+              <th>Size</th>
               <th>Tank</th>
               <th>Qty</th>
               <th>Unit {"\u20B9"}</th>
@@ -4040,6 +4132,11 @@ function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers,
                     ) : (
                       <span style={{ fontSize: 11 }}>{AGE_GROUP_LABELS[s.ageGroup]?.label || s.ageGroup}</span>
                     )}
+                  </td>
+
+                  {/* Size */}
+                  <td>
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{s.size || '—'}</span>
                   </td>
 
                   {/* Tank */}
@@ -4183,17 +4280,20 @@ function SalesTab({ isMobile, sales, setSales, species, customers, setCustomers,
 function CustomersTab({ isMobile, customers, setCustomers }) {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
+  const [city, setCity] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
 
   // Editing State
   const [editingCustomerId, setEditingCustomerId] = useState(null);
   const [editName, setEditName] = useState('');
   const [editContact, setEditContact] = useState('');
+  const [editCity, setEditCity] = useState('');
 
   const handleAddCustomer = (e) => {
     e.preventDefault();
     const cleanName = name.trim();
     const cleanContact = contact.trim();
+    const cleanCity = city.trim();
     if (!cleanName || !cleanContact) return;
 
     // Check for duplicate name
@@ -4208,6 +4308,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
       id: Date.now(),
       name: cleanName,
       contact: cleanContact,
+      city: cleanCity,
       totalOrders: 0,
       totalValue: 0,
       lastOrder: '—',
@@ -4217,17 +4318,20 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
     setCustomers(prev => [...prev, newCust]);
     setName('');
     setContact('');
+    setCity('');
   };
 
   const handleStartEdit = (c) => {
     setEditingCustomerId(c.id);
     setEditName(c.name);
     setEditContact(c.contact);
+    setEditCity(c.city || '');
   };
 
   const handleSaveEdit = (id) => {
     const cleanName = editName.trim();
     const cleanContact = editContact.trim();
+    const cleanCity = editCity.trim();
     if (!cleanName || !cleanContact) return;
 
     // Check for duplicate name (excluding itself)
@@ -4240,7 +4344,8 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
     setCustomers(prev => prev.map(c => c.id === id ? {
       ...c,
       name: cleanName,
-      contact: cleanContact
+      contact: cleanContact,
+      city: cleanCity
     } : c));
     setEditingCustomerId(null);
   };
@@ -4281,6 +4386,13 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
                     style={{ height: 28, fontSize: 12, padding: '2px 6px' }}
                     placeholder="Contact"
                   />
+                  <input
+                    type="text"
+                    value={editCity}
+                    onChange={e => setEditCity(e.target.value)}
+                    style={{ height: 28, fontSize: 12, padding: '2px 6px' }}
+                    placeholder="City"
+                  />
                   <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
                     <button onClick={() => handleSaveEdit(c.id)} style={{ flex: 1, height: 26, fontSize: 11, background: '#FFFFFF', color: '#000000', fontWeight: 'bold' }}>Save</button>
                     <button onClick={() => setEditingCustomerId(null)} style={{ flex: 1, height: 26, fontSize: 11, background: 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}>Cancel</button>
@@ -4297,7 +4409,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, color: '#fff', fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.contact}</div>
+                      <div style={{ fontSize: 11, color: 'var(--muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.contact} {c.city ? `· ${c.city}` : ''}</div>
                     </div>
                     <button onClick={() => handleStartEdit(c)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', padding: 0 }} title="Edit"><Pencil size={12} /></button>
                   </div>
@@ -4344,6 +4456,16 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
               style={{ height: 34 }}
             />
           </div>
+          <div style={{ width: 130 }}>
+            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>CITY</span>
+            <input
+              type="text"
+              value={city}
+              onChange={e => setCity(e.target.value)}
+              placeholder="e.g. Pune"
+              style={{ height: 34 }}
+            />
+          </div>
           <button
             type="submit"
             style={{
@@ -4366,6 +4488,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
             <tr>
               <th>Customer</th>
               <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Contact</th>
+              <th style={{ display: isMobile ? 'none' : 'table-cell' }}>City</th>
               <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Total Orders</th>
               <th>Lifetime Value</th>
               <th style={{ display: isMobile ? 'none' : 'table-cell' }}>Top Species</th>
@@ -4377,6 +4500,7 @@ function CustomersTab({ isMobile, customers, setCustomers }) {
               <tr key={c.id}>
                 <td style={{ fontWeight: 600 }}>{c.name}</td>
                 <td style={{ color: 'var(--secondary)', display: isMobile ? 'none' : 'table-cell' }}>{c.contact}</td>
+                <td style={{ color: 'var(--muted)', display: isMobile ? 'none' : 'table-cell' }}>{c.city || '—'}</td>
                 <td style={{ display: isMobile ? 'none' : 'table-cell' }}>{c.totalOrders}</td>
                 <td style={{ fontWeight: 700 }}>{"\u20B9"}{c.totalValue.toLocaleString('en-IN')}</td>
                 <td style={{ color: 'var(--secondary)', display: isMobile ? 'none' : 'table-cell' }}>{c.topSpecies || '—'}</td>
@@ -5183,6 +5307,7 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
   const [wqPh, setWqPh] = useState('');
   const [wqTemp, setWqTemp] = useState('');
   const [wqAmmonia, setWqAmmonia] = useState('');
+  const [wqTds, setWqTds] = useState('');
   const [wqSuccess, setWqSuccess] = useState(false);
 
   const handleLogReadingSubmit = (e) => {
@@ -5190,6 +5315,7 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
     const phVal = parseFloat(wqPh);
     const tempVal = parseFloat(wqTemp);
     const ammoniaVal = parseFloat(wqAmmonia);
+    const tdsVal = wqTds !== '' ? parseFloat(wqTds) : null;
 
     if (isNaN(phVal) || isNaN(tempVal) || isNaN(ammoniaVal)) {
       alert("Please enter valid numeric readings.");
@@ -5202,6 +5328,7 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
       ph: phVal,
       temp: tempVal,
       ammonia: ammoniaVal,
+      tds: tdsVal,
       loggedBy: 'Admin',
       date: today()
     };
@@ -5212,6 +5339,7 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
     setWqPh('');
     setWqTemp('');
     setWqAmmonia('');
+    setWqTds('');
     setWqSuccess(true);
     setTimeout(() => {
       setWqSuccess(false);
@@ -5308,6 +5436,18 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
                 />
               </div>
 
+              <div style={{ width: 90 }}>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TDS (ppm)</span>
+                <input
+                  type="number"
+                  step="1"
+                  placeholder="e.g. 350"
+                  value={wqTds}
+                  onChange={e => setWqTds(e.target.value)}
+                  style={{ height: 34 }}
+                />
+              </div>
+
               <button
                 type="submit"
                 style={{
@@ -5325,7 +5465,7 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
       {/* Section 1 — Today's readings grid */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
         {waterLog.slice(0, 6).map(w => {
-          const status = getWaterStatus(w.ph, w.temp, w.ammonia);
+          const status = getWaterStatus(w.ph, w.temp, w.ammonia, w.tds);
           const statusColor = status === 'critical' ? '#666666' : status === 'warning' ? '#888888' : '#FFFFFF';
           
           return (
@@ -5341,18 +5481,22 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, margin: '8px 0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, margin: '8px 0' }}>
                 <div>
                   <div style={{ fontSize: 10, color: 'var(--muted)' }}>pH</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: (w.ph < 6.5 || w.ph > 8.0) ? statusColor : '#FFFFFF' }}>{w.ph}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: (w.ph < 6.5 || w.ph > 8.0) ? statusColor : '#FFFFFF' }}>{w.ph}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10, color: 'var(--muted)' }}>Temp</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: (w.temp < 22 || w.temp > 28) ? statusColor : '#FFFFFF' }}>{w.temp}°C</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: (w.temp < 22 || w.temp > 28) ? statusColor : '#FFFFFF' }}>{w.temp}°C</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10, color: 'var(--muted)' }}>Ammonia</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: (w.ammonia > 0.0) ? statusColor : '#FFFFFF' }}>{w.ammonia}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: (w.ammonia > 0.0) ? statusColor : '#FFFFFF' }}>{w.ammonia}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)' }}>TDS</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: (w.tds > 500) ? statusColor : '#FFFFFF' }}>{w.tds !== undefined && w.tds !== null ? w.tds : '—'}</div>
                 </div>
               </div>
 
@@ -5394,6 +5538,1031 @@ function WaterQualityTab({ isMobile, waterLog, setWaterLog, tanks }) {
     </div>
   );
 }
+
+// ─── MORTALITY TAB ────────────────────────────────────────────────────────────
+
+function MortalityTab({ isMobile, mortalityLogs, setMortalityLogs, species, tanks, triggerToast, onDeductStock }) {
+  const [showForm, setShowForm] = useState(false);
+  const [date, setDate] = useState(formattedToday());
+  const [speciesId, setSpeciesId] = useState(species[0]?.id || 1);
+  const [ageGroup, setAgeGroup] = useState('adult');
+  const [tankId, setTankId] = useState(tanks[0]?.id || 'A');
+  const [qtyDead, setQtyDead] = useState('');
+  const [reason, setReason] = useState('');
+  const [workerName, setWorkerName] = useState('');
+
+  const totalDeaths = useMemo(() => {
+    return (mortalityLogs || []).reduce((acc, m) => acc + (Number(m.qty_dead) || 0), 0);
+  }, [mortalityLogs]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const qty = parseInt(qtyDead, 10);
+    if (!qty || qty <= 0) return;
+    const sp = (species || []).find(s => s.id === Number(speciesId));
+    if (!sp) return;
+
+    try {
+      const payload = {
+        date: date || formattedToday(),
+        species_id: sp.id,
+        species_name: sp.name,
+        age_group: ageGroup,
+        tank_id: tankId,
+        qty_dead: qty,
+        possible_reason: reason.trim() || 'Unspecified',
+        worker_name: workerName.trim() || 'Admin'
+      };
+      const res = await api.addMortalityLog(payload);
+      if (res) {
+        setMortalityLogs(prev => [res, ...prev]);
+        if (onDeductStock) onDeductStock(sp.id, ageGroup, tankId, qty);
+        triggerToast && triggerToast(`Mortality logged: ${qty} ${sp.name} (${ageGroup})`);
+        setQtyDead(''); setReason(''); setShowForm(false);
+      }
+    } catch(err) { console.error(err); }
+  };
+
+  return (
+    <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Mortality Ledger</div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#FFFFFF', color:'#000000', borderRadius:8, fontWeight:700, fontSize:13, border:'none', cursor:'pointer' }}
+        >
+          <Plus size={14} /> {showForm ? 'Close Panel' : 'Log Mortality'}
+        </button>
+      </div>
+
+      <div className="card" style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL MORTALITY THIS MONTH</span>
+        <div style={{ fontSize: 28, fontWeight: 800, color: totalDeaths > 0 ? '#666666' : '#FFFFFF' }}>{totalDeaths} fish</div>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ padding: 20, background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Record Mortality Entry</div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>DATE</span>
+              <input type="text" value={date} onChange={e => setDate(e.target.value)} style={{ height: 34 }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SPECIES</span>
+              <select value={speciesId} onChange={e => setSpeciesId(e.target.value)} style={{ height: 34 }}>
+                {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>AGE GROUP</span>
+              <select value={ageGroup} onChange={e => setAgeGroup(e.target.value)} style={{ height: 34 }}>
+                <option value="adult">Adult</option>
+                <option value="semi-adult">Semi-Adult</option>
+                <option value="newborn">Newborn</option>
+              </select>
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TANK</span>
+              <select value={tankId} onChange={e => setTankId(e.target.value)} style={{ height: 34 }}>
+                {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 90 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>QTY DEAD</span>
+              <input type="number" required min="1" value={qtyDead} onChange={e => setQtyDead(e.target.value)} style={{ height: 34 }} placeholder="e.g. 5" />
+            </div>
+            <div style={{ flex: 2, minWidth: 150 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>POSSIBLE REASON</span>
+              <input type="text" value={reason} onChange={e => setReason(e.target.value)} style={{ height: 34 }} placeholder="e.g. pH spike, disease..." />
+            </div>
+            <div style={{ width: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>WORKER</span>
+              <input type="text" value={workerName} onChange={e => setWorkerName(e.target.value)} style={{ height: 34 }} placeholder="Admin" />
+            </div>
+            <button type="submit" style={{ height: 34, padding: '0 20px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+              Save Entry
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Species</th>
+              <th>Age Group</th>
+              <th>Tank</th>
+              <th>Qty Dead</th>
+              <th>Possible Reason</th>
+              <th>Worker</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(mortalityLogs || []).map(m => (
+              <tr key={m.id}>
+                <td>{m.date}</td>
+                <td style={{ fontWeight: 600 }}>{m.species_name}</td>
+                <td>{m.age_group}</td>
+                <td>Tank {m.tank_id}</td>
+                <td style={{ color: '#666666', fontWeight: 700 }}>{m.qty_dead}</td>
+                <td style={{ color: 'var(--muted)' }}>{m.possible_reason || '—'}</td>
+                <td style={{ color: 'var(--secondary)' }}>{m.worker_name || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── FEED TAB ─────────────────────────────────────────────────────────────────
+
+function FeedTab({ isMobile, feedLogs, setFeedLogs, sales, tanks, triggerToast }) {
+  const [showForm, setShowForm] = useState(false);
+  const [date, setDate] = useState(formattedToday());
+  const [feedType, setFeedType] = useState('');
+  const [purchased, setPurchased] = useState('');
+  const [used, setUsed] = useState('');
+  const [cost, setCost] = useState('');
+  const [tankId, setTankId] = useState(tanks[0]?.id || 'A');
+  const [workerName, setWorkerName] = useState('');
+
+  const totalFeedCost = useMemo(() => {
+    return (feedLogs || []).reduce((sum, f) => sum + (Number(f.cost) || 0), 0);
+  }, [feedLogs]);
+
+  const totalFishSold = useMemo(() => {
+    return (sales || []).filter(s => s.approved).reduce((sum, s) => sum + (Number(s.qty) || 0), 0);
+  }, [sales]);
+
+  const feedCostPerFishSold = useMemo(() => {
+    if (totalFishSold <= 0) return 0;
+    return Math.round(totalFeedCost / totalFishSold);
+  }, [totalFeedCost, totalFishSold]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const costVal = parseInt(cost, 10);
+    if (!feedType.trim() || isNaN(costVal)) return;
+
+    try {
+      const payload = {
+        feed_type: feedType.trim(),
+        purchased: parseFloat(purchased) || 0,
+        used: parseFloat(used) || 0,
+        cost: costVal,
+        date: date || formattedToday(),
+        tank_id: tankId,
+        worker_name: workerName.trim() || 'Admin'
+      };
+      const res = await api.addFeedLog(payload);
+      if (res) {
+        setFeedLogs(prev => [res, ...prev]);
+        triggerToast && triggerToast(`Feed log added: ${feedType}`);
+        setFeedType(''); setPurchased(''); setUsed(''); setCost(''); setShowForm(false);
+      }
+    } catch(err) { console.error(err); }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteFeedLog(id);
+      setFeedLogs(prev => prev.filter(f => f.id !== id));
+      triggerToast && triggerToast('Feed log deleted');
+    } catch(e) { console.error(e); }
+  };
+
+  return (
+    <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Feed Consumption & Inventory</div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#FFFFFF', color:'#000000', borderRadius:8, fontWeight:700, fontSize:13, border:'none', cursor:'pointer' }}
+        >
+          <Plus size={14} /> {showForm ? 'Close Panel' : 'Add Feed Log'}
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
+        <div className="card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL FEED COST THIS MONTH</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{"\u20B9"}{totalFeedCost.toLocaleString('en-IN')}</div>
+        </div>
+        <div className="card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>FEED COST PER FISH SOLD</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{"\u20B9"}{feedCostPerFishSold.toLocaleString('en-IN')} / fish</div>
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ padding: 20, background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Record Feed Purchase / Usage</div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>FEED TYPE</span>
+              <input type="text" required value={feedType} onChange={e => setFeedType(e.target.value)} style={{ height: 34 }} placeholder="e.g. Hikari Pellets 5kg" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>PURCHASED (KG)</span>
+              <input type="number" step="0.1" value={purchased} onChange={e => setPurchased(e.target.value)} style={{ height: 34 }} placeholder="5.0" />
+            </div>
+            <div style={{ width: 90 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>USED (KG)</span>
+              <input type="number" step="0.1" value={used} onChange={e => setUsed(e.target.value)} style={{ height: 34 }} placeholder="1.2" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>COST ({"\u20B9"})</span>
+              <input type="number" required value={cost} onChange={e => setCost(e.target.value)} style={{ height: 34 }} placeholder="\u20B91500" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TANK</span>
+              <select value={tankId} onChange={e => setTankId(e.target.value)} style={{ height: 34 }}>
+                {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>DATE</span>
+              <input type="text" value={date} onChange={e => setDate(e.target.value)} style={{ height: 34 }} />
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>WORKER</span>
+              <input type="text" value={workerName} onChange={e => setWorkerName(e.target.value)} style={{ height: 34 }} placeholder="Admin" />
+            </div>
+            <button type="submit" style={{ height: 34, padding: '0 20px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+              Save Feed Log
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Feed Type</th>
+              <th>Purchased</th>
+              <th>Used</th>
+              <th>Cost {"\u20B9"}</th>
+              <th>Tank</th>
+              <th>Worker</th>
+              <th style={{ textAlign: 'right', paddingRight: 16 }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(feedLogs || []).map(f => (
+              <tr key={f.id}>
+                <td>{f.date}</td>
+                <td style={{ fontWeight: 600 }}>{f.feed_type}</td>
+                <td>{f.purchased} kg</td>
+                <td>{f.used} kg</td>
+                <td style={{ fontWeight: 700 }}>{"\u20B9"}{Number(f.cost).toLocaleString('en-IN')}</td>
+                <td>Tank {f.tank_id || 'All'}</td>
+                <td style={{ color: 'var(--secondary)' }}>{f.worker_name || '—'}</td>
+                <td style={{ textAlign: 'right', paddingRight: 16 }}>
+                  <button onClick={() => handleDelete(f.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── ELECTRICITY TAB ──────────────────────────────────────────────────────────
+
+function ElectricityTab({ isMobile, electricityLogs, setElectricityLogs, triggerToast }) {
+  const [showForm, setShowForm] = useState(false);
+  const [month, setMonth] = useState('August 2026');
+  const [unitsUsed, setUnitsUsed] = useState('');
+  const [bill, setBill] = useState('');
+  const [tanksRunning, setTanksRunning] = useState('6');
+  const [heatersRunning, setHeatersRunning] = useState('2');
+  const [pumpsRunning, setPumpsRunning] = useState('4');
+
+  const avgMonthlyBill3Months = useMemo(() => {
+    const logs = (electricityLogs || []).slice(0, 3);
+    if (logs.length === 0) return 0;
+    const total = logs.reduce((sum, l) => sum + (Number(l.bill) || 0), 0);
+    return Math.round(total / logs.length);
+  }, [electricityLogs]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const billVal = parseInt(bill, 10);
+    if (!month.trim() || isNaN(billVal)) return;
+
+    try {
+      const payload = {
+        month: month.trim(),
+        units_used: parseFloat(unitsUsed) || 0,
+        bill: billVal,
+        tanks_running: parseInt(tanksRunning, 10) || 1,
+        heaters_running: parseInt(heatersRunning, 10) || 0,
+        pumps_running: parseInt(pumpsRunning, 10) || 0
+      };
+      const res = await api.addElectricityLog(payload);
+      if (res) {
+        setElectricityLogs(prev => [res, ...prev]);
+        triggerToast && triggerToast(`Electricity report added for ${month}`);
+        setUnitsUsed(''); setBill(''); setShowForm(false);
+      }
+    } catch(err) { console.error(err); }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteElectricityLog(id);
+      setElectricityLogs(prev => prev.filter(l => l.id !== id));
+      triggerToast && triggerToast('Electricity report deleted');
+    } catch(e) { console.error(e); }
+  };
+
+  return (
+    <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Electricity & Power Costs</div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#FFFFFF', color:'#000000', borderRadius:8, fontWeight:700, fontSize:13, border:'none', cursor:'pointer' }}
+        >
+          <Plus size={14} /> {showForm ? 'Close Panel' : 'Add Monthly Report'}
+        </button>
+      </div>
+
+      <div className="card" style={{ padding: 18 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>AVERAGE MONTHLY BILL (LAST 3 MONTHS)</div>
+        <div style={{ fontSize: 28, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{"\u20B9"}{avgMonthlyBill3Months.toLocaleString('en-IN')}</div>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ padding: 20, background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Record Electricity Bill</div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ width: 140 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>MONTH</span>
+              <input type="text" required value={month} onChange={e => setMonth(e.target.value)} style={{ height: 34 }} placeholder="e.g. August 2026" />
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>UNITS USED</span>
+              <input type="number" step="0.1" value={unitsUsed} onChange={e => setUnitsUsed(e.target.value)} style={{ height: 34 }} placeholder="e.g. 450" />
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>BILL AMOUNT ({"\u20B9"})</span>
+              <input type="number" required value={bill} onChange={e => setBill(e.target.value)} style={{ height: 34 }} placeholder="\u20B94200" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TANKS RUNNING</span>
+              <input type="number" value={tanksRunning} onChange={e => setTanksRunning(e.target.value)} style={{ height: 34 }} placeholder="6" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>HEATERS</span>
+              <input type="number" value={heatersRunning} onChange={e => setHeatersRunning(e.target.value)} style={{ height: 34 }} placeholder="2" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>PUMPS</span>
+              <input type="number" value={pumpsRunning} onChange={e => setPumpsRunning(e.target.value)} style={{ height: 34 }} placeholder="4" />
+            </div>
+            <button type="submit" style={{ height: 34, padding: '0 20px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+              Save Report
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Units Used</th>
+              <th>Bill Amount</th>
+              <th>Tanks Running</th>
+              <th>Heaters</th>
+              <th>Pumps</th>
+              <th>Cost Per Tank</th>
+              <th style={{ textAlign: 'right', paddingRight: 16 }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(electricityLogs || []).map(l => {
+              const tanksCount = Number(l.tanks_running) || 1;
+              const costPerTank = Math.round((Number(l.bill) || 0) / tanksCount);
+              return (
+                <tr key={l.id}>
+                  <td style={{ fontWeight: 600 }}>{l.month}</td>
+                  <td>{l.units_used} kWh</td>
+                  <td style={{ fontWeight: 700 }}>{"\u20B9"}{Number(l.bill).toLocaleString('en-IN')}</td>
+                  <td>{l.tanks_running}</td>
+                  <td>{l.heaters_running}</td>
+                  <td>{l.pumps_running}</td>
+                  <td style={{ color: 'var(--secondary)', fontWeight: 600 }}>{"\u20B9"}{costPerTank.toLocaleString('en-IN')} / tank</td>
+                  <td style={{ textAlign: 'right', paddingRight: 16 }}>
+                    <button onClick={() => handleDelete(l.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── BROODSTOCK TAB ───────────────────────────────────────────────────────────
+
+function BroodstockTab({ isMobile, broodstocks, setBroodstocks, species, tanks, triggerToast }) {
+  const [showForm, setShowForm] = useState(false);
+  const [broodstockId, setBroodstockId] = useState('');
+  const [speciesId, setSpeciesId] = useState(species[0]?.id || 1);
+  const [gender, setGender] = useState('Female');
+  const [purchaseDate, setPurchaseDate] = useState(formattedToday());
+  const [cost, setCost] = useState('');
+  const [tankId, setTankId] = useState(tanks[0]?.id || 'A');
+  const [notes, setNotes] = useState('');
+
+  // Inline edit state
+  const [editingId, setEditingId] = useState(null);
+  const [editSpawnCount, setEditSpawnCount] = useState('');
+  const [editTankId, setEditTankId] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  const totalCount = useMemo(() => (broodstocks || []).length, [broodstocks]);
+  const totalInvestment = useMemo(() => (broodstocks || []).reduce((sum, b) => sum + (Number(b.cost) || 0), 0), [broodstocks]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const costVal = parseInt(cost, 10);
+    if (!broodstockId.trim() || isNaN(costVal)) return;
+    const sp = (species || []).find(s => s.id === Number(speciesId));
+
+    try {
+      const payload = {
+        broodstock_id: broodstockId.trim(),
+        species_id: sp ? sp.id : Number(speciesId),
+        species_name: sp ? sp.name : 'Unknown Species',
+        gender,
+        purchase_date: purchaseDate || formattedToday(),
+        cost: costVal,
+        tank_id: tankId,
+        spawn_count: 0,
+        notes: notes.trim()
+      };
+      const res = await api.addBroodstock(payload);
+      if (res) {
+        setBroodstocks(prev => [...prev, res]);
+        triggerToast && triggerToast(`Broodstock ${broodstockId} added`);
+        setBroodstockId(''); setCost(''); setNotes(''); setShowForm(false);
+      }
+    } catch(err) { console.error(err); }
+  };
+
+  const handleStartEdit = (b) => {
+    setEditingId(b.id);
+    setEditSpawnCount(String(b.spawn_count || 0));
+    setEditTankId(b.tank_id || 'A');
+    setEditNotes(b.notes || '');
+  };
+
+  const handleSaveEdit = async (id) => {
+    try {
+      const payload = {
+        spawn_count: parseInt(editSpawnCount, 10) || 0,
+        tank_id: editTankId,
+        notes: editNotes.trim()
+      };
+      const res = await api.updateBroodstock(id, payload);
+      if (res) {
+        setBroodstocks(prev => prev.map(b => b.id === id ? { ...b, ...payload } : b));
+        setEditingId(null);
+        triggerToast && triggerToast('Broodstock updated');
+      }
+    } catch(e) { console.error(e); }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteBroodstock(id);
+      setBroodstocks(prev => prev.filter(b => b.id !== id));
+      triggerToast && triggerToast('Broodstock deleted');
+    } catch(e) { console.error(e); }
+  };
+
+  return (
+    <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Broodstock Breeders</div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#FFFFFF', color:'#000000', borderRadius:8, fontWeight:700, fontSize:13, border:'none', cursor:'pointer' }}
+        >
+          <Plus size={14} /> {showForm ? 'Close Panel' : 'Add Broodstock'}
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
+        <div className="card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL BROODSTOCK COUNT</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{totalCount} breeders</div>
+        </div>
+        <div className="card" style={{ padding: 18 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL INVESTMENT</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{"\u20B9"}{totalInvestment.toLocaleString('en-IN')}</div>
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ padding: 20, background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Register Broodstock Breeder</div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ width: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>ID (e.g. BS-001)</span>
+              <input type="text" required value={broodstockId} onChange={e => setBroodstockId(e.target.value)} style={{ height: 34 }} placeholder="BS-001" />
+            </div>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SPECIES</span>
+              <select value={speciesId} onChange={e => setSpeciesId(e.target.value)} style={{ height: 34 }}>
+                {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>GENDER</span>
+              <select value={gender} onChange={e => setGender(e.target.value)} style={{ height: 34 }}>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+              </select>
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>COST ({"\u20B9"})</span>
+              <input type="number" required value={cost} onChange={e => setCost(e.target.value)} style={{ height: 34 }} placeholder="\u20B91200" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TANK</span>
+              <select value={tankId} onChange={e => setTankId(e.target.value)} style={{ height: 34 }}>
+                {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>PURCHASE DATE</span>
+              <input type="text" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} style={{ height: 34 }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 150 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>NOTES</span>
+              <input type="text" value={notes} onChange={e => setNotes(e.target.value)} style={{ height: 34 }} placeholder="Lineage, origin..." />
+            </div>
+            <button type="submit" style={{ height: 34, padding: '0 20px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+              Register Breeder
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Species</th>
+              <th>Gender</th>
+              <th>Purchase Date</th>
+              <th>Cost {"\u20B9"}</th>
+              <th>Tank</th>
+              <th>Spawn Count</th>
+              <th>Notes</th>
+              <th style={{ textAlign: 'right', paddingRight: 16 }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(broodstocks || []).map(b => {
+              const isEditing = editingId === b.id;
+              return (
+                <tr key={b.id}>
+                  <td style={{ fontWeight: 700 }}>{b.broodstock_id}</td>
+                  <td style={{ fontWeight: 600 }}>{b.species_name}</td>
+                  <td>{b.gender}</td>
+                  <td>{b.purchase_date}</td>
+                  <td style={{ fontWeight: 700 }}>{"\u20B9"}{Number(b.cost).toLocaleString('en-IN')}</td>
+                  <td>
+                    {isEditing ? (
+                      <select value={editTankId} onChange={e => setEditTankId(e.target.value)} style={{ height: 28 }}>
+                        {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+                      </select>
+                    ) : (
+                      <span>Tank {b.tank_id}</span>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input type="number" value={editSpawnCount} onChange={e => setEditSpawnCount(e.target.value)} style={{ width: 60, height: 28 }} />
+                    ) : (
+                      <span style={{ color: 'var(--secondary)', fontWeight: 700 }}>{b.spawn_count || 0}</span>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input type="text" value={editNotes} onChange={e => setEditNotes(e.target.value)} style={{ height: 28 }} />
+                    ) : (
+                      <span style={{ color: 'var(--muted)' }}>{b.notes || '—'}</span>
+                    )}
+                  </td>
+                  <td style={{ textAlign: 'right', paddingRight: 16 }}>
+                    {isEditing ? (
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <button onClick={() => handleSaveEdit(b.id)} style={{ padding: '4px 8px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 4, fontSize: 11 }}>Save</button>
+                        <button onClick={() => setEditingId(null)} style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.06)', color: '#FFFFFF', borderRadius: 4, fontSize: 11 }}>Cancel</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                        <button onClick={() => handleStartEdit(b)} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer' }}><Pencil size={13} /></button>
+                        <button onClick={() => handleDelete(b.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── BREEDING TAB ─────────────────────────────────────────────────────────────
+
+function BreedingTab({ isMobile, breedingPerformances, setBreedingPerformances, species, triggerToast }) {
+  const [showForm, setShowForm] = useState(false);
+  const [pairId, setPairId] = useState('');
+  const [speciesName, setSpeciesName] = useState(species[0]?.name || 'Guppy (Fancy)');
+  const [spawnDate, setSpawnDate] = useState(formattedToday());
+  const [eggsLaid, setEggsLaid] = useState('');
+  const [eggsHatched, setEggsHatched] = useState('');
+  const [frySurvived, setFrySurvived] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const bestPerformingPair = useMemo(() => {
+    if (!breedingPerformances || breedingPerformances.length === 0) return null;
+    const pairStats = {};
+    breedingPerformances.forEach(bp => {
+      const hatched = Number(bp.eggs_hatched) || 0;
+      const survived = Number(bp.fry_survived) || 0;
+      const rate = hatched > 0 ? (survived / hatched) * 100 : 0;
+      if (!pairStats[bp.pair_id]) {
+        pairStats[bp.pair_id] = { totalRate: rate, count: 1, species: bp.species_name };
+      } else {
+        pairStats[bp.pair_id].totalRate += rate;
+        pairStats[bp.pair_id].count += 1;
+      }
+    });
+    let best = null;
+    let maxAvg = -1;
+    Object.entries(pairStats).forEach(([pId, data]) => {
+      const avg = data.totalRate / data.count;
+      if (avg > maxAvg) {
+        maxAvg = avg;
+        best = { pairId: pId, species: data.species, avgSurvivalRate: avg.toFixed(1) };
+      }
+    });
+    return best;
+  }, [breedingPerformances]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const laid = parseInt(eggsLaid, 10);
+    const hatched = parseInt(eggsHatched, 10);
+    const survived = parseInt(frySurvived, 10);
+    if (!pairId.trim() || isNaN(laid) || isNaN(hatched) || isNaN(survived)) return;
+
+    try {
+      const payload = {
+        pair_id: pairId.trim(),
+        species_name: speciesName,
+        spawn_date: spawnDate || formattedToday(),
+        eggs_laid: laid,
+        eggs_hatched: hatched,
+        fry_survived: survived,
+        notes: notes.trim()
+      };
+      const res = await api.addBreedingPerformance(payload);
+      if (res) {
+        setBreedingPerformances(prev => [res, ...prev]);
+        triggerToast && triggerToast(`Spawn logged for pair ${pairId}`);
+        setPairId(''); setEggsLaid(''); setEggsHatched(''); setFrySurvived(''); setNotes(''); setShowForm(false);
+      }
+    } catch(err) { console.error(err); }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteBreedingPerformance(id);
+      setBreedingPerformances(prev => prev.filter(b => b.id !== id));
+      triggerToast && triggerToast('Breeding record deleted');
+    } catch(e) { console.error(e); }
+  };
+
+  return (
+    <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Breeding & Spawn Performance</div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#FFFFFF', color:'#000000', borderRadius:8, fontWeight:700, fontSize:13, border:'none', cursor:'pointer' }}
+        >
+          <Plus size={14} /> {showForm ? 'Close Panel' : 'Log Spawn'}
+        </button>
+      </div>
+
+      <div className="card" style={{ padding: 18 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>BEST PERFORMING PAIR</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>
+          {bestPerformingPair ? `${bestPerformingPair.pairId} (${bestPerformingPair.species}) — ${bestPerformingPair.avgSurvivalRate}% survival` : 'No spawn data available'}
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ padding: 20, background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Log Spawn Event</div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ width: 140 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>PAIR ID (e.g. BS-001 x BS-002)</span>
+              <input type="text" required value={pairId} onChange={e => setPairId(e.target.value)} style={{ height: 34 }} placeholder="BS-001 x BS-002" />
+            </div>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SPECIES</span>
+              <select value={speciesName} onChange={e => setSpeciesName(e.target.value)} style={{ height: 34 }}>
+                {(species || []).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>EGGS LAID</span>
+              <input type="number" required value={eggsLaid} onChange={e => setEggsLaid(e.target.value)} style={{ height: 34 }} placeholder="150" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>EGGS HATCHED</span>
+              <input type="number" required value={eggsHatched} onChange={e => setEggsHatched(e.target.value)} style={{ height: 34 }} placeholder="120" />
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>FRY SURVIVED</span>
+              <input type="number" required value={frySurvived} onChange={e => setFrySurvived(e.target.value)} style={{ height: 34 }} placeholder="95" />
+            </div>
+            <div style={{ width: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SPAWN DATE</span>
+              <input type="text" value={spawnDate} onChange={e => setSpawnDate(e.target.value)} style={{ height: 34 }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 150 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>NOTES</span>
+              <input type="text" value={notes} onChange={e => setNotes(e.target.value)} style={{ height: 34 }} placeholder="Water condition, diet..." />
+            </div>
+            <button type="submit" style={{ height: 34, padding: '0 20px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+              Save Spawn Record
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Pair ID</th>
+              <th>Species</th>
+              <th>Spawn Date</th>
+              <th>Eggs Laid</th>
+              <th>Hatched</th>
+              <th>Survived</th>
+              <th>Hatch Rate %</th>
+              <th>Survival Rate %</th>
+              <th>Notes</th>
+              <th style={{ textAlign: 'right', paddingRight: 16 }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(breedingPerformances || []).map(b => {
+              const laid = Number(b.eggs_laid) || 0;
+              const hatched = Number(b.eggs_hatched) || 0;
+              const survived = Number(b.fry_survived) || 0;
+              const hatchRate = laid > 0 ? ((hatched / laid) * 100).toFixed(1) : '0';
+              const survivalRate = hatched > 0 ? ((survived / hatched) * 100).toFixed(1) : '0';
+              return (
+                <tr key={b.id}>
+                  <td style={{ fontWeight: 700 }}>{b.pair_id}</td>
+                  <td style={{ fontWeight: 600 }}>{b.species_name}</td>
+                  <td>{b.spawn_date}</td>
+                  <td>{b.eggs_laid}</td>
+                  <td>{b.eggs_hatched}</td>
+                  <td>{b.fry_survived}</td>
+                  <td style={{ fontWeight: 700 }}>{hatchRate}%</td>
+                  <td style={{ fontWeight: 700, color: 'var(--secondary)' }}>{survivalRate}%</td>
+                  <td style={{ color: 'var(--muted)' }}>{b.notes || '—'}</td>
+                  <td style={{ textAlign: 'right', paddingRight: 16 }}>
+                    <button onClick={() => handleDelete(b.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── GROWTH TAB ───────────────────────────────────────────────────────────────
+
+function GrowthTab({ isMobile, growthRecords, setGrowthRecords, species, tanks, triggerToast }) {
+  const [showForm, setShowForm] = useState(false);
+  const [speciesId, setSpeciesId] = useState(species[0]?.id || 1);
+  const [ageGroup, setAgeGroup] = useState('adult');
+  const [tankId, setTankId] = useState(tanks[0]?.id || 'A');
+  const [avgSize, setAvgSize] = useState('');
+  const [sampleCount, setSampleCount] = useState('25');
+  const [recordedDate, setRecordedDate] = useState(formattedToday());
+  const [workerName, setWorkerName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const latestGrowthTrend = useMemo(() => {
+    const map = {};
+    (growthRecords || []).forEach(gr => {
+      if (!map[gr.species_name]) {
+        map[gr.species_name] = gr;
+      }
+    });
+    return Object.values(map);
+  }, [growthRecords]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const countVal = parseInt(sampleCount, 10);
+    if (!avgSize.trim()) return;
+    if (isNaN(countVal) || countVal < 20 || countVal > 30) {
+      setErrorMsg('Sample count must be between 20 and 30 fish');
+      return;
+    }
+    setErrorMsg('');
+    const sp = (species || []).find(s => s.id === Number(speciesId));
+
+    try {
+      const payload = {
+        species_id: sp ? sp.id : Number(speciesId),
+        species_name: sp ? sp.name : 'Unknown Species',
+        age_group: ageGroup,
+        tank_id: tankId,
+        avg_size: avgSize.trim(),
+        sample_count: countVal,
+        recorded_date: recordedDate || formattedToday(),
+        worker_name: workerName.trim() || 'Admin',
+        notes: notes.trim()
+      };
+      const res = await api.addGrowthRecord(payload);
+      if (res) {
+        setGrowthRecords(prev => [res, ...prev]);
+        triggerToast && triggerToast(`Growth sample recorded for ${sp ? sp.name : speciesId}`);
+        setAvgSize(''); setNotes(''); setShowForm(false);
+      }
+    } catch(err) { console.error(err); }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteGrowthRecord(id);
+      setGrowthRecords(prev => prev.filter(g => g.id !== id));
+      triggerToast && triggerToast('Growth record deleted');
+    } catch(e) { console.error(e); }
+  };
+
+  return (
+    <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Growth & Size Tracking</div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#FFFFFF', color:'#000000', borderRadius:8, fontWeight:700, fontSize:13, border:'none', cursor:'pointer' }}
+        >
+          <Plus size={14} /> {showForm ? 'Close Panel' : 'Record Growth'}
+        </button>
+      </div>
+
+      <div className="card" style={{ padding: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Latest Growth Trend by Species</div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+          {latestGrowthTrend.length === 0 ? (
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>No growth samples recorded yet.</span>
+          ) : (
+            latestGrowthTrend.map(g => (
+              <div key={g.id} style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{g.species_name}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--secondary)', margin: '4px 0' }}>{g.avg_size}</div>
+                <div style={{ fontSize: 10, color: 'var(--muted)' }}>Tank {g.tank_id} · {g.recorded_date}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ padding: 20, background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', marginBottom: 12 }}>Record Growth Sample (20-30 Fish)</div>
+          {errorMsg && <div style={{ color: '#FF6666', fontSize: 11, fontWeight: 600, marginBottom: 10 }}>{errorMsg}</div>}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SPECIES</span>
+              <select value={speciesId} onChange={e => setSpeciesId(e.target.value)} style={{ height: 34 }}>
+                {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>AGE GROUP</span>
+              <select value={ageGroup} onChange={e => setAgeGroup(e.target.value)} style={{ height: 34 }}>
+                <option value="adult">Adult</option>
+                <option value="semi-adult">Semi-Adult</option>
+                <option value="newborn">Newborn</option>
+              </select>
+            </div>
+            <div style={{ width: 100 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>TANK</span>
+              <select value={tankId} onChange={e => setTankId(e.target.value)} style={{ height: 34 }}>
+                {(tanks || []).map(t => <option key={t.id} value={t.id}>{t.displayName}</option>)}
+              </select>
+            </div>
+            <div style={{ width: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>AVG SIZE (e.g. 2.5 inch)</span>
+              <input type="text" required value={avgSize} onChange={e => setAvgSize(e.target.value)} style={{ height: 34 }} placeholder="2.5 inch" />
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>SAMPLES (20-30)</span>
+              <input type="number" required min="20" max="30" value={sampleCount} onChange={e => setSampleCount(e.target.value)} style={{ height: 34 }} placeholder="25" />
+            </div>
+            <div style={{ width: 120 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>DATE</span>
+              <input type="text" value={recordedDate} onChange={e => setRecordedDate(e.target.value)} style={{ height: 34 }} />
+            </div>
+            <div style={{ width: 110 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>WORKER</span>
+              <input type="text" value={workerName} onChange={e => setWorkerName(e.target.value)} style={{ height: 34 }} placeholder="Admin" />
+            </div>
+            <div style={{ flex: 1, minWidth: 150 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>NOTES</span>
+              <input type="text" value={notes} onChange={e => setNotes(e.target.value)} style={{ height: 34 }} placeholder="Growth rate notes..." />
+            </div>
+            <button type="submit" style={{ height: 34, padding: '0 20px', background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>
+              Save Record
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Species</th>
+              <th>Age Group</th>
+              <th>Tank</th>
+              <th>Avg Size</th>
+              <th>Sample Count</th>
+              <th>Worker</th>
+              <th>Notes</th>
+              <th style={{ textAlign: 'right', paddingRight: 16 }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(growthRecords || []).map(g => (
+              <tr key={g.id}>
+                <td>{g.recorded_date}</td>
+                <td style={{ fontWeight: 600 }}>{g.species_name}</td>
+                <td>{g.age_group}</td>
+                <td>Tank {g.tank_id}</td>
+                <td style={{ fontWeight: 700, color: 'var(--secondary)' }}>{g.avg_size}</td>
+                <td>{g.sample_count} fish</td>
+                <td style={{ color: 'var(--secondary)' }}>{g.worker_name || '—'}</td>
+                <td style={{ color: 'var(--muted)' }}>{g.notes || '—'}</td>
+                <td style={{ textAlign: 'right', paddingRight: 16 }}>
+                  <button onClick={() => handleDelete(g.id)} style={{ background: 'none', border: 'none', color: '#666666', cursor: 'pointer' }}><Trash2 size={13} /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 
 
 function WorkerApp({ isMobile,
@@ -5483,6 +6652,143 @@ function WorkerApp({ isMobile,
   const [trToTank, setTrToTank] = useState('');
   const [trCount, setTrCount] = useState('');
   const [trSuccess, setTrSuccess] = useState(false);
+
+  // WORKER MORTALITY STATE
+  const [wmSpeciesId, setWmSpeciesId] = useState(species[0]?.id || 1);
+  const [wmAgeGroup, setWmAgeGroup] = useState('adult');
+  const [wmTankId, setWmTankId] = useState(tanks[0]?.id || 'A');
+  const [wmQtyDead, setWmQtyDead] = useState('');
+  const [wmReason, setWmReason] = useState('');
+  const [wmSuccessMsg, setWmSuccessMsg] = useState(null);
+
+  // WORKER FEED STATE
+  const [wfType, setWfType] = useState('');
+  const [wfPurchased, setWfPurchased] = useState('');
+  const [wfUsed, setWfUsed] = useState('');
+  const [wfCost, setWfCost] = useState('');
+  const [wfTankId, setWfTankId] = useState(tanks[0]?.id || 'A');
+  const [wfSuccessMsg, setWfSuccessMsg] = useState(null);
+
+  // WORKER GROWTH STATE
+  const [wgSpeciesId, setWgSpeciesId] = useState(species[0]?.id || 1);
+  const [wgAgeGroup, setWgAgeGroup] = useState('adult');
+  const [wgTankId, setWgTankId] = useState(tanks[0]?.id || 'A');
+  const [wgAvgSize, setWgAvgSize] = useState('');
+  const [wgSampleCount, setWgSampleCount] = useState('25');
+  const [wgNotes, setWgNotes] = useState('');
+  const [wgSuccessMsg, setWgSuccessMsg] = useState(null);
+  const [wgErrorMsg, setWgErrorMsg] = useState('');
+
+  const handleWorkerMortalitySubmit = async (e) => {
+    e.preventDefault();
+    const qty = parseInt(wmQtyDead, 10);
+    if (!qty || qty <= 0) return;
+    const sp = (species || []).find(s => s.id === Number(wmSpeciesId));
+    if (!sp) return;
+
+    try {
+      const payload = {
+        date: formattedToday(),
+        species_id: sp.id,
+        species_name: sp.name,
+        age_group: wmAgeGroup,
+        tank_id: wmTankId,
+        qty_dead: qty,
+        possible_reason: wmReason.trim() || 'Unspecified',
+        worker_name: activeWorker?.name || 'Worker'
+      };
+      await api.addMortalityLog(payload);
+
+      const newSub = {
+        id: Date.now(),
+        worker: activeWorker?.name || 'Worker',
+        type: 'mortality',
+        details: `Mortality: ${qty} ${sp.name} (${wmAgeGroup}) from Tank ${wmTankId}`,
+        time: 'Just now',
+        date: today(),
+        status: 'approved'
+      };
+      setWorkerSubmissions(prev => [newSub, ...prev]);
+      setWmSuccessMsg(`Logged mortality: ${qty} ${sp.name}`);
+      setWmQtyDead(''); setWmReason('');
+      setTimeout(() => setWmSuccessMsg(null), 3000);
+    } catch(err) { console.error(err); }
+  };
+
+  const handleWorkerFeedSubmit = async (e) => {
+    e.preventDefault();
+    const costVal = parseInt(wfCost, 10);
+    if (!wfType.trim() || isNaN(costVal)) return;
+
+    try {
+      const payload = {
+        feed_type: wfType.trim(),
+        purchased: parseFloat(wfPurchased) || 0,
+        used: parseFloat(wfUsed) || 0,
+        cost: costVal,
+        date: formattedToday(),
+        tank_id: wfTankId,
+        worker_name: activeWorker?.name || 'Worker'
+      };
+      await api.addFeedLog(payload);
+
+      const newSub = {
+        id: Date.now(),
+        worker: activeWorker?.name || 'Worker',
+        type: 'feed_log',
+        details: `Feed Logged: ${wfType} (₹${costVal}) Tank ${wfTankId}`,
+        time: 'Just now',
+        date: today(),
+        status: 'approved'
+      };
+      setWorkerSubmissions(prev => [newSub, ...prev]);
+      setWfSuccessMsg(`Logged feed: ${wfType}`);
+      setWfType(''); setWfPurchased(''); setWfUsed(''); setWfCost('');
+      setTimeout(() => setWfSuccessMsg(null), 3000);
+    } catch(err) { console.error(err); }
+  };
+
+  const handleWorkerGrowthSubmit = async (e) => {
+    e.preventDefault();
+    const countVal = parseInt(wgSampleCount, 10);
+    if (!wgAvgSize.trim()) return;
+    if (isNaN(countVal) || countVal < 20 || countVal > 30) {
+      setWgErrorMsg('Sample count must be between 20 and 30 fish');
+      return;
+    }
+    setWgErrorMsg('');
+    const sp = (species || []).find(s => s.id === Number(wgSpeciesId));
+
+    try {
+      const payload = {
+        species_id: sp ? sp.id : Number(wgSpeciesId),
+        species_name: sp ? sp.name : 'Unknown Species',
+        age_group: wgAgeGroup,
+        tank_id: wgTankId,
+        avg_size: wgAvgSize.trim(),
+        sample_count: countVal,
+        recorded_date: formattedToday(),
+        worker_name: activeWorker?.name || 'Worker',
+        notes: wgNotes.trim()
+      };
+      await api.addGrowthRecord(payload);
+
+      const newSub = {
+        id: Date.now(),
+        worker: activeWorker?.name || 'Worker',
+        type: 'growth_record',
+        details: `Growth Recorded: ${sp ? sp.name : wgSpeciesId} (${wgAvgSize}) Tank ${wgTankId}`,
+        time: 'Just now',
+        date: today(),
+        status: 'approved'
+      };
+      setWorkerSubmissions(prev => [newSub, ...prev]);
+      setWgSuccessMsg(`Logged growth: ${sp ? sp.name : wgSpeciesId} (${wgAvgSize})`);
+      setWgAvgSize(''); setWgNotes('');
+      setTimeout(() => setWgSuccessMsg(null), 3000);
+    } catch(err) { console.error(err); }
+  };
+
 
   // Active worker's tasks list logged today
   const activeWorkerLogs = useMemo(() => {
@@ -6359,7 +7665,142 @@ function WorkerApp({ isMobile,
           </form>
         </div>
 
+        {/* Card — Log Mortality (Worker) */}
+        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log Mortality</span>
+            <Skull size={18} color="#666666" />
+          </div>
+          <form onSubmit={handleWorkerMortalitySubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>SPECIES</span>
+            <select value={wmSpeciesId} onChange={e => setWmSpeciesId(e.target.value)}>
+              {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AGE GROUP</span>
+                <select value={wmAgeGroup} onChange={e => setWmAgeGroup(e.target.value)}>
+                  <option value="adult">Adult</option>
+                  <option value="semi-adult">Semi-Adult</option>
+                  <option value="newborn">Newborn</option>
+                </select>
+              </div>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
+                <select value={wmTankId} onChange={e => setWmTankId(e.target.value)}>
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>QTY DEAD</span>
+            <input type="number" required min="1" placeholder="Quantity dead" value={wmQtyDead} onChange={e => setWmQtyDead(e.target.value)} />
+
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>POSSIBLE REASON</span>
+            <input type="text" placeholder="e.g. Disease, pH issue" value={wmReason} onChange={e => setWmReason(e.target.value)} />
+
+            <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
+              Submit Mortality Log
+            </button>
+            {wmSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wmSuccessMsg} {"\u2713"}</div>}
+          </form>
+        </div>
+
+        {/* Card — Log Feed (Worker) */}
+        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Log Feed Usage</span>
+            <Package size={18} />
+          </div>
+          <form onSubmit={handleWorkerFeedSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>FEED TYPE</span>
+            <input type="text" required placeholder="e.g. Hikari Pellets" value={wfType} onChange={e => setWfType(e.target.value)} />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>PURCHASED (KG)</span>
+                <input type="number" step="0.1" placeholder="Purchased" value={wfPurchased} onChange={e => setWfPurchased(e.target.value)} />
+              </div>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>USED (KG)</span>
+                <input type="number" step="0.1" placeholder="Used" value={wfUsed} onChange={e => setWfUsed(e.target.value)} />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>COST ({"\u20B9"})</span>
+                <input type="number" required placeholder="Cost" value={wfCost} onChange={e => setWfCost(e.target.value)} />
+              </div>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
+                <select value={wfTankId} onChange={e => setWfTankId(e.target.value)}>
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
+              Submit Feed Log
+            </button>
+            {wfSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wfSuccessMsg} {"\u2713"}</div>}
+          </form>
+        </div>
+
+        {/* Card — Record Growth (Worker) */}
+        <div className="card" style={{ padding: 18, background: 'rgba(255,255,255,0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Record Growth</span>
+            <TrendingUp size={18} />
+          </div>
+          {wgErrorMsg && <div style={{ fontSize: 11, color: '#FF6666', fontWeight: 600, marginBottom: 8 }}>{wgErrorMsg}</div>}
+          <form onSubmit={handleWorkerGrowthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>SPECIES</span>
+            <select value={wgSpeciesId} onChange={e => setWgSpeciesId(e.target.value)}>
+              {(species || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AGE GROUP</span>
+                <select value={wgAgeGroup} onChange={e => setWgAgeGroup(e.target.value)}>
+                  <option value="adult">Adult</option>
+                  <option value="semi-adult">Semi-Adult</option>
+                  <option value="newborn">Newborn</option>
+                </select>
+              </div>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>TANK</span>
+                <select value={wgTankId} onChange={e => setWgTankId(e.target.value)}>
+                  {(tanks || []).map(t => <option key={t.id} value={t.id}>Tank {t.id}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>AVG SIZE</span>
+                <input type="text" required placeholder="e.g. 2.5 inch" value={wgAvgSize} onChange={e => setWgAvgSize(e.target.value)} />
+              </div>
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 2 }}>SAMPLES (20-30)</span>
+                <input type="number" required min="20" max="30" placeholder="25" value={wgSampleCount} onChange={e => setWgSampleCount(e.target.value)} />
+              </div>
+            </div>
+
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>NOTES</span>
+            <input type="text" placeholder="Growth notes..." value={wgNotes} onChange={e => setWgNotes(e.target.value)} />
+
+            <button type="submit" style={{ padding: 10, background: '#FFFFFF', color: '#000000', fontWeight: 'bold', borderRadius: 6, cursor: 'pointer', border: 'none' }}>
+              Submit Growth Sample
+            </button>
+            {wgSuccessMsg && <div style={{ fontSize: 12, color: 'var(--secondary)', textAlign: 'center' }}>{wgSuccessMsg} {"\u2713"}</div>}
+          </form>
+        </div>
+
       </div>
+
 
       {/* Activity Logs summary feed */}
       <div className="card" style={{ padding: 18, marginTop: 10 }}>
@@ -6423,7 +7864,13 @@ const TAB_TITLES = {
   customers: 'Customers',
   workers: 'Workers',
   equipment: 'Equipment',
-  water: 'Water Quality'
+  water: 'Water Quality',
+  mortality: 'Mortality Logs',
+  feed: 'Feed Logs',
+  electricity: 'Electricity Reports',
+  broodstock: 'Broodstock Management',
+  breeding: 'Breeding Performance',
+  growth: 'Growth Tracking'
 };
 
 const BOTTOM_NAV = [
@@ -6696,6 +8143,14 @@ export default function App() {
   const [tanks, setTanks] = useState([]);
   const [quarantinedTanks, setQuarantinedTanks] = useState({});
 
+  // 13-module extension states
+  const [mortalityLogs, setMortalityLogs] = useState([]);
+  const [feedLogs, setFeedLogs] = useState([]);
+  const [electricityLogs, setElectricityLogs] = useState([]);
+  const [broodstocks, setBroodstocks] = useState([]);
+  const [breedingPerformances, setBreedingPerformances] = useState([]);
+  const [growthRecords, setGrowthRecords] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [apiError, setApiError] = useState(null);
@@ -6795,9 +8250,15 @@ export default function App() {
       api.getWorkers(),
       api.getEquipment(),
       api.getWaterLogs(),
-      api.getActivity()
+      api.getActivity(),
+      api.getMortalityLog().catch(() => []),
+      api.getFeedLog().catch(() => []),
+      api.getElectricityLog().catch(() => []),
+      api.getBroodstock().catch(() => []),
+      api.getBreedingPerformance().catch(() => []),
+      api.getGrowthRecord().catch(() => [])
     ])
-      .then(([spData, tsData, tData, sData, eData, cData, wData, eqData, wlData, actData]) => {
+      .then(([spData, tsData, tData, sData, eData, cData, wData, eqData, wlData, actData, mData, fData, elData, bData, bpData, gData]) => {
         setSpeciesStateAll((Array.isArray(spData) ? spData : []).map(s => ({
           id: s.id, name: s.name, price: s.price, min: s.min_threshold,
           stock: 0, born: 0, exported: 0, died: 0
@@ -6819,7 +8280,7 @@ export default function App() {
           ageGroup: s.age_group, tankId: s.tank_id, qty: s.qty,
           unitPrice: s.unit_price, total: s.total, buyer: s.buyer,
           payMode: s.pay_mode, payStatus: s.pay_status, worker: s.worker_name,
-          approved: s.approved, date: s.date, note: s.note
+          approved: s.approved, date: s.date, note: s.note, size: s.size || ''
         })));
         setExpenses(eData.map(e => ({
           id: e.id, category: e.category, amount: e.amount,
@@ -6831,7 +8292,8 @@ export default function App() {
           totalOrders: c.total_orders ?? 0,
           totalValue: c.total_value ?? 0,
           lastOrder: c.last_order ?? '—',
-          topSpecies: c.top_species ?? '—'
+          topSpecies: c.top_species ?? '—',
+          city: c.city || ''
         })));
         const normWorkers = wData.map(w => ({
           id: w.id, name: w.name, role: w.role, pin: w.pin,
@@ -6850,7 +8312,7 @@ export default function App() {
         setWaterLog(wlData.map(w => ({
           id: w.id, tank: w.tank_id, date: w.date,
           ph: w.ph, temp: w.temp, ammonia: w.ammonia,
-          loggedBy: w.logged_by, status: w.status
+          loggedBy: w.logged_by, status: w.status, tds: w.tds
         })));
         const qMap = {};
         tData.forEach(t => {
@@ -6864,6 +8326,12 @@ export default function App() {
             return { id: a.id, type: a.type, time: formatActivityTime(a.created_at), note: a.description };
           }
         }));
+        setMortalityLogs(Array.isArray(mData) ? mData : []);
+        setFeedLogs(Array.isArray(fData) ? fData : []);
+        setElectricityLogs(Array.isArray(elData) ? elData : []);
+        setBroodstocks(Array.isArray(bData) ? bData : []);
+        setBreedingPerformances(Array.isArray(bpData) ? bpData : []);
+        setGrowthRecords(Array.isArray(gData) ? gData : []);
         setLoading(false);
       })
       .catch(err => {
@@ -7963,6 +9431,109 @@ export default function App() {
                 )}
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('mortality')}
+              data-label="Mortality"
+              className={`sidebar-nav-item ${activeTab === 'mortality' ? 'active' : ''}`}
+              style={{
+                width: '100%', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: activeTab === 'mortality' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                color: activeTab === 'mortality' ? '#FFFFFF' : 'var(--secondary)',
+                borderLeft: activeTab === 'mortality' ? '3px solid #FFFFFF' : '3px solid transparent',
+                borderRadius: activeTab === 'mortality' ? '0 8px 8px 0' : '8px'
+              }}
+            >
+              <Skull size={18} />
+              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Mortality</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('feed')}
+              data-label="Feed"
+              className={`sidebar-nav-item ${activeTab === 'feed' ? 'active' : ''}`}
+              style={{
+                width: '100%', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: activeTab === 'feed' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                color: activeTab === 'feed' ? '#FFFFFF' : 'var(--secondary)',
+                borderLeft: activeTab === 'feed' ? '3px solid #FFFFFF' : '3px solid transparent',
+                borderRadius: activeTab === 'feed' ? '0 8px 8px 0' : '8px'
+              }}
+            >
+              <Package size={18} />
+              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Feed</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('electricity')}
+              data-label="Electricity"
+              className={`sidebar-nav-item ${activeTab === 'electricity' ? 'active' : ''}`}
+              style={{
+                width: '100%', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: activeTab === 'electricity' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                color: activeTab === 'electricity' ? '#FFFFFF' : 'var(--secondary)',
+                borderLeft: activeTab === 'electricity' ? '3px solid #FFFFFF' : '3px solid transparent',
+                borderRadius: activeTab === 'electricity' ? '0 8px 8px 0' : '8px'
+              }}
+            >
+              <Zap size={18} />
+              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Electricity</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('broodstock')}
+              data-label="Broodstock"
+              className={`sidebar-nav-item ${activeTab === 'broodstock' ? 'active' : ''}`}
+              style={{
+                width: '100%', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: activeTab === 'broodstock' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                color: activeTab === 'broodstock' ? '#FFFFFF' : 'var(--secondary)',
+                borderLeft: activeTab === 'broodstock' ? '3px solid #FFFFFF' : '3px solid transparent',
+                borderRadius: activeTab === 'broodstock' ? '0 8px 8px 0' : '8px'
+              }}
+            >
+              <Dna size={18} />
+              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Broodstock</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('breeding')}
+              data-label="Breeding"
+              className={`sidebar-nav-item ${activeTab === 'breeding' ? 'active' : ''}`}
+              style={{
+                width: '100%', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: activeTab === 'breeding' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                color: activeTab === 'breeding' ? '#FFFFFF' : 'var(--secondary)',
+                borderLeft: activeTab === 'breeding' ? '3px solid #FFFFFF' : '3px solid transparent',
+                borderRadius: activeTab === 'breeding' ? '0 8px 8px 0' : '8px'
+              }}
+            >
+              <HeartPulse size={18} />
+              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Breeding</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('growth')}
+              data-label="Growth"
+              className={`sidebar-nav-item ${activeTab === 'growth' ? 'active' : ''}`}
+              style={{
+                width: '100%', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: activeTab === 'growth' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                color: activeTab === 'growth' ? '#FFFFFF' : 'var(--secondary)',
+                borderLeft: activeTab === 'growth' ? '3px solid #FFFFFF' : '3px solid transparent',
+                borderRadius: activeTab === 'growth' ? '0 8px 8px 0' : '8px'
+              }}
+            >
+              <TrendingUp size={18} />
+              <span className="label-text" style={{ fontSize: 13, fontWeight: 500 }}>Growth</span>
+            </button>
+
           </div>
 
           {/* Toggle View button */}
@@ -8187,6 +9758,10 @@ export default function App() {
                     waterWarnings={waterWarnings}
                     onNavigateTab={setActiveTab}
                     highUrgentIssues={highUrgentIssues}
+                    broodstocks={broodstocks}
+                    breedingPerformances={breedingPerformances}
+                    expenses={expenses}
+                    sales={sales}
                   />
                 </ErrorBoundary>
               )}
@@ -8205,6 +9780,7 @@ export default function App() {
                     tanks={tanks}
                     onUpdateSpeciesPrice={handleUpdateSpeciesPrice}
                     triggerToast={triggerToast}
+                    growthRecords={growthRecords}
                   />
                 </ErrorBoundary>
               )}
@@ -8300,6 +9876,77 @@ export default function App() {
                   />
                 </ErrorBoundary>
               )}
+              {activeTab === 'mortality' && (
+                <ErrorBoundary key="mortality">
+                  <MortalityTab isMobile={isMobile}
+                    key="mortality"
+                    mortalityLogs={mortalityLogs}
+                    setMortalityLogs={setMortalityLogs}
+                    species={species}
+                    tanks={tanks}
+                    triggerToast={triggerToast}
+                    onDeductStock={deductStock}
+                  />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'feed' && (
+                <ErrorBoundary key="feed">
+                  <FeedTab isMobile={isMobile}
+                    key="feed"
+                    feedLogs={feedLogs}
+                    setFeedLogs={setFeedLogs}
+                    sales={sales}
+                    tanks={tanks}
+                    triggerToast={triggerToast}
+                  />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'electricity' && (
+                <ErrorBoundary key="electricity">
+                  <ElectricityTab isMobile={isMobile}
+                    key="electricity"
+                    electricityLogs={electricityLogs}
+                    setElectricityLogs={setElectricityLogs}
+                    triggerToast={triggerToast}
+                  />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'broodstock' && (
+                <ErrorBoundary key="broodstock">
+                  <BroodstockTab isMobile={isMobile}
+                    key="broodstock"
+                    broodstocks={broodstocks}
+                    setBroodstocks={setBroodstocks}
+                    species={species}
+                    tanks={tanks}
+                    triggerToast={triggerToast}
+                  />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'breeding' && (
+                <ErrorBoundary key="breeding">
+                  <BreedingTab isMobile={isMobile}
+                    key="breeding"
+                    breedingPerformances={breedingPerformances}
+                    setBreedingPerformances={setBreedingPerformances}
+                    species={species}
+                    triggerToast={triggerToast}
+                  />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'growth' && (
+                <ErrorBoundary key="growth">
+                  <GrowthTab isMobile={isMobile}
+                    key="growth"
+                    growthRecords={growthRecords}
+                    setGrowthRecords={setGrowthRecords}
+                    species={species}
+                    tanks={tanks}
+                    triggerToast={triggerToast}
+                  />
+                </ErrorBoundary>
+              )}
+
           </main>
           </div>
           {isMobile && (

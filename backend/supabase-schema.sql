@@ -249,3 +249,98 @@ ALTER TABLE equipment DISABLE ROW LEVEL SECURITY;
 ALTER TABLE water_log DISABLE ROW LEVEL SECURITY;
 ALTER TABLE activity DISABLE ROW LEVEL SECURITY;
 
+-- 11. Column Extensions
+ALTER TABLE water_log ADD COLUMN IF NOT EXISTS tds NUMERIC;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS size TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city TEXT;
+
+-- 12. Feed Log
+CREATE TABLE IF NOT EXISTS feed_log (
+    id SERIAL PRIMARY KEY,
+    feed_type TEXT NOT NULL,
+    purchased NUMERIC NOT NULL,
+    used NUMERIC NOT NULL,
+    cost INT NOT NULL,
+    date TEXT NOT NULL,
+    tank_id TEXT,
+    worker_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 13. Mortality Record
+CREATE TABLE IF NOT EXISTS mortality_log (
+    id SERIAL PRIMARY KEY,
+    date TEXT NOT NULL,
+    species_id INT NOT NULL,
+    species_name TEXT NOT NULL,
+    age_group TEXT NOT NULL,
+    tank_id TEXT NOT NULL,
+    qty_dead INT NOT NULL,
+    possible_reason TEXT,
+    worker_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 14. Electricity Report
+CREATE TABLE IF NOT EXISTS electricity_log (
+    id SERIAL PRIMARY KEY,
+    month TEXT NOT NULL,
+    units_used NUMERIC NOT NULL,
+    bill INT NOT NULL,
+    tanks_running INT,
+    heaters_running INT,
+    pumps_running INT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 15. Broodstock Record
+CREATE TABLE IF NOT EXISTS broodstock (
+    id SERIAL PRIMARY KEY,
+    broodstock_id TEXT NOT NULL,
+    species_id INT NOT NULL,
+    species_name TEXT NOT NULL,
+    gender TEXT NOT NULL,
+    purchase_date TEXT NOT NULL,
+    cost INT NOT NULL,
+    tank_id TEXT,
+    spawn_count INT DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 16. Breeding Performance
+CREATE TABLE IF NOT EXISTS breeding_performance (
+    id SERIAL PRIMARY KEY,
+    pair_id TEXT NOT NULL,
+    species_name TEXT NOT NULL,
+    spawn_date TEXT NOT NULL,
+    eggs_laid INT NOT NULL,
+    eggs_hatched INT NOT NULL,
+    fry_survived INT NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 17. Growth Record
+CREATE TABLE IF NOT EXISTS growth_record (
+    id SERIAL PRIMARY KEY,
+    species_id INT NOT NULL,
+    species_name TEXT NOT NULL,
+    age_group TEXT NOT NULL,
+    tank_id TEXT NOT NULL,
+    avg_size TEXT NOT NULL,
+    sample_count INT NOT NULL,
+    recorded_date TEXT NOT NULL,
+    worker_name TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE feed_log DISABLE ROW LEVEL SECURITY;
+ALTER TABLE mortality_log DISABLE ROW LEVEL SECURITY;
+ALTER TABLE electricity_log DISABLE ROW LEVEL SECURITY;
+ALTER TABLE broodstock DISABLE ROW LEVEL SECURITY;
+ALTER TABLE breeding_performance DISABLE ROW LEVEL SECURITY;
+ALTER TABLE growth_record DISABLE ROW LEVEL SECURITY;
+
+

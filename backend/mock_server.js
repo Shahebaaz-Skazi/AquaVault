@@ -56,5 +56,17 @@ app.get('/api/customers', (req, res) => res.json([]));
 app.get('/api/equipment', (req, res) => res.json([]));
 app.get('/api/water-log', (req, res) => res.json([]));
 app.get('/api/activity', (req, res) => res.json([]));
+app.get('/api/feed-log', (req, res) => res.json([]));
+app.get('/api/mortality-log', (req, res) => res.json([]));
+app.get('/api/electricity-log', (req, res) => res.json([]));
+app.get('/api/broodstock', (req, res) => res.json([]));
+app.get('/api/breeding-performance', (req, res) => res.json([]));
+app.get('/api/growth-record', (req, res) => res.json([]));
+app.post('/api/feed-log', (req, res) => res.json({ id: Date.now(), ...req.body }));
+app.post('/api/mortality-log', (req, res) => res.json({ id: Date.now(), ...req.body }));
+app.post('/api/electricity-log', (req, res) => res.json({ id: Date.now(), ...req.body }));
+app.post('/api/broodstock', (req, res) => res.json({ id: Date.now(), ...req.body }));
+app.post('/api/breeding-performance', (req, res) => res.json({ id: Date.now(), ...req.body }));
+app.post('/api/growth-record', (req, res) => res.json({ id: Date.now(), ...req.body }));
 
 app.listen(3001, () => console.log('Mock server running on port 3001'));
