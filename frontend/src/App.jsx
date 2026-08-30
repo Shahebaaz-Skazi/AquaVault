@@ -8454,6 +8454,8 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const [activeInvoice, setActiveInvoice] = useState(null);
+
   const role = session?.role || 'admin';
   const canModify = role === 'admin';
   const displayName = role === 'manager'
