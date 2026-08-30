@@ -2440,19 +2440,28 @@ function TanksTab({ isMobile,
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      {/* Mini Summary Chips */}
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {activeAgeGroups.map(ag => (
-                          <span key={ag} style={{ fontSize: 9, background: 'rgba(255,255,255,0.06)', borderRadius: 4, padding: '2px 7px', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.04)' }}>
-                            {AGE_GROUP_LABELS[ag].short}: {getAgeGroupTotal(sp.id, ag)}
-                          </span>
-                        ))}
+                      {/* Compact Stacked Age-Group Breakdown */}
+                      <div style={{
+                        display: 'flex', flexDirection: 'column', gap: 2, fontSize: 11,
+                        background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: 6,
+                        minWidth: 130, border: '1px solid rgba(255,255,255,0.06)'
+                      }}>
+                        {['adult', 'semi-adult', 'newborn'].map(ag => {
+                          const cnt = getAgeGroupTotal(sp.id, ag);
+                          if (cnt <= 0) return null;
+                          const agLabel = ag === 'adult' ? 'Adult' : ag === 'semi-adult' ? 'Semi-Adult' : ag === 'newborn' ? 'Newborn' : ag;
+                          return (
+                            <div key={ag} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                              <span style={{ color: 'rgba(255,255,255,0.5)' }}>{agLabel}</span>
+                              <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{cnt}</span>
+                            </div>
+                          );
+                        })}
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', marginTop: 2, paddingTop: 2, display: 'flex', justifyContent: 'space-between', gap: 12, fontWeight: 700 }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)' }}>Total</span>
+                          <span style={{ color: '#FFFFFF' }}>{spTotal}</span>
+                        </div>
                       </div>
-
-                      {/* Total */}
-                      <span style={{ fontSize: 13, fontWeight: 800, color: '#FFFFFF', minWidth: 40, textAlign: 'right' }}>
-                        {spTotal}
-                      </span>
 
                       {/* Warning pill */}
                       {(isLowStock || isCritical) && (
@@ -5705,6 +5714,41 @@ function FeedTab({ isMobile, feedLogs, setFeedLogs, sales, tanks, triggerToast }
     return Math.round(totalFeedCost / totalFishSold);
   }, [totalFeedCost, totalFishSold]);
 
+  const monthlyFeedBreakdown = useMemo(() => {
+    const groups = {};
+    (feedLogs || []).forEach(f => {
+      if (!f.date) return;
+      const str = f.date.trim();
+      const d = new Date(str.endsWith('Z') || str.includes('T') ? str : str + 'T00:00:00');
+      let monthKey = '';
+      let monthLabel = '';
+      if (!isNaN(d.getTime())) {
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        monthLabel = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        monthKey = `${d.getFullYear()}-${m}`;
+      } else {
+        monthLabel = f.date;
+        monthKey = f.date;
+      }
+
+      if (!groups[monthKey]) {
+        groups[monthKey] = {
+          label: monthLabel,
+          key: monthKey,
+          cost: 0,
+          purchased: 0,
+          used: 0
+        };
+      }
+      groups[monthKey].cost += Number(f.cost) || 0;
+      groups[monthKey].purchased += Number(f.purchased) || 0;
+      groups[monthKey].used += Number(f.used) || 0;
+    });
+
+    return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
+  }, [feedLogs]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const costVal = parseInt(cost, 10);
@@ -5757,6 +5801,38 @@ function FeedTab({ isMobile, feedLogs, setFeedLogs, sales, tanks, triggerToast }
         <div className="card" style={{ padding: 18 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>FEED COST PER FISH SOLD</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{"\u20B9"}{feedCostPerFishSold.toLocaleString('en-IN')} / fish</div>
+        </div>
+      </div>
+
+      {/* Monthly Breakdown Table */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>Monthly Breakdown</div>
+        <div className="card" style={{ overflowX: 'auto', padding: '18px 0' }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Total Feed Cost ({"\u20B9"})</th>
+                <th>Total Purchased (kg)</th>
+                <th>Total Used (kg)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyFeedBreakdown.map(m => (
+                <tr key={m.key}>
+                  <td style={{ fontWeight: 600 }}>{m.label}</td>
+                  <td style={{ fontWeight: 700 }}>{"\u20B9"}{m.cost.toLocaleString('en-IN')}</td>
+                  <td>{m.purchased.toFixed(1)} kg</td>
+                  <td>{m.used.toFixed(1)} kg</td>
+                </tr>
+              ))}
+              {monthlyFeedBreakdown.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: 'center', color: 'var(--muted)', fontStyle: 'italic' }}>No feed history logged yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -5998,8 +6074,36 @@ function BroodstockTab({ isMobile, broodstocks, setBroodstocks, species, tanks, 
   const [editTankId, setEditTankId] = useState('');
   const [editNotes, setEditNotes] = useState('');
 
-  const totalCount = useMemo(() => (broodstocks || []).length, [broodstocks]);
-  const totalInvestment = useMemo(() => (broodstocks || []).reduce((sum, b) => sum + (Number(b.cost) || 0), 0), [broodstocks]);
+  const broodstockSpeciesData = useMemo(() => {
+    const speciesMap = {};
+    (broodstocks || []).forEach(b => {
+      const name = b.species_name || 'Unknown Species';
+      if (!speciesMap[name]) {
+        speciesMap[name] = {
+          name,
+          male: 0,
+          female: 0,
+          total: 0,
+          cost: 0
+        };
+      }
+      if (b.gender === 'Male') speciesMap[name].male += 1;
+      else if (b.gender === 'Female') speciesMap[name].female += 1;
+      speciesMap[name].total += 1;
+      speciesMap[name].cost += Number(b.cost) || 0;
+    });
+
+    const rows = Object.values(speciesMap);
+    const totals = rows.reduce((acc, r) => {
+      acc.male += r.male;
+      acc.female += r.female;
+      acc.total += r.total;
+      acc.cost += r.cost;
+      return acc;
+    }, { male: 0, female: 0, total: 0, cost: 0 });
+
+    return { rows, totals };
+  }, [broodstocks]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -6071,16 +6175,77 @@ function BroodstockTab({ isMobile, broodstocks, setBroodstocks, species, tanks, 
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
-        <div className="card" style={{ padding: 18 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL BROODSTOCK COUNT</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{totalCount} breeders</div>
+      {/* Species Breakdown Tables */}
+      {broodstocks && broodstocks.length > 0 ? (
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
+          {/* Table A — Brooders by Species */}
+          <div className="card" style={{ padding: '18px 0', overflowX: 'auto' }}>
+            <div style={{ padding: '0 18px 12px 18px', fontWeight: 700, fontSize: 13, color: '#fff' }}>
+              Brooders by Species
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Species</th>
+                  <th>Male</th>
+                  <th>Female</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {broodstockSpeciesData.rows.map(r => (
+                  <tr key={r.name}>
+                    <td style={{ fontWeight: 600 }}>{r.name}</td>
+                    <td>{r.male}</td>
+                    <td>{r.female}</td>
+                    <td style={{ fontWeight: 700 }}>{r.total}</td>
+                  </tr>
+                ))}
+                <tr style={{ fontWeight: 700, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+                  <td>Total</td>
+                  <td>{broodstockSpeciesData.totals.male}</td>
+                  <td>{broodstockSpeciesData.totals.female}</td>
+                  <td style={{ color: 'var(--secondary)' }}>{broodstockSpeciesData.totals.total}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Table B — Investment by Species */}
+          <div className="card" style={{ padding: '18px 0', overflowX: 'auto' }}>
+            <div style={{ padding: '0 18px 12px 18px', fontWeight: 700, fontSize: 13, color: '#fff' }}>
+              Investment by Species
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Species</th>
+                  <th>Count</th>
+                  <th>Total Investment ({"\u20B9"})</th>
+                </tr>
+              </thead>
+              <tbody>
+                {broodstockSpeciesData.rows.map(r => (
+                  <tr key={r.name}>
+                    <td style={{ fontWeight: 600 }}>{r.name}</td>
+                    <td>{r.total}</td>
+                    <td style={{ fontWeight: 700 }}>{"\u20B9"}{r.cost.toLocaleString('en-IN')}</td>
+                  </tr>
+                ))}
+                <tr style={{ fontWeight: 700, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+                  <td>Total</td>
+                  <td>{broodstockSpeciesData.totals.total}</td>
+                  <td style={{ color: 'var(--secondary)' }}>{"\u20B9"}{broodstockSpeciesData.totals.cost.toLocaleString('en-IN')}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="card" style={{ padding: 18 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)' }}>TOTAL INVESTMENT</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginTop: 6 }}>{"\u20B9"}{totalInvestment.toLocaleString('en-IN')}</div>
+      ) : (
+        <div className="card" style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontStyle: 'italic' }}>
+          No broodstock recorded yet
         </div>
-      </div>
+      )}
 
       {showForm && (
         <div className="card" style={{ padding: 20, background: '#0D0D0D', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
